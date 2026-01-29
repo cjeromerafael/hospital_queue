@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+
+<body>
+<div class="container">
+
+<div> 
+    <h2>Staff Dashboard</h2>
+    <button onclick="logout()" style="float: right;">Logout</button>
+</div>
+
+<h2>Staff Queue</h2>
+
+<div>
+  <strong>Current in Queue:</strong>
+  <span id="currentQueue">None</span>
+</div>
+
+<div style="margin-top:10px;">
+  <button onclick="next()">Next (Complete Current)</button>
+  <button onclick="skipCurrent()">Skip Current</button>
+  <button onclick="window.location.href='../patient/register.html'">
+    Go to Patient Registration
+  </button>
+</div>
+
+<hr>
+
+<h3>Create Queue Entry</h3>
+<div>
+  <label for="new_patient_id">Patient ID</label>
+  <input id="new_patient_id" placeholder="Patient ID">
+  <button onclick="createQueue()">Add to Queue</button>
+</div>
+
+<hr>
+
+<h3>Waiting Queue</h3>
+<table id="queueTable"></table>
+
+<hr>
+
+<div>
+  <h3>Transfer Patient</h3>
+  <label for="patient_id">Patient ID</label>
+  <input id="patient_id" placeholder="Patient ID">
+</div>
+
+<div>
+  <label for="transfer">Transfer to Department</label>
+  <input id="new_dept" placeholder="New Dept ID">
+  <button onclick="transfer()">Transfer</button>
+</div>
+
+</div>
+
+<script src="../assets/js/staff.js"></script>
+</body>
+</html>

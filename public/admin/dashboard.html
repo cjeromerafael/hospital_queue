@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+
+<body>
+<div class="container">
+
+<h2>Admin Dashboard</h2>
+<button onclick="logout()" style="float: right;">Logout</button>
+
+<h3>Add Department</h3>
+<input id="deptName" placeholder="Department name">
+<button onclick="addDepartment()">Add</button>
+
+<h3>Manage Department</h3>
+<input id="deptIdEdit" placeholder="Department ID">
+<input id="deptNameEdit" placeholder="New name">
+<button onclick="updateDepartment()">Update</button>
+<button onclick="deleteDepartment()">Delete</button>
+
+<table id="deptTable"></table>
+
+<hr>
+
+<h3>Add User</h3>
+<input id="userName" placeholder="Name">
+<select id="deptSelect"></select>
+<button onclick="addUser()">Create</button>
+
+<h3>Manage User</h3>
+<input id="userIdEdit" placeholder="User ID">
+<input id="userNameEdit" placeholder="New name">
+<select id="userDeptEdit"></select>
+<button onclick="updateUser()">Update</button>
+<button onclick="deleteUser()">Delete</button>
+
+<table id="userTable"></table>
+</div>
+
+<script src="../assets/js/admin.js"></script>
+</body>
+</html>
