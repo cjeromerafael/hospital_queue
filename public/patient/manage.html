@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+<title>Manage Patients</title>
+</head>
+<body>
+<div class="container">
+
+<h2>Patient Management</h2>
+<button onclick="window.location.href='../staff/dashboard.html'" style="float:right">Home</button>
+
+<h3>Register Patient</h3>
+<div>
+  <label for="patient_number">Patient Number</label>
+  <input id="patient_number" placeholder="Patient Number">
+</div>
+<div>
+  <label for="patient_name">Patient Name (optional)</label>
+  <input id="patient_name" placeholder="Patient Name">
+</div>
+<div>
+  <label for="patient_dept">Department</label>
+  <select id="patient_dept"><option value="">Select department</option></select>
+</div>
+<button onclick="registerPatientManaged()">Register</button>
+<p id="register_msg"></p>
+
+<hr>
+
+<h3>All Registered Patients</h3>
+<table id="patientTable"></table>
+
+</div>
+
+<script src="../assets/js/patient-manage.js"></script>
+</body>
+</html>

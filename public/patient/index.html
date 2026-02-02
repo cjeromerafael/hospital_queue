@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+<title>Patient Queue Status</title>
+</head>
+
+<body>
+<div class="container">
+
+<button onclick="window.location.href='../index.html'">Back</button>
+
+<h2>Patient Queue Status</h2>
+
+<div style="margin-top:10px;">
+  <strong>Now Serving:</strong>
+  <span id="currentQueue">—</span>
+</div>
+<p id="msg" class="error"></p>
+
+<hr>
+
+<h3>Queue (all departments)</h3>
+<table id="waitingTable"></table>
+
+</div>
+
+<script src="../assets/js/patient-queue.js"></script>
+</body>
+</html>

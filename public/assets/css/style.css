@@ -1,0 +1,220 @@
+/* Base */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8; /* Light blueish gray for a calm hospital feel */
+    padding: 30px;
+    color: #333;
+}
+
+/* Container/Card */
+.container {
+    background: #ffffff;
+    padding: 30px;
+    max-width: 900px;
+    margin: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Forms */
+input, select {
+    padding: 12px 10px;
+    margin: 10px 0;
+    width: 30%;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+input:focus, select:focus {
+    border-color: #1e90ff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(30, 144, 255, 0.3);
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+    padding: 12px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: 0.2s;
+    color: #fff;
+    background-color: #1e90ff; /* Default hospital blue */
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Optional button variations */
+.btn-green {
+    background-color: #32cd32;
+}
+
+.btn-green:hover {
+    background-color: #28a428;
+}
+
+.btn-yellow {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.btn-yellow:hover {
+    background-color: #e0a800;
+}
+
+.btn-blue {
+    background-color: #1e90ff;
+}
+
+.btn-blue:hover {
+    background-color: #187bcd;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 15px;
+}
+
+th {
+    background-color: #1e90ff;
+    color: white;
+    padding: 10px;
+    text-align: left;
+    border-radius: 4px;
+}
+
+td {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+}
+
+/* Admin tables: separate Edit and Delete columns so buttons are always visible */
+th.th-edit, td.td-edit,
+th.th-delete, td.td-delete {
+    white-space: nowrap;
+    width: 1%;
+    min-width: 70px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th.th-edit, th.th-delete {
+    background-color: #187bcd;
+}
+
+table .td-edit button,
+table .td-delete button {
+    padding: 8px 14px;
+    font-size: 14px;
+}
+
+/* Long text in table cells: horizontal scroll within cell */
+td.td-scroll {
+    max-width: 200px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+/* Table row hover effect */
+tr:hover {
+    background-color: #02ff23; /* light hospital-friendly blue */
+}
+
+/* Queue List Cards */
+.queue-item {
+    background-color: #e0f7fa;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: 0.2s;
+}
+
+.queue-item:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+/* Status badges */
+.status {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.status-waiting {
+    background-color: #1e90ff20;
+    color: #1e90ff;
+}
+
+.status-called {
+    background-color: #32cd3220;
+    color: #32cd32;
+}
+
+.status-skipped {
+    background-color: #ffc10720;
+    color: #ffc107;
+}
+
+/* Headers and Titles */
+h1, h2, h3 {
+    color: #1e90ff;
+}
+
+h1 {
+    font-size: 28px;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+/* Display / TV Mode */
+.display-container { text-align: center; max-width: none; padding: 40px; background: transparent; }
+.display-current { font-size: 64px; font-weight: bold; color: #32cd32; margin: 20px 0; }
+.display-waiting td { font-size: 36px; padding: 20px; }
+.error { color: #c62828; font-weight: bold; margin-top:10px; }
+
+/* Responsive adjustments */
+@media(max-width: 768px){
+    body {
+        padding: 15px;
+    }
+
+    .container {
+        padding: 20px;
+    }
+
+    input, select, button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+}

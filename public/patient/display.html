@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+<title>Queue Display</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body { padding: 10px;  margin: 0; background: #000; color: #fff; height: 100vh; overflow: hidden; }
+  .display-layout { display: flex; flex-direction: row; height: 100vh; width: 100%; }
+  .display-left { flex: 1 1 auto; min-width: 0; height: 100vh; padding: 16px 20px; display: flex; flex-direction: column; overflow: hidden; }
+  .display-right { flex: 1 1 auto; min-width: 0; height: 100vh; padding: 16px 20px; display: flex; flex-direction: column; overflow: hidden; }
+  .display-current { font-size: 200px; color: #32cd32; margin: 0 0 8px 0; font-weight: bold; line-height: 1.1; }
+  .display-info { font-size: clamp(14px, 2vw, 22px); color: #e0e0e0; line-height: 1.4; }
+  .display-info .label { color: #b0b0b0;  font-size: 0.9em; }
+  .display-title { font-size: clamp(16px, 2vw, 22px); color: #fff; margin: 12px 0 6px 0; flex-shrink: 0; }
+  .display-waiting-wrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  .display-waiting { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .display-waiting th { font-size: clamp(14px, 1.8vw, 20px); padding: 6px 8px; color: #fff; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.2); }
+  .display-waiting td { font-size: clamp(14px, 1.8vw, 20px); padding: 6px 8px; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  #event_banner { display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 14px 22px; border-radius: 10px; font-size: 24px; box-shadow: 0 6px 18px rgba(0,0,0,0.3); z-index: 9999; }
+</style>
+</head>
+<body>
+<div class="display-layout">
+  <div class="display-left">
+    <div class="display-title">Finance Department Queues</div>
+    <div class="display-waiting-wrap">
+      <div class="finance-queue billing-admission">
+        <h3>Billing - Admission</h3>
+        <table id="billing-admission" class="display-waiting" aria-live="polite"></table>
+      </div>
+      <div class="finance-queue billing-opd">
+        <h3>Billing - OPD</h3>
+        <table id="billing-opd" class="display-waiting" aria-live="polite"></table>
+      </div>
+      <div class="finance-queue cashier">
+        <h3>Cashier</h3>
+        <table id="cashier" class="display-waiting" aria-live="polite"></table>
+      </div>
+      <div class="finance-queue medical-social-services">
+        <h3>Medical Social Services</h3>
+        <table id="medical-social-services" class="display-waiting" aria-live="polite"></table>
+      </div>
+    </div>
+  </div>
+  <div class="display-right">
+    <div id="display_current" class="display-current">None</div>
+    <div id="display_info" class="display-info"></div>
+    <div class="display-title">Waiting Queue</div>
+    <div class="display-waiting-wrap">
+      <table id="display_waiting" class="display-waiting" aria-live="polite"></table>
+    </div>
+  </div>
+</div>
+
+<div id="event_banner"></div>
+
+<audio id="queue_bell" preload="auto" style="display:none;">
+  <source src="../assets/bell.ogg" type="audio/ogg">
+</audio>
+
+<script>
+// Unlock audio on first user interaction (required by browser autoplay policy)
+var audioUnlocked = false;
+function unlockAudio(){
+    if(audioUnlocked) return;
+    var audio = document.getElementById('queue_bell');
+    if(audio){
+        audio.volume = 0.8;
+        var playPromise = audio.play();
+        if(playPromise){
+            playPromise.then(function(){
+                audio.pause();
+                audio.currentTime = 0;
+                audioUnlocked = true;
+                console.log('Audio unlocked');
+            }).catch(function(err){
+                console.warn('Audio unlock failed:', err);
+            });
+        }
+    }
+}
+// Try to unlock on any user interaction
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('keydown', unlockAudio, { once: true });
+</script>
+
+<script src="../assets/js/patient-display.js"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+
+<body>
+<div class="container">
+
+<div> 
+    <h2>Staff Dashboard</h2>
+    <button onclick="logout()" style="float: right;">Logout</button>
+</div>
+
+<h3>Create Queue Entry</h3>
+<div>
+  <label for="new_patient_select">Patient Number</label>
+  <br>
+  <select id="new_patient_select">
+    <option value="">Select patient</option>
+  </select>
+  <button onclick="createQueue()">Add to Queue</button>
+</div>
+
+<hr>
+
+<h3>Create Special Queue Entry (Billing & Services)</h3>
+<div>
+  <label for="special_patient_select">Patient Number (Billing - Admission, Billing - OPD, Cashier, Medical Social Services)</label>
+  <br>
+  <select id="special_patient_select">
+    <option value="">Select patient</option>
+  </select>
+  <button onclick="createSpecialQueue()">Add to Queue</button>
+</div>
+
+<hr>
+
+<h2>Staff Queue</h2>
+
+<div>
+  <strong>Current in Queue:</strong>
+  <span id="currentQueue">None</span>
+</div>
+
+<div style="margin-top:10px;">
+  <button onclick="next()">Next (Complete Current)</button>
+  <button onclick="skipCurrent()">Skip Current</button>
+  <button onclick="window.location.href='../patient/manage.html'">Manage Patients</button>
+  <button onclick="openQueueDisplay()">Open Queue Display</button>
+</div>
+
+<hr>
+
+<h3>Waiting Queue</h3>
+<table id="queueTable"></table>
+
+<hr>
+
+</div>
+
+<!-- load audio file -->
+<audio id="queue_bell" preload="auto" style="display:none;">
+  <source src="../assets/bell.ogg" type="audio/ogg">
+</audio>
+
+<script src="../assets/js/staff.js"></script>
+</body>
+</html>

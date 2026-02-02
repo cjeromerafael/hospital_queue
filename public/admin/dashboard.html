@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../assets/css/style.css">
+<style>
+  /* Admin tables: force Edit and Delete columns and buttons to be visible */
+  #deptTable th:nth-child(3), #deptTable th:nth-child(4),
+  #deptTable td:nth-child(3), #deptTable td:nth-child(4),
+  #userTable th:nth-child(4), #userTable th:nth-child(5),
+  #userTable td:nth-child(4), #userTable td:nth-child(5) {
+    min-width: 72px;
+    width: 72px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  #deptTable .edit-dept-btn, #deptTable .delete-dept-btn,
+  #userTable .edit-user-btn, #userTable .delete-user-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 2px;
+    font-size: 14px;
+    background-color: #1e90ff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #deptTable .delete-dept-btn, #userTable .delete-user-btn {
+    background-color: #c62828;
+  }
+  #deptTable .edit-dept-btn:hover, #userTable .edit-user-btn:hover { background-color: #187bcd; }
+  #deptTable .delete-dept-btn:hover, #userTable .delete-user-btn:hover { background-color: #b71c1c; }
+  td.td-scroll { max-width: 200px; overflow-x: auto; }
+</style>
+</head>
+
+<body>
+<!-- Dashboard -->
+<div class="container">
+
+<h2>Admin Dashboard</h2>
+<button onclick="logout()" style="float: right;">Logout</button>
+
+<!-- Add Department section -->
+<h3>Add Department</h3>
+<input id="deptName" placeholder="Department name">
+<button onclick="addDepartment()">Add</button>
+
+<!-- Table -->
+<table id="deptTable"></table>
+
+<hr>
+
+<!-- Add User section -->
+<h3>Add User</h3>
+<input id="userName" placeholder="Name">
+<select id="deptSelect"></select>
+<button onclick="addUser()">Create</button>
+
+<!-- Table -->
+<table id="userTable"></table>
+</div>
+
+<script src="../assets/js/admin.js?v=2"></script>
+</body>
+</html>
