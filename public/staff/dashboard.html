@@ -22,6 +22,27 @@
   <button onclick="createQueue()">Add to Queue</button>
 </div>
 
+<h2>Staff Queue</h2>
+
+<div>
+  <strong>Current in Queue:</strong>
+  <span id="currentQueue">None</span>
+</div>
+
+<div style="margin-top:10px;">
+  <button onclick="next()">Next (Complete Current)</button>
+  <button onclick="skipCurrent()">Skip Current</button>
+  <button onclick="window.location.href='../patient/manage.html'">Manage Patients</button>
+  <button onclick="openQueueDisplay()">Open Queue Display</button>
+</div>
+
+<hr>
+
+<h3>Waiting Queue</h3>
+<table id="queueTable"></table>
+
+<hr>
+
 <hr>
 
 <h2>Billing - Admission Queue</h2>
@@ -130,26 +151,7 @@
 
 <hr>
 
-<h2>Staff Queue</h2>
 
-<div>
-  <strong>Current in Queue:</strong>
-  <span id="currentQueue">None</span>
-</div>
-
-<div style="margin-top:10px;">
-  <button onclick="next()">Next (Complete Current)</button>
-  <button onclick="skipCurrent()">Skip Current</button>
-  <button onclick="window.location.href='../patient/manage.html'">Manage Patients</button>
-  <button onclick="openQueueDisplay()">Open Queue Display</button>
-</div>
-
-<hr>
-
-<h3>Waiting Queue</h3>
-<table id="queueTable"></table>
-
-<hr>
 
 </div>
 
