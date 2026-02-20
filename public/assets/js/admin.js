@@ -116,7 +116,7 @@ function loadUsers(){
             html+="<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\">"+
                 "<td>"+u.user_id+"</td>"+
                 "<td class=\"user-name-cell td-scroll\">"+escapeHtml(u.name)+"</td>"+
-                "<td class=\"td-scroll\">"+escapeHtml(u.department_name||u.department_id||"")+"</td>"+
+                "<td class=\"user-dept-cell td-scroll\">"+escapeHtml(u.department_name||u.department_id||"")+"</td>"+
                 "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"edit-user-btn\">Edit</button></td>"+
                 "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"delete-user-btn\">Delete</button></td>"+
                 "</tr>";
@@ -138,10 +138,10 @@ function startEditUser(ev){
     const userId=row.dataset.userId;
     const departmentId=row.dataset.departmentId;
     const nameCell=row.querySelector(".user-name-cell");
+    const deptCell=row.querySelector(".user-dept-cell");
     const existingInput=nameCell.querySelector("input.inline-edit-input");
     if(existingInput){
-        nameCell.textContent=row.dataset.editOriginalName||"";
-        delete row.dataset.editOriginalName;
+        loadUsers();
         return;
     }
     const currentName=nameCell.textContent;
@@ -153,13 +153,33 @@ function startEditUser(ev){
     nameCell.textContent="";
     nameCell.appendChild(input);
     input.focus();
+    let deptSelect=null;
+    if(deptCell){
+        deptSelect=document.createElement("select");
+        deptSelect.className="inline-dept-select";
+        deptCell.textContent="";
+        deptCell.appendChild(deptSelect);
+        fetch("../../api/admin/departments.php")
+            .then(r=>r.json())
+            .then(function(depts){
+                if(!Array.isArray(depts)) return;
+                let opts="";
+                depts.forEach(function(d){
+                    const selAttr=String(d.department_id)===String(departmentId)?" selected":"";
+                    opts+="<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
+                });
+                deptSelect.innerHTML=opts;
+            })
+            .catch(function(){});
+    }
     function save(){
         const newName=input.value.trim();
         if(!newName) return;
+        const newDeptId=deptSelect&&deptSelect.value?deptSelect.value:departmentId;
         fetch("../../api/admin/users.php",{
             method:"PUT",
             headers:{"Content-Type":"application/x-www-form-urlencoded"},
-            body:`user_id=${encodeURIComponent(userId)}&name=${encodeURIComponent(newName)}&department_id=${encodeURIComponent(departmentId)}`
+            body:`user_id=${encodeURIComponent(userId)}&name=${encodeURIComponent(newName)}&department_id=${encodeURIComponent(newDeptId)}`
         }).then(()=>loadUsers());
     }
     input.addEventListener("keydown", function(e){

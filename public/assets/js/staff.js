@@ -10,6 +10,24 @@ let departmentIdMap = {};
 let financeQueueData = [];
 let financeDepIds = []; // Store IDs of finance departments
 
+/** Removes a patient's option from all selection dropdowns (main + finance). */
+function removePatientOptionFromAllSelects(patientId){
+    const selectIds = [
+        'new_patient_select',
+        'billing_admission_select',
+        'billing_opd_select',
+        'cashier_select',
+        'medical_social_select'
+    ];
+    const pidStr = String(patientId);
+    selectIds.forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const opt = sel.querySelector(`option[value="${pidStr}"]`);
+        if (opt) opt.remove();
+    });
+}
+
 function logout() {
     localStorage.removeItem("department_id");
     window.location.href = "../index.html";
@@ -97,7 +115,7 @@ loadDepartmentIds();
 function loadPatientSelect(){
     const sel = document.getElementById("new_patient_select");
     if (!sel) return;
-    fetch(`../../api/patient/list.php?_=${Date.now()}`)
+    fetch(`../../api/patient/list.php?for_queue=1&_=${Date.now()}`)
         .then(r => r.json())
         .then(data => {
             const base = '<option value="">Select patient</option>';
@@ -210,6 +228,7 @@ function createQueue(){
             if(d.status==="error") {
                 alert(d.message);
             } else {
+                removePatientOptionFromAllSelects(patientId);
                 sel.value = '';
                 loadQueue();
             }
@@ -242,6 +261,8 @@ function createQueueForDepartment(selectId, deptName){
             if(d.status==="error") {
                 alert(d.message);
             } else {
+                // Remove patient from all dropdowns immediately
+                removePatientOptionFromAllSelects(patientId);
                 sel.value = '';
                 loadFinanceQueue();
             }
