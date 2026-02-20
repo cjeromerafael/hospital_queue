@@ -24,14 +24,108 @@
 
 <hr>
 
-<h3>Create Special Queue Entry (Billing & Services)</h3>
-<div>
-  <label for="special_patient_select">Patient Number (Billing - Admission, Billing - OPD, Cashier, Medical Social Services)</label>
-  <br>
-  <select id="special_patient_select">
-    <option value="">Select patient</option>
-  </select>
-  <button onclick="createSpecialQueue()">Add to Queue</button>
+<h2>Billing - Admission Queue</h2>
+<div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
+  <h4>Create Queue Entry</h4>
+  <div>
+    <label for="billing_admission_select">Patient Number</label>
+    <br>
+    <select id="billing_admission_select">
+      <option value="">Select patient</option>
+    </select>
+    <button onclick="createBillingAdmissionQueue()">Add to Queue</button>
+  </div>
+
+  <div style="margin-top:15px;">
+    <strong>Current in Queue:</strong>
+    <span id="billing_admission_current">None</span>
+  </div>
+
+  <div style="margin-top:10px;">
+    <button onclick="nextBillingAdmission()">Next (Complete Current)</button>
+    <button onclick="skipBillingAdmission()">Skip Current</button>
+  </div>
+
+  <h4 style="margin-top:15px;">Waiting Queue</h4>
+  <table id="billing_admission_table" style="width: 100%;"></table>
+</div>
+
+<h2>Billing - OPD Queue</h2>
+<div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
+  <h4>Create Queue Entry</h4>
+  <div>
+    <label for="billing_opd_select">Patient Number</label>
+    <br>
+    <select id="billing_opd_select">
+      <option value="">Select patient</option>
+    </select>
+    <button onclick="createBillingOPDQueue()">Add to Queue</button>
+  </div>
+
+  <div style="margin-top:15px;">
+    <strong>Current in Queue:</strong>
+    <span id="billing_opd_current">None</span>
+  </div>
+
+  <div style="margin-top:10px;">
+    <button onclick="nextBillingOPD()">Next (Complete Current)</button>
+    <button onclick="skipBillingOPD()">Skip Current</button>
+  </div>
+
+  <h4 style="margin-top:15px;">Waiting Queue</h4>
+  <table id="billing_opd_table" style="width: 100%;"></table>
+</div>
+
+<h2>Cashier Queue</h2>
+<div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
+  <h4>Create Queue Entry</h4>
+  <div>
+    <label for="cashier_select">Patient Number</label>
+    <br>
+    <select id="cashier_select">
+      <option value="">Select patient</option>
+    </select>
+    <button onclick="createCashierQueue()">Add to Queue</button>
+  </div>
+
+  <div style="margin-top:15px;">
+    <strong>Current in Queue:</strong>
+    <span id="cashier_current">None</span>
+  </div>
+
+  <div style="margin-top:10px;">
+    <button onclick="nextCashier()">Next (Complete Current)</button>
+    <button onclick="skipCashier()">Skip Current</button>
+  </div>
+
+  <h4 style="margin-top:15px;">Waiting Queue</h4>
+  <table id="cashier_table" style="width: 100%;"></table>
+</div>
+
+<h2>Medical Social Services Queue</h2>
+<div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
+  <h4>Create Queue Entry</h4>
+  <div>
+    <label for="medical_social_select">Patient Number</label>
+    <br>
+    <select id="medical_social_select">
+      <option value="">Select patient</option>
+    </select>
+    <button onclick="createMedicalSocialQueue()">Add to Queue</button>
+  </div>
+
+  <div style="margin-top:15px;">
+    <strong>Current in Queue:</strong>
+    <span id="medical_social_current">None</span>
+  </div>
+
+  <div style="margin-top:10px;">
+    <button onclick="nextMedicalSocial()">Next (Complete Current)</button>
+    <button onclick="skipMedicalSocial()">Skip Current</button>
+  </div>
+
+  <h4 style="margin-top:15px;">Waiting Queue</h4>
+  <table id="medical_social_table" style="width: 100%;"></table>
 </div>
 
 <hr>

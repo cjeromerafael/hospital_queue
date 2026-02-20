@@ -3,11 +3,51 @@
  * Requires department_id in localStorage (set after login). Polls queue every 3s.
  */
 const dept = localStorage.getItem("department_id");
-const finance_departments = ["Billing - Admission", "Billing - OPD", "Cashier", "Medical Social Services"];
+const finance_departments = ["Billing - Admission", "Billing - OPD", "Cashier", "Medical Social Services Department"];
+
+// Store department ID mapping
+let departmentIdMap = {};
+let financeQueueData = [];
+let financeDepIds = []; // Store IDs of finance departments
 
 function logout() {
     localStorage.removeItem("department_id");
     window.location.href = "../index.html";
+}
+
+/** Fetches and caches department IDs for dynamic lookups. */
+function loadDepartmentIds() {
+    fetch('../../api/admin/departments.php')
+        .then(r => r.json())
+        .then(depts => {
+            depts.forEach(d => {
+                departmentIdMap[d.department_name] = d.department_id;
+                // Track which IDs are finance departments
+                if (finance_departments.includes(d.department_name)) {
+                    financeDepIds.push(d.department_id);
+                }
+            });
+            // Hide main queue sections if logged-in user is from a finance department
+            hideMainQueueIfFinanceDept();
+        })
+        .catch(err => console.error('Error loading department IDs:', err));
+}
+
+/** Gets department ID from department name (supports hardcoded fallback). */
+function getDepartmentId(deptName) {
+    // First try the dynamically loaded map
+    if (departmentIdMap[deptName]) {
+        return departmentIdMap[deptName];
+    }
+    
+    // Fallback to hardcoded map if dynamic load hasn't completed
+    const fallbackMap = {
+        "Billing - Admission": 1,
+        "Billing - OPD": 2,
+        "Cashier": 3,
+        "Medical Social Services Department": 4
+    };
+    return fallbackMap[deptName];
 }
 
 /** Opens queue display (patient/display.html) for this department in a new tab. */
@@ -50,6 +90,9 @@ function loadQueue(){
 setInterval(loadQueue,3000);
 loadQueue();
 
+// Load department IDs for dynamic mapping
+loadDepartmentIds();
+
 /** Fetches all patients and populates the "Patient Number" dropdown for Create Queue Entry. */
 function loadPatientSelect(){
     const sel = document.getElementById("new_patient_select");
@@ -62,8 +105,12 @@ function loadPatientSelect(){
                 sel.innerHTML = base;
                 return;
             }
+            // Filter out patients assigned to finance departments
+            const filtered = data.filter(p => !finance_departments.includes(p.department_name));
+            // Sort by numeric patient_id
+            filtered.sort((a,b)=> (Number(a.patient_id) || 0) - (Number(b.patient_id) || 0));
             let opts = base;
-            data.forEach(p => {
+            filtered.forEach(p => {
                 const label = p.patient_number + (p.patient_name ? ` - ${p.patient_name}` : '');
                 opts += `<option value="${p.patient_id}">${escapePatientLabel(label)}</option>`;
             });
@@ -72,10 +119,21 @@ function loadPatientSelect(){
         .catch(() => { sel.innerHTML = '<option value="">Select patient</option>'; });
 }
 
-/** Fetches patients from specific departments and populates the "Special Patient Number" dropdown. */
-function loadSpecialPatientSelect(){
-    const sel = document.getElementById("special_patient_select");
+/** Fetches patients from specific departments and populates a given dropdown for finance departments. */
+function loadFinanceDepartmentPatients(selectId){
+    const sel = document.getElementById(selectId);
     if (!sel) return;
+    
+    // Map select IDs to department names
+    const deptMap = {
+        'billing_admission_select': 'Billing - Admission',
+        'billing_opd_select': 'Billing - OPD',
+        'cashier_select': 'Cashier',
+        'medical_social_select': 'Medical Social Services Department'
+    };
+    
+    const targetDept = deptMap[selectId];
+    
     fetch(`../../api/patient/list_special.php?_=${Date.now()}`)
         .then(r => r.json())
         .then(data => {
@@ -84,9 +142,13 @@ function loadSpecialPatientSelect(){
                 sel.innerHTML = base;
                 return;
             }
+            // Filter patients to only show those assigned to the target department
+            let filtered = data.filter(p => p.department_name === targetDept);
+            // Sort by numeric patient_id
+            filtered.sort((a,b)=> (Number(a.patient_id)||0) - (Number(b.patient_id)||0));
             let opts = base;
-            data.forEach(p => {
-                const label = p.patient_number + (p.patient_name ? ` - ${p.patient_name}` : '') + ` (${p.department_name})`;
+            filtered.forEach(p => {
+                const label = p.patient_number + (p.patient_name ? ` - ${p.patient_name}` : '');
                 opts += `<option value="${p.patient_id}">${escapePatientLabel(label)}</option>`;
             });
             sel.innerHTML = opts;
@@ -99,8 +161,6 @@ function escapePatientLabel(s) {
     d.textContent = s;
     return d.innerHTML;
 }
-loadPatientSelect();
-loadSpecialPatientSelect();
 
 /** Completes current serving (removes from queue) and promotes next waiting. */
 function next(){
@@ -135,7 +195,10 @@ function skipCurrent(){
 function createQueue(){
     const sel = document.getElementById("new_patient_select");
     const patientId = sel ? sel.value : '';
-    if (!patientId) return;
+    if (!patientId) {
+        alert('Please select a patient');
+        return;
+    }
 
     const f = new FormData();
     f.append('patient_id', patientId);
@@ -143,69 +206,143 @@ function createQueue(){
 
     fetch("../../api/queue/add.php",{method:"POST",body:f})
         .then(r=>r.json())
-        .then(d=>{ if(d.status==="error") alert(d.message); else loadQueue(); })
+        .then(d=>{ 
+            if(d.status==="error") {
+                alert(d.message);
+            } else {
+                sel.value = '';
+                loadQueue();
+            }
+        })
         .catch(()=>loadQueue());
 }
 
-/** Adds selected patient (special_patient_select) to this department's queue as waiting. */
-function createSpecialQueue(){
-    const sel = document.getElementById("special_patient_select");
+/** Adds selected patient to a specific department's queue as waiting. */
+function createQueueForDepartment(selectId, deptName){
+    const sel = document.getElementById(selectId);
     const patientId = sel ? sel.value : '';
-    if (!patientId) return;
+    if (!patientId) {
+        alert('Please select a patient');
+        return;
+    }
+
+    const deptId = getDepartmentId(deptName);
+    if (!deptId) {
+        alert('Invalid department');
+        return;
+    }
 
     const f = new FormData();
     f.append('patient_id', patientId);
-    f.append('department_id', dept);
+    f.append('department_id', deptId);
 
     fetch("../../api/queue/add.php",{method:"POST",body:f})
         .then(r=>r.json())
-        .then(d=>{ if(d.status==="error") alert(d.message); else loadQueue(); })
-        .catch(()=>loadQueue());
+        .then(d=>{ 
+            if(d.status==="error") {
+                alert(d.message);
+            } else {
+                sel.value = '';
+                loadFinanceQueue();
+            }
+        })
+        .catch(()=>loadFinanceQueue());
 }
 
-/** Fetches finance queue and updates current serving and waiting table. */
+function createBillingAdmissionQueue() {
+    createQueueForDepartment('billing_admission_select', 'Billing - Admission');
+}
+
+function createBillingOPDQueue() {
+    createQueueForDepartment('billing_opd_select', 'Billing - OPD');
+}
+
+function createCashierQueue() {
+    createQueueForDepartment('cashier_select', 'Cashier');
+}
+
+function createMedicalSocialQueue() {
+    createQueueForDepartment('medical_social_select', 'Medical Social Services Department');
+}
+
+/** Fetches finance queue and updates all 4 departments' displays. */
 function loadFinanceQueue(){
     fetch(`../../api/queue/view_finance.php?_=${Date.now()}`)
     .then(r=>r.json())
     .then(data=>{
-        let current = data.find(q => q.status === "serving");
-        const currentEl = document.getElementById("financeCurrentQueue");
+        financeQueueData = data || [];
+        
+        // Update each department's queue display
+        updateDepartmentQueueDisplay('Billing - Admission', 'billing_admission_current', 'billing_admission_table');
+        updateDepartmentQueueDisplay('Billing - OPD', 'billing_opd_current', 'billing_opd_table');
+        updateDepartmentQueueDisplay('Cashier', 'cashier_current', 'cashier_table');
+        updateDepartmentQueueDisplay('Medical Social Services Department', 'medical_social_current', 'medical_social_table');
+    })
+    .catch(err => console.error('Error loading finance queue:', err));
+}
+
+/** Updates queue display for a specific department. */
+function updateDepartmentQueueDisplay(deptName, currentElementId, tableElementId) {
+    const deptQueues = financeQueueData.filter(q => q.department_name === deptName);
+    
+    // Find current serving
+    let current = deptQueues.find(q => q.status === "serving");
+    const currentEl = document.getElementById(currentElementId);
+    if (currentEl) {
         if (current) {
             currentEl.innerText = `Queue #${current.queue_number} (${current.patient_number || current.patient_id})`;
         } else {
             currentEl.innerText = "None";
         }
+    }
 
-        const waiting = data.filter(q => q.status === "waiting");
-        let html="<tr><th>Queue No</th><th>Patient Number</th><th>Department</th></tr>";
-        waiting.forEach(q=>{
-            html+=`<tr>
-            <td>${q.queue_number}</td>
-            <td>${q.patient_number || q.patient_id}</td>
-            <td>${q.department_name || ''}</td>
-            </tr>`;
-        });
-        document.getElementById("financeQueueTable").innerHTML=html;
+    // Display waiting queue
+    const waiting = deptQueues.filter(q => q.status === "waiting");
+    let html="<tr><th>Queue No</th><th>Patient Number</th><th>Department</th></tr>";
+    waiting.forEach(q=>{
+        html+=`<tr>
+        <td>${q.queue_number}</td>
+        <td>${q.patient_number || q.patient_id}</td>
+        <td>${q.department_name || ''}</td>
+        </tr>`;
     });
+    const tableEl = document.getElementById(tableElementId);
+    if (tableEl) {
+        tableEl.innerHTML = html;
+    }
 }
 
-/** Completes current serving in finance queue and promotes next waiting. */
-function nextFinance(){
+/** Completes current serving in a specific department and promotes next waiting. */
+function nextDepartmentQueue(deptName){
     var bell = document.getElementById('queue_bell');
     if(bell) { bell.currentTime = 0; bell.play().catch(function(){}); }
-    // Note: This assumes finance queue uses the same department logic or needs adjustment
-    const f=new FormData();
-    f.append("department_id",dept); // This might need to be adjusted for finance departments
+    
+    const deptId = getDepartmentId(deptName);
+    if (!deptId) {
+        alert('Invalid department');
+        return;
+    }
+    
+    const f = new FormData();
+    f.append("department_id", deptId);
     fetch("../../api/queue/next.php",{method:"POST",body:f})
-        .then(()=>loadFinanceQueue());
+        .then(()=>loadFinanceQueue())
+        .catch(()=>loadFinanceQueue());
 }
 
-/** Skips current serving in finance queue; requeues patient at end and promotes next. */
-function skipFinanceCurrent(){
+/** Skips current serving in a specific department; requeues patient at end and promotes next. */
+function skipDepartmentQueue(deptName){
     var bell = document.getElementById('queue_bell');
     if(bell) { bell.currentTime = 0; bell.play().catch(function(){}); }
-    const f=new FormData();
-    f.append("department_id",dept); // This might need to be adjusted for finance departments
+    
+    const deptId = getDepartmentId(deptName);
+    if (!deptId) {
+        alert('Invalid department');
+        return;
+    }
+    
+    const f = new FormData();
+    f.append("department_id", deptId);
     fetch("../../api/queue/skip.php",{method:"POST",body:f})
         .then(r=>r.json())
         .then(d=>{
@@ -219,6 +356,85 @@ function skipFinanceCurrent(){
         .catch(()=>loadFinanceQueue());
 }
 
-setInterval(loadFinanceQueue,3000);
-loadFinanceQueue();
+// Wrapper functions for each department
+function nextBillingAdmission() {
+    nextDepartmentQueue('Billing - Admission');
+}
 
+function skipBillingAdmission() {
+    skipDepartmentQueue('Billing - Admission');
+}
+
+function nextBillingOPD() {
+    nextDepartmentQueue('Billing - OPD');
+}
+
+function skipBillingOPD() {
+    skipDepartmentQueue('Billing - OPD');
+}
+
+function nextCashier() {
+    nextDepartmentQueue('Cashier');
+}
+
+function skipCashier() {
+    skipDepartmentQueue('Cashier');
+}
+
+function nextMedicalSocial() {
+    nextDepartmentQueue('Medical Social Services Department');
+}
+
+function skipMedicalSocial() {
+    skipDepartmentQueue('Medical Social Services Department');
+}
+
+// ============ INITIALIZATION ============
+
+// Check if logged-in user is from a finance department and hide main queue if so
+function hideMainQueueIfFinanceDept() {
+    const deptNum = parseInt(dept);
+    if (financeDepIds.includes(deptNum)) {
+        // Hide main queue and create entry sections
+        const createQueueSection = document.querySelector('h3');
+        const staffQueueH2 = Array.from(document.querySelectorAll('h2')).find(h => h.textContent.includes('Staff Queue'));
+        
+        if (createQueueSection) {
+            // Hide from h3 "Create Queue Entry" to next <hr>
+            let el = createQueueSection;
+            while (el && el.tagName !== 'HR') {
+                el.style.display = 'none';
+                el = el.nextElementSibling;
+            }
+            if (el && el.tagName === 'HR') el.style.display = 'none';
+        }
+        
+        if (staffQueueH2) {
+            // Hide from h2 "Staff Queue" to next <hr>
+            let el = staffQueueH2;
+            while (el && el.tagName !== 'HR') {
+                el.style.display = 'none';
+                el = el.nextElementSibling;
+            }
+            if (el && el.tagName === 'HR') el.style.display = 'none';
+        }
+    }
+}
+
+// Load department IDs for dynamic mapping
+loadDepartmentIds();
+
+// Load patient dropdowns
+loadPatientSelect();
+loadFinanceDepartmentPatients('billing_admission_select');
+loadFinanceDepartmentPatients('billing_opd_select');
+loadFinanceDepartmentPatients('cashier_select');
+loadFinanceDepartmentPatients('medical_social_select');
+
+// Start polling main department queue every 3 seconds
+setInterval(loadQueue, 3000);
+loadQueue();
+
+// Start polling finance queue every 3 seconds
+setInterval(loadFinanceQueue, 3000);
+loadFinanceQueue();

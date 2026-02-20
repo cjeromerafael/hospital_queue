@@ -18,7 +18,8 @@ function loadDepartments(){
     .then(data=>{
         const sel = document.getElementById('patient_dept');
         let opts = '<option value="">Select department</option>';
-        data.forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
+        // Exclude Admin department (id 22)
+        data.filter(d => Number(d.department_id) !== 22).forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
         sel.innerHTML = opts;
     }).catch(()=>{});
 }
@@ -92,7 +93,7 @@ function startEditPatient(ev){
     // populate departments
     fetch('../../api/admin/departments.php').then(r=>r.json()).then(depts=>{
         let opts = '';
-        depts.forEach(d=> opts += `<option value="${d.department_id}" ${d.department_id==deptId? 'selected':''}>${escapeHtml(d.department_name)}</option>`);
+        depts.filter(d => Number(d.department_id) !== 22).forEach(d=> opts += `<option value="${d.department_id}" ${d.department_id==deptId? 'selected':''}>${escapeHtml(d.department_name)}</option>`);
         select.innerHTML = opts;
         deptCell.textContent=''; deptCell.appendChild(select);
         select.focus();
