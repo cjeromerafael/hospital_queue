@@ -5,6 +5,7 @@
 document.addEventListener('DOMContentLoaded', function(){
     loadDepartments();
     loadPatients();
+    updateAssignQueueButton();
 });
 
 function setRegisterMsg(text){
@@ -24,45 +25,60 @@ function loadDepartments(){
     }).catch(()=>{});
 }
 
-/** Registers a new patient (patient_number, department required) via create.php. */
+/** Fetches the next patient number and updates the assign-queue button label. */
+function updateAssignQueueButton(){
+    const btn = document.getElementById('assign_queue_btn');
+    if(!btn) return;
+    fetch('../../api/patient/next_number.php')
+        .then(r => r.json())
+        .then(d => {
+            const n = d && typeof d.next_number !== 'undefined'
+                ? Number(d.next_number) || 1
+                : 1;
+            btn.textContent = 'Assign queue: ' + n;
+        })
+        .catch(() => {
+            btn.textContent = 'Assign queue: ?';
+        });
+}
+
+/** Registers a new patient (department required, patient_number auto-generated) via create.php. */
 function registerPatientManaged(){
-    const number = document.getElementById('patient_number').value.trim();
-    const name = document.getElementById('patient_name').value.trim();
     const dept = document.getElementById('patient_dept').value;
-    if(!number || !dept){ setRegisterMsg('Patient number and department required'); return; }
+    if(!dept){ setRegisterMsg('Department required'); return; }
+
     const f = new FormData();
-    f.append('patient_number', number);
-    f.append('patient_name', name);
     f.append('department_id', dept);
     fetch('../../api/patient/create.php',{method:'POST',body:f})
     .then(r=>r.json())
     .then(d=>{
         if(d.status === 'success'){
             setRegisterMsg('Registered: ' + d.patient_number);
-            document.getElementById('patient_number').value='';
-            document.getElementById('patient_name').value='';
             loadPatients();
+            updateAssignQueueButton();
         } else {
             setRegisterMsg(d.message || 'Registration failed');
         }
-    }).catch(()=> setRegisterMsg('Registration failed'));
+    })
+    .catch(()=>{
+        setRegisterMsg('Registration failed');
+    });
 }
 
-/** Fetches patient list; renders table with edit/delete buttons. */
+/** Fetches patient list; renders table with transfer/delete buttons. */
 function loadPatients(){
     const el = document.getElementById('patientTable');
     fetch('../../api/patient/list.php')
     .then(r=>r.json())
     .then(data=>{
         if(!Array.isArray(data)){ el.innerHTML='<tr><td>No patients</td></tr>'; return; }
-        let html = '<tr><th>ID</th><th>Patient Number</th><th>Patient Name</th><th>Department</th><th>Edit</th><th>Delete</th></tr>';
+        let html = '<tr><th>ID</th><th>Patient Number</th><th>Department</th><th>Transfer</th><th>Delete</th></tr>';
         data.forEach(p=>{
             html += `<tr data-patient-id="${p.patient_id}" data-department-id="${p.department_id}">`+
                     `<td>${p.patient_id}</td>`+
                     `<td>${escapeHtml(p.patient_number)}</td>`+
-                    `<td class="patient-name-cell td-scroll">${escapeHtml(p.patient_name||'')}</td>`+
                     `<td class="patient-dept-cell td-scroll">${escapeHtml(p.department_name||'')}</td>`+
-                    `<td style="min-width:72px;text-align:center"><button class="edit-patient-btn">Edit</button></td>`+
+                    `<td style="min-width:72px;text-align:center"><button class="edit-patient-btn">Transfer</button></td>`+
                     `<td style="min-width:72px;text-align:center"><button class="delete-patient-btn">Delete</button></td>`+
                     `</tr>`;
         });
@@ -73,59 +89,47 @@ function loadPatients(){
 }
 
 function startEditPatient(ev){
-    const btn = ev.target; const row = btn.closest('tr');
-    const id = row.dataset.patientId; const deptId = row.dataset.departmentId;
-    const nameCell = row.querySelector('.patient-name-cell');
-    if(nameCell.querySelector('input.inline-edit-input')){
-        // cancel edit
-        nameCell.textContent = row.dataset.originalName||'';
-        delete row.dataset.originalName;
-        loadPatients();
-        return;
-    }
-    row.dataset.originalName = nameCell.textContent;
-    const input = document.createElement('input'); input.type='text'; input.className='inline-edit-input'; input.value = nameCell.textContent;
-    nameCell.textContent=''; nameCell.appendChild(input);
+    const btn = ev.target;
+    const row = btn.closest('tr');
+    const id = row.dataset.patientId;
+    const deptId = row.dataset.departmentId;
 
-    // replace dept cell with select
+    // replace dept cell with select (only department is editable now)
     const deptCell = row.querySelector('.patient-dept-cell');
-    const select = document.createElement('select'); select.className='inline-dept-select';
+    const select = document.createElement('select');
+    select.className = 'inline-dept-select';
+
     // populate departments
-    fetch('../../api/admin/departments.php').then(r=>r.json()).then(depts=>{
-        let opts = '';
-        depts.filter(d => Number(d.department_id) !== 22).forEach(d=> opts += `<option value="${d.department_id}" ${d.department_id==deptId? 'selected':''}>${escapeHtml(d.department_name)}</option>`);
-        select.innerHTML = opts;
-        deptCell.textContent=''; deptCell.appendChild(select);
-        select.focus();
-    });
+    fetch('../../api/admin/departments.php')
+        .then(r=>r.json())
+        .then(depts=>{
+            let opts = '';
+            depts
+                .filter(d => Number(d.department_id) !== 22)
+                .forEach(d=> opts += `<option value="${d.department_id}" ${d.department_id==deptId? 'selected':''}>${escapeHtml(d.department_name)}</option>`);
+            select.innerHTML = opts;
+            deptCell.textContent='';
+            deptCell.appendChild(select);
+            select.focus();
+        });
 
     function save(){
-        const newName = input.value.trim();
         const newDept = select.value;
-        const promises = [];
-        // update name via PUT
-        if(newName !== row.dataset.originalName){
-            promises.push(fetch('../../api/patient/update.php',{
-                method:'PUT',
-                headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                body:`patient_id=${encodeURIComponent(id)}&patient_name=${encodeURIComponent(newName)}`
-            }).then(r=>r.json()));
-        }
-        // if dept changed, update patient's assigned department WITHOUT enqueuing
         if(newDept && newDept != deptId){
-            // update via PUT to patient/update.php
-            promises.push(fetch('../../api/patient/update.php',{
+            const fBody = `patient_id=${encodeURIComponent(id)}&department_id=${encodeURIComponent(newDept)}`;
+            fetch('../../api/patient/update.php',{
                 method:'PUT',
                 headers:{'Content-Type':'application/x-www-form-urlencoded'},
-                body:`patient_id=${encodeURIComponent(id)}&department_id=${encodeURIComponent(newDept)}`
-            }).then(r=>r.json()));
-        }
-        Promise.all(promises).then(()=>{
+                body:fBody
+            })
+            .then(r=>r.json())
+            .then(()=> loadPatients())
+            .catch(()=>{ alert('Update failed'); loadPatients(); });
+        } else {
             loadPatients();
-        }).catch(()=>{ alert('Update failed'); loadPatients(); });
+        }
     }
 
-    input.addEventListener('keydown', function(e){ if(e.key==='Enter') save(); });
     select.addEventListener('change', save);
 }
 
@@ -139,6 +143,13 @@ function deletePatientRow(ev){
     const f = new FormData(); f.append('patient_id', id);
     fetch('../../api/patient/delete.php',{method:'POST', body: f})
     .then(r=>r.json())
-    .then(d=>{ if(d && d.status === 'success') loadPatients(); else alert(d.message || 'Delete failed'); })
+    .then(d=>{
+        if(d && d.status === 'success'){
+            loadPatients();
+            updateAssignQueueButton();
+        } else {
+            alert(d.message || 'Delete failed');
+        }
+    })
     .catch(()=>{ alert('Delete failed'); });
 }

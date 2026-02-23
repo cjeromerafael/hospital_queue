@@ -12,18 +12,10 @@
 
 <h3>Register Patient</h3>
 <div>
-  <label for="patient_number">Patient Number</label>
-  <input id="patient_number" placeholder="Patient Number">
-</div>
-<div>
-  <label for="patient_name">Patient Name (optional)</label>
-  <input id="patient_name" placeholder="Patient Name">
-</div>
-<div>
   <label for="patient_dept">Department</label>
-  <select id="patient_dept"><option value="">Select department</option></select>
+  <select id="patient_dept" style="width:40%;font-size:18px;"><option value="">Select department</option></select>
 </div>
-<button onclick="registerPatientManaged()">Register</button>
+<button id="assign_queue_btn" onclick="registerPatientManaged()" style="font-size:18px;padding:14px 22px;min-width:240px;">Assign queue: ...</button>
 <p id="register_msg"></p>
 
 <hr>

@@ -459,3 +459,11 @@ loadQueue();
 // Start polling finance queue every 3 seconds
 setInterval(loadFinanceQueue, 3000);
 loadFinanceQueue();
+
+// Refresh finance department patient dropdowns every 3 seconds to pick up transferred patients
+setInterval(() => {
+    loadFinanceDepartmentPatients('billing_admission_select');
+    loadFinanceDepartmentPatients('billing_opd_select');
+    loadFinanceDepartmentPatients('cashier_select');
+    loadFinanceDepartmentPatients('medical_social_select');
+}, 3000);

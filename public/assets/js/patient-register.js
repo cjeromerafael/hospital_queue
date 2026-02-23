@@ -15,23 +15,22 @@ function loadDepartmentsForPatient(){
         });
 }
 
-document.addEventListener("DOMContentLoaded", loadDepartmentsForPatient);
+document.addEventListener("DOMContentLoaded", function(){
+    loadDepartmentsForPatient();
+    updateAssignQueueButtonPublic();
+});
 
-/** Submits registration (patient_number, department required) to create.php. */
+/** Submits registration (department required, patient_number auto-generated) to create.php. */
 function registerPatient(){
-    const number = document.getElementById("patient_number").value;
-    const name   = document.getElementById("patient_name").value;
     const dept   = document.getElementById("patient_department").value;
 
-    if(!number || !dept){
+    if(!dept){
         document.getElementById("register_result").innerText =
-            "Patient number and department are required.";
+            "Department is required.";
         return;
     }
 
     const f = new FormData();
-    f.append("patient_number", number);
-    f.append("patient_name", name);
     f.append("department_id", dept);
 
     fetch("../../api/patient/create.php",{method:"POST",body:f})
@@ -41,6 +40,7 @@ function registerPatient(){
                 document.getElementById("register_result").innerText =
                     "Registered. Patient : " + d.patient_id +
                     " | Patient Number: " + d.patient_number;
+                updateAssignQueueButtonPublic();
             }else{
                 document.getElementById("register_result").innerText =
                     d.message || "Registration failed.";
@@ -49,6 +49,23 @@ function registerPatient(){
         .catch(()=>{
             document.getElementById("register_result").innerText =
                 "Registration failed.";
+        });
+}
+
+/** Fetches the next patient number and updates the public assign-queue button label. */
+function updateAssignQueueButtonPublic(){
+    const btn = document.getElementById("assign_queue_btn_public");
+    if(!btn) return;
+    fetch("../../api/patient/next_number.php")
+        .then(r => r.json())
+        .then(d => {
+            const n = d && typeof d.next_number !== 'undefined'
+                ? Number(d.next_number) || 1
+                : 1;
+            btn.textContent = "Assign queue: " + n;
+        })
+        .catch(() => {
+            btn.textContent = "Assign queue: ?";
         });
 }
 

@@ -51,16 +51,15 @@ function loadQueue(){
                  const ss = (q.status === null || q.status === undefined) ? '' : String(q.status).toLowerCase().trim();
                  return ss === 'waiting' || ss === '0' || ss === 'queued' || ss === 'pending';
              }).slice(0,20);
-             if(waiting.length === 0){
+            if(waiting.length === 0){
                  table.innerHTML = '<tr><td style="font-size:1.1em;color:#ccc;">No waiting entries</td></tr>';
              } else {
-                let html = '<tr><th>Queue No</th><th>Patient No</th><th>Patient Name</th><th>Department</th></tr>';
+                let html = '<tr><th>Queue No</th><th>Patient No</th><th>Department</th></tr>';
                 waiting.forEach(w=>{
                     const patientNo = w.patient_number || w.patient_id || '';
                     html += '<tr>' +
                         '<td>' + escapeHtml(String(w.queue_number || '')) + '</td>' +
                         '<td>' + escapeHtml(String(patientNo)) + '</td>' +
-                        '<td>' + escapeHtml(String(w.patient_name || '')) + '</td>' +
                         '<td>' + escapeHtml(String(w.patient_department_name || '')) + '</td>' +
                         '</tr>';
                  });
@@ -137,7 +136,7 @@ function updateFinanceQueuesDisplay(data){
             const deptData = data.filter(q => normalize(q.department_name) === normalize(financeQueues[queueId]));
             
             // Build rows starting with current serving
-            let html = '<tr><th>Queue No</th><th>Patient No</th><th>Patient Name</th></tr>';
+            let html = '<tr><th>Queue No</th><th>Patient No</th></tr>';
             
             // If exact match failed, try token-based fallback (handles small naming differences)
             let deptDataFinal = deptData;
@@ -166,8 +165,7 @@ function updateFinanceQueuesDisplay(data){
                     html += '<tr>' +
                         '<td>' + escapeHtml(String(w.queue_number || '')) + '</td>' +
                         '<td>' + escapeHtml(String(patientNo)) + '</td>' +
-                        '<td>' + escapeHtml(String(w.patient_name || '')) + '</td>' +
-                        '</tr>';
+                    '</tr>';
                 });
             }
             table.innerHTML = html;
