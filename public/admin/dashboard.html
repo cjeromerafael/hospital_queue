@@ -4,8 +4,8 @@
 <link rel="stylesheet" href="../assets/css/style.css">
 <style>
   /* Admin tables: force Edit and Delete columns and buttons to be visible */
-  #deptTable th:nth-child(3), #deptTable th:nth-child(4),
-  #deptTable td:nth-child(3), #deptTable td:nth-child(4),
+  #deptTable th:nth-child(4), #deptTable th:nth-child(5),
+  #deptTable td:nth-child(4), #deptTable td:nth-child(5),
   #userTable th:nth-child(4), #userTable th:nth-child(5),
   #userTable td:nth-child(4), #userTable td:nth-child(5) {
     min-width: 72px;
@@ -44,6 +44,7 @@
 <!-- Add Department section -->
 <h3>Add Department</h3>
 <input id="deptName" placeholder="Department name">
+<input id="deptCode" placeholder="Code (3 letters)" maxlength="3" style="width: 8em;">
 <button onclick="addDepartment()">Add</button>
 
 <!-- Table -->

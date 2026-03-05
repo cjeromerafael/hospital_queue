@@ -2,8 +2,10 @@
 /**
  * Updates patient name and/or department. Expects PUT with patient_id and optional
  * patient_name, department_id. Used in patient manage page (edit row).
+ * When department_id is changed (transfer), assigns new patient_number (XXX-NNN) for the new department.
  */
 require_once("../config.php");
+require_once("../helpers/department_queue.php");
 
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== 'PUT') {
@@ -32,6 +34,15 @@ if ($patient_name !== '') {
 }
 
 if (!is_null($department_id)) {
+    $curr = $conn->query("SELECT department_id FROM patient WHERE patient_id = " . (int)$patient_id);
+    $current_dept = ($curr && $row = $curr->fetch_assoc()) ? (int)$row['department_id'] : null;
+    if ($current_dept !== $department_id) {
+        ensureDepartmentCodeColumn($conn);
+        $new_patient_number = getNextPatientNumberForDepartment($conn, $department_id);
+        $fields[] = "patient_number=?";
+        $params[] = $new_patient_number;
+        $types .= 's';
+    }
     $fields[] = "department_id=?";
     $params[] = $department_id;
     $types .= 'i';

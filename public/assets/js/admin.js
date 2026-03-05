@@ -22,11 +22,12 @@ function loadDepartments(){
     .then(data=>{
         if (!Array.isArray(data)) return;
         var options="";
-        var html="<tr><th>ID</th><th>Name</th><th>Edit</th><th>Delete</th></tr>";
+        var html="<tr><th>ID</th><th>Name</th><th>Code</th><th>Edit</th><th>Delete</th></tr>";
         data.forEach(function(d){
             html+="<tr data-department-id=\""+d.department_id+"\">"+
                 "<td>"+d.department_id+"</td>"+
                 "<td class=\"dept-name-cell td-scroll\">"+escapeHtml(d.department_name)+"</td>"+
+                "<td class=\"dept-code-cell\">"+escapeHtml(d.department_code||"")+"</td>"+
                 "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"edit-dept-btn\">Edit</button></td>"+
                 "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"delete-dept-btn\">Delete</button></td>"+
                 "</tr>";
@@ -41,7 +42,7 @@ function loadDepartments(){
             btn.addEventListener("click", deleteDepartmentRow);
         });
     })
-    .catch(function(){ el.innerHTML="<tr><td colspan=\"4\">Could not load departments.</td></tr>"; });
+    .catch(function(){ el.innerHTML="<tr><td colspan=\"5\">Could not load departments.</td></tr>"; });
 }
 
 /** Escape HTML for safe display (XSS). */
@@ -56,31 +57,52 @@ function startEditDepartment(ev){
     const row=btn.closest("tr");
     const id=row.dataset.departmentId;
     const nameCell=row.querySelector(".dept-name-cell");
+    const codeCell=row.querySelector(".dept-code-cell");
     const existingInput=nameCell.querySelector("input.inline-edit-input");
     if(existingInput){
         nameCell.textContent=row.dataset.editOriginalName||"";
+        if(codeCell) codeCell.textContent=row.dataset.editOriginalCode||"";
         delete row.dataset.editOriginalName;
+        delete row.dataset.editOriginalCode;
         return;
     }
     const currentName=nameCell.textContent;
+    const currentCode=codeCell ? codeCell.textContent : "";
     row.dataset.editOriginalName=currentName;
+    row.dataset.editOriginalCode=currentCode;
     const input=document.createElement("input");
     input.type="text";
     input.value=currentName;
     input.className="inline-edit-input";
+    input.placeholder="Name";
     nameCell.textContent="";
     nameCell.appendChild(input);
+    const codeInput=document.createElement("input");
+    codeInput.type="text";
+    codeInput.value=currentCode;
+    codeInput.className="inline-edit-input";
+    codeInput.placeholder="Code";
+    codeInput.maxLength=3;
+    codeInput.style.width="4em";
+    if(codeCell){
+        codeCell.textContent="";
+        codeCell.appendChild(codeInput);
+    }
     input.focus();
     function save(){
         const newName=input.value.trim();
         if(!newName) return;
+        const newCode=(codeInput&&codeInput.value.trim()!=="") ? codeInput.value.trim().toUpperCase().substring(0,3) : "";
         fetch("../../api/admin/departments.php",{
             method:"PUT",
             headers:{"Content-Type":"application/x-www-form-urlencoded"},
-            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}`
+            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}`
         }).then(()=>loadDepartments());
     }
     input.addEventListener("keydown", function(e){
+        if(e.key==="Enter") save();
+    });
+    if(codeInput) codeInput.addEventListener("keydown", function(e){
         if(e.key==="Enter") save();
     });
 }
@@ -97,8 +119,15 @@ function deleteDepartmentRow(ev){
 }
 
 function addDepartment(){
+    const nameEl=document.getElementById("deptName");
+    const codeEl=document.getElementById("deptCode");
+    const name=nameEl&&nameEl.value ? nameEl.value.trim() : "";
+    if(!name) return;
     const f=new FormData();
-    f.append("department_name",document.getElementById("deptName").value);
+    f.append("department_name",name);
+    if(codeEl&&codeEl.value.trim()!=="") {
+        f.append("department_code",codeEl.value.trim().toUpperCase().substring(0,3));
+    }
     fetch("../../api/admin/departments.php",{method:"POST",body:f})
     .then(()=>loadDepartments());
 }

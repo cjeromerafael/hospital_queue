@@ -18,6 +18,8 @@ function loadDepartmentsForPatient(){
 document.addEventListener("DOMContentLoaded", function(){
     loadDepartmentsForPatient();
     updateAssignQueueButtonPublic();
+    const deptSelect = document.getElementById("patient_department");
+    if (deptSelect) deptSelect.addEventListener("change", updateAssignQueueButtonPublic);
 });
 
 /** Submits registration (department required, patient_number auto-generated) to create.php. */
@@ -52,17 +54,21 @@ function registerPatient(){
         });
 }
 
-/** Fetches the next patient number and updates the public assign-queue button label. */
+/** Fetches the next patient number for the selected department and updates the assign-queue button label. */
 function updateAssignQueueButtonPublic(){
     const btn = document.getElementById("assign_queue_btn_public");
+    const deptSelect = document.getElementById("patient_department");
     if(!btn) return;
-    fetch("../../api/patient/next_number.php")
+    const deptId = deptSelect && deptSelect.value ? deptSelect.value : "";
+    if(!deptId){
+        btn.textContent = "Assign queue: Select department";
+        return;
+    }
+    fetch("../../api/patient/next_number.php?department_id=" + encodeURIComponent(deptId))
         .then(r => r.json())
         .then(d => {
-            const n = d && typeof d.next_number !== 'undefined'
-                ? Number(d.next_number) || 1
-                : 1;
-            btn.textContent = "Assign queue: " + n;
+            const n = d && d.next_number != null ? String(d.next_number) : null;
+            btn.textContent = n ? "Assign queue: " + n : "Assign queue: Select department";
         })
         .catch(() => {
             btn.textContent = "Assign queue: ?";

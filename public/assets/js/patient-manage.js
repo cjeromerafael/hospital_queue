@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function(){
     loadDepartments();
     loadPatients();
     updateAssignQueueButton();
+    const deptSelect = document.getElementById('patient_dept');
+    if (deptSelect) deptSelect.addEventListener('change', updateAssignQueueButton);
 });
 
 function setRegisterMsg(text){
@@ -25,17 +27,21 @@ function loadDepartments(){
     }).catch(()=>{});
 }
 
-/** Fetches the next patient number and updates the assign-queue button label. */
+/** Fetches the next patient number for the selected department and updates the assign-queue button label. */
 function updateAssignQueueButton(){
     const btn = document.getElementById('assign_queue_btn');
+    const deptSelect = document.getElementById('patient_dept');
     if(!btn) return;
-    fetch('../../api/patient/next_number.php')
+    const deptId = deptSelect && deptSelect.value ? deptSelect.value : '';
+    if(!deptId){
+        btn.textContent = 'Assign queue: Select department';
+        return;
+    }
+    fetch('../../api/patient/next_number.php?department_id=' + encodeURIComponent(deptId))
         .then(r => r.json())
         .then(d => {
-            const n = d && typeof d.next_number !== 'undefined'
-                ? Number(d.next_number) || 1
-                : 1;
-            btn.textContent = 'Assign queue: ' + n;
+            const n = d && d.next_number != null ? String(d.next_number) : null;
+            btn.textContent = n ? 'Assign queue: ' + n : 'Assign queue: Select department';
         })
         .catch(() => {
             btn.textContent = 'Assign queue: ?';
@@ -74,10 +80,14 @@ function loadPatients(){
         if(!Array.isArray(data)){ el.innerHTML='<tr><td>No patients</td></tr>'; return; }
         let html = '<tr><th>ID</th><th>Patient Number</th><th>Department</th><th>Transfer</th><th>Delete</th></tr>';
         data.forEach(p=>{
+            const hasCode = p.patient_number && /^[A-Z0-9]{3}-\d{3}$/.test(String(p.patient_number));
+            const deptDisplay = p.department_name
+                ? (hasCode ? p.department_name + ' (' + p.patient_number + ')' : p.department_name)
+                : (hasCode ? p.patient_number : '');
             html += `<tr data-patient-id="${p.patient_id}" data-department-id="${p.department_id}">`+
                     `<td>${p.patient_id}</td>`+
                     `<td>${escapeHtml(p.patient_number)}</td>`+
-                    `<td class="patient-dept-cell td-scroll">${escapeHtml(p.department_name||'')}</td>`+
+                    `<td class="patient-dept-cell td-scroll">${escapeHtml(deptDisplay)}</td>`+
                     `<td style="min-width:72px;text-align:center"><button class="edit-patient-btn">Transfer</button></td>`+
                     `<td style="min-width:72px;text-align:center"><button class="delete-patient-btn">Delete</button></td>`+
                     `</tr>`;
