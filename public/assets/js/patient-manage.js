@@ -21,8 +21,8 @@ function loadDepartments(){
     .then(data=>{
         const sel = document.getElementById('patient_dept');
         let opts = '<option value="">Select department</option>';
-        // Exclude Admin department (id 22)
-        data.filter(d => Number(d.department_id) !== 22).forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
+        // Exclude Admin department by name
+        data.filter(d => (d.department_name || '').trim().toLowerCase() !== 'admin').forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
         sel.innerHTML = opts;
     }).catch(()=>{});
 }
@@ -115,7 +115,7 @@ function startEditPatient(ev){
         .then(depts=>{
             let opts = '';
             depts
-                .filter(d => Number(d.department_id) !== 22)
+                .filter(d => (d.department_name || '').trim().toLowerCase() !== 'admin')
                 .forEach(d=> opts += `<option value="${d.department_id}" ${d.department_id==deptId? 'selected':''}>${escapeHtml(d.department_name)}</option>`);
             select.innerHTML = opts;
             deptCell.textContent='';
