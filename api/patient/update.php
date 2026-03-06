@@ -33,10 +33,12 @@ if ($patient_name !== '') {
     $types .= 's';
 }
 
+$source_department_id = null;
 if (!is_null($department_id)) {
     $curr = $conn->query("SELECT department_id FROM patient WHERE patient_id = " . (int)$patient_id);
     $current_dept = ($curr && $row = $curr->fetch_assoc()) ? (int)$row['department_id'] : null;
     if ($current_dept !== $department_id) {
+        $source_department_id = $current_dept;
         ensureDepartmentCodeColumn($conn);
         $new_patient_number = getNextPatientNumberForDepartment($conn, $department_id);
         $fields[] = "patient_number=?";
@@ -60,5 +62,10 @@ $types .= 'i';
 
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
+
+// After a transfer, renumber remaining patients in the source department so there are no gaps (PRR-003 -> PRR-002, etc.)
+if ($source_department_id !== null) {
+    renumberDepartmentPatients($conn, $source_department_id);
+}
 
 echo json_encode(["status"=>"success"]);

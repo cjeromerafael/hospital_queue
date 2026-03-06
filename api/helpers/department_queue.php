@@ -81,3 +81,45 @@ function getNextPatientNumberForDepartment($conn, $department_id) {
     $next = $max + 1;
     return $code . '-' . sprintf('%03d', $next);
 }
+
+/**
+ * Renumbers patients remaining in a department so their codes are sequential with no gaps (001, 002, 003...).
+ * Call this after a patient is transferred out of this department.
+ * Only affects patients whose patient_number matches this department's CODE-NNN format.
+ * Updates in descending order of current number to avoid unique constraint violations.
+ *
+ * @param mysqli $conn
+ * @param int $department_id
+ */
+function renumberDepartmentPatients($conn, $department_id) {
+    $code = getDepartmentCode($conn, $department_id);
+    $prefix = $code . '-';
+    $prefixLen = strlen($prefix);
+    $stmt = $conn->prepare("
+        SELECT patient_id, patient_number FROM patient
+        WHERE department_id = ? AND patient_number REGEXP '^[A-Z0-9]{3}-[0-9]{3}$'
+        ORDER BY CAST(SUBSTRING(patient_number, 5) AS UNSIGNED) DESC
+    ");
+    $stmt->bind_param("i", $department_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $rows = [];
+    while ($row = $res->fetch_assoc()) {
+        $pn = $row['patient_number'];
+        if (substr($pn, 0, $prefixLen) === $prefix) {
+            $rows[] = $row;
+        }
+    }
+    $stmt->close();
+    $count = count($rows);
+    if ($count === 0) {
+        return;
+    }
+    $upd = $conn->prepare("UPDATE patient SET patient_number = ? WHERE patient_id = ?");
+    for ($i = 0; $i < $count; $i++) {
+        $newNum = $count - $i;
+        $new_number = $code . '-' . sprintf('%03d', $newNum);
+        $upd->bind_param("si", $new_number, $rows[$i]['patient_id']);
+        $upd->execute();
+    }
+}
