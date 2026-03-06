@@ -2,20 +2,29 @@
 <html>
 <head>
 <link rel="stylesheet" href="../assets/css/style.css">
+<title>Patient Queue Status</title>
 </head>
 
 <body>
 <div class="container">
 
-<h2>Patient Access</h2>
+<button onclick="window.location.href='../index.html'">Back</button>
 
-<input id="user_id" placeholder="Access Card ID">
-<button onclick="register()">Submit</button>
+<h2>Patient Queue Status</h2>
 
-<p id="result"></p>
+<div style="margin-top:10px;">
+  <strong>Now Serving:</strong>
+  <span id="currentQueue">—</span>
+</div>
+<p id="msg" class="error"></p>
+
+<hr>
+
+<h3>Queue (all departments)</h3>
+<table id="waitingTable"></table>
 
 </div>
 
-<script src="../assets/js/patient.js"></script>
+<script src="../assets/js/patient-queue.js"></script>
 </body>
 </html>

@@ -20,7 +20,7 @@ body {
 input, select {
     padding: 12px 10px;
     margin: 10px 0;
-    width: 100%;
+    width: 30%;
     border: 1px solid #ccc;
     border-radius: 8px;
     font-size: 16px;
@@ -102,9 +102,36 @@ td {
     padding: 10px;
 }
 
+/* Admin tables: separate Edit and Delete columns so buttons are always visible */
+th.th-edit, td.td-edit,
+th.th-delete, td.td-delete {
+    white-space: nowrap;
+    width: 1%;
+    min-width: 70px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th.th-edit, th.th-delete {
+    background-color: #187bcd;
+}
+
+table .td-edit button,
+table .td-delete button {
+    padding: 8px 14px;
+    font-size: 14px;
+}
+
+/* Long text in table cells: horizontal scroll within cell */
+td.td-scroll {
+    max-width: 200px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 /* Table row hover effect */
 tr:hover {
-    background-color: #e0f7fa; /* light hospital-friendly blue */
+    background-color: #02ff23; /* light hospital-friendly blue */
 }
 
 /* Queue List Cards */
@@ -161,6 +188,12 @@ h2 {
     font-size: 22px;
     margin-bottom: 12px;
 }
+
+/* Display / TV Mode */
+.display-container { text-align: center; max-width: none; padding: 40px; background: transparent; }
+.display-current { font-size: 64px; font-weight: bold; color: #32cd32; margin: 20px 0; }
+.display-waiting td { font-size: 36px; padding: 20px; }
+.error { color: #c62828; font-weight: bold; margin-top:10px; }
 
 /* Responsive adjustments */
 @media(max-width: 768px){

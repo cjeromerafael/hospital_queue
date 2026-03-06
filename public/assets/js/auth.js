@@ -1,5 +1,8 @@
+/**
+ * Staff login: POST user_id to auth/login.php; on success stores user_id, department_id,
+ * role and redirects to admin or staff dashboard. Used in public/index.html.
+ */
 function login(){
-
     const user_id = document.getElementById("user_id").value;
 
     const form = new FormData();

@@ -1,4 +1,8 @@
 <?php
+/**
+ * Staff login by user_id. Looks up department and role; returns department_id and department_role
+ * for redirect to admin or staff dashboard. Used by: index.html (auth.js).
+ */
 require_once("../config.php");
 
 $user_id = $_POST['user_id'] ?? null;

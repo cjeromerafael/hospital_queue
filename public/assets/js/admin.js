@@ -1,58 +1,116 @@
-loadDepartments();
-loadUsers();
+/**
+ * Admin Dashboard: department and user CRUD. Loads departments (table + dropdown)
+ * and users on DOMContentLoaded. Used by: public/admin/dashboard.html.
+ */
+document.addEventListener("DOMContentLoaded", function() {
+    loadDepartments();
+    loadUsers();
+});
 
+/** Logs out by clearing localStorage and redirecting to index.html. */
 function logout() {
     localStorage.removeItem("admin_id");
     window.location.href = "../index.html";
 }
 
-
+/** Fetches departments; fills deptTable and deptSelect; wires edit/delete. */
 function loadDepartments(){
+    var el = document.getElementById("deptTable");
+    if (!el) return;
     fetch("../../api/admin/departments.php")
     .then(r=>r.json())
     .then(data=>{
-        let html="<tr><th>ID</th><th>Name</th></tr>";
-        let options="";
-
-        data.forEach(d=>{
-            html+=`<tr><td>${d.department_id}</td><td>${d.department_name}</td></tr>`;
-            options+=`<option value="${d.department_id}">${d.department_name}</option>`;
+        if (!Array.isArray(data)) return;
+        var options="";
+        var html="<tr><th>ID</th><th>Name</th><th>Code</th><th>Edit</th><th>Delete</th></tr>";
+        data.forEach(function(d){
+            html+="<tr data-department-id=\""+d.department_id+"\">"+
+                "<td>"+d.department_id+"</td>"+
+                "<td class=\"dept-name-cell td-scroll\">"+escapeHtml(d.department_name)+"</td>"+
+                "<td class=\"dept-code-cell\">"+escapeHtml(d.department_code||"")+"</td>"+
+                "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"edit-dept-btn\">Edit</button></td>"+
+                "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"delete-dept-btn\">Delete</button></td>"+
+                "</tr>";
+            options+="<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
         });
-
-        document.getElementById("deptTable").innerHTML=html;
+        el.innerHTML=html;
         document.getElementById("deptSelect").innerHTML=options;
-        const userDeptEdit = document.getElementById("userDeptEdit");
-        if (userDeptEdit) {
-            userDeptEdit.innerHTML = options;
-        }
+        el.querySelectorAll(".edit-dept-btn").forEach(function(btn){
+            btn.addEventListener("click", startEditDepartment);
+        });
+        el.querySelectorAll(".delete-dept-btn").forEach(function(btn){
+            btn.addEventListener("click", deleteDepartmentRow);
+        });
+    })
+    .catch(function(){ el.innerHTML="<tr><td colspan=\"5\">Could not load departments.</td></tr>"; });
+}
+
+/** Escape HTML for safe display (XSS). */
+function escapeHtml(s){
+    const div=document.createElement("div");
+    div.textContent=s;
+    return div.innerHTML;
+}
+
+function startEditDepartment(ev){
+    const btn=ev.target;
+    const row=btn.closest("tr");
+    const id=row.dataset.departmentId;
+    const nameCell=row.querySelector(".dept-name-cell");
+    const codeCell=row.querySelector(".dept-code-cell");
+    const existingInput=nameCell.querySelector("input.inline-edit-input");
+    if(existingInput){
+        nameCell.textContent=row.dataset.editOriginalName||"";
+        if(codeCell) codeCell.textContent=row.dataset.editOriginalCode||"";
+        delete row.dataset.editOriginalName;
+        delete row.dataset.editOriginalCode;
+        return;
+    }
+    const currentName=nameCell.textContent;
+    const currentCode=codeCell ? codeCell.textContent : "";
+    row.dataset.editOriginalName=currentName;
+    row.dataset.editOriginalCode=currentCode;
+    const input=document.createElement("input");
+    input.type="text";
+    input.value=currentName;
+    input.className="inline-edit-input";
+    input.placeholder="Name";
+    nameCell.textContent="";
+    nameCell.appendChild(input);
+    const codeInput=document.createElement("input");
+    codeInput.type="text";
+    codeInput.value=currentCode;
+    codeInput.className="inline-edit-input";
+    codeInput.placeholder="Code";
+    codeInput.maxLength=3;
+    codeInput.style.width="4em";
+    if(codeCell){
+        codeCell.textContent="";
+        codeCell.appendChild(codeInput);
+    }
+    input.focus();
+    function save(){
+        const newName=input.value.trim();
+        if(!newName) return;
+        const newCode=(codeInput&&codeInput.value.trim()!=="") ? codeInput.value.trim().toUpperCase().substring(0,3) : "";
+        fetch("../../api/admin/departments.php",{
+            method:"PUT",
+            headers:{"Content-Type":"application/x-www-form-urlencoded"},
+            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}`
+        }).then(()=>loadDepartments());
+    }
+    input.addEventListener("keydown", function(e){
+        if(e.key==="Enter") save();
+    });
+    if(codeInput) codeInput.addEventListener("keydown", function(e){
+        if(e.key==="Enter") save();
     });
 }
 
-function addDepartment(){
-    const f=new FormData();
-    f.append("department_name",document.getElementById("deptName").value);
-
-    fetch("../../api/admin/departments.php",{method:"POST",body:f})
-    .then(()=>loadDepartments());
-}
-
-function updateDepartment(){
-    const id   = document.getElementById("deptIdEdit").value;
-    const name = document.getElementById("deptNameEdit").value;
-
-    if(!id || !name) return;
-
-    fetch("../../api/admin/departments.php",{
-        method:"PUT",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(name)}`
-    }).then(()=>loadDepartments());
-}
-
-function deleteDepartment(){
-    const id = document.getElementById("deptIdEdit").value;
-    if(!id) return;
-
+function deleteDepartmentRow(ev){
+    const row=ev.target.closest("tr");
+    const id=row.dataset.departmentId;
+    if(!confirm("Delete this department?")) return;
     fetch("../../api/admin/departments.php",{
         method:"DELETE",
         headers:{"Content-Type":"application/x-www-form-urlencoded"},
@@ -60,51 +118,119 @@ function deleteDepartment(){
     }).then(()=>loadDepartments());
 }
 
+function addDepartment(){
+    const nameEl=document.getElementById("deptName");
+    const codeEl=document.getElementById("deptCode");
+    const name=nameEl&&nameEl.value ? nameEl.value.trim() : "";
+    if(!name) return;
+    const f=new FormData();
+    f.append("department_name",name);
+    if(codeEl&&codeEl.value.trim()!=="") {
+        f.append("department_code",codeEl.value.trim().toUpperCase().substring(0,3));
+    }
+    fetch("../../api/admin/departments.php",{method:"POST",body:f})
+    .then(()=>loadDepartments());
+}
+
+/** Fetches users (with department name); fills userTable; wires edit/delete. */
 function loadUsers(){
+    var el = document.getElementById("userTable");
+    if (!el) return;
     fetch("../../api/admin/users.php")
     .then(r=>r.json())
     .then(data=>{
-        let html="<tr><th>ID</th><th>Name</th></tr>";
-        data.forEach(u=>{
-            html+=`<tr><td>${u.user_id}</td><td>${u.name}</td></tr>`;
+        if (!Array.isArray(data)) return;
+        var html="<tr><th>ID</th><th>Name</th><th>Department</th><th>Edit</th><th>Delete</th></tr>";
+        data.forEach(function(u){
+            html+="<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\">"+
+                "<td>"+u.user_id+"</td>"+
+                "<td class=\"user-name-cell td-scroll\">"+escapeHtml(u.name)+"</td>"+
+                "<td class=\"user-dept-cell td-scroll\">"+escapeHtml(u.department_name||u.department_id||"")+"</td>"+
+                "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"edit-user-btn\">Edit</button></td>"+
+                "<td style=\"min-width:72px;text-align:center\"><button type=\"button\" class=\"delete-user-btn\">Delete</button></td>"+
+                "</tr>";
         });
-        document.getElementById("userTable").innerHTML=html;
+        el.innerHTML=html;
+        el.querySelectorAll(".edit-user-btn").forEach(function(btn){
+            btn.addEventListener("click", startEditUser);
+        });
+        el.querySelectorAll(".delete-user-btn").forEach(function(btn){
+            btn.addEventListener("click", deleteUserRow);
+        });
+    })
+    .catch(function(){ el.innerHTML="<tr><td colspan=\"5\">Could not load users.</td></tr>"; });
+}
+
+function startEditUser(ev){
+    const btn=ev.target;
+    const row=btn.closest("tr");
+    const userId=row.dataset.userId;
+    const departmentId=row.dataset.departmentId;
+    const nameCell=row.querySelector(".user-name-cell");
+    const deptCell=row.querySelector(".user-dept-cell");
+    const existingInput=nameCell.querySelector("input.inline-edit-input");
+    if(existingInput){
+        loadUsers();
+        return;
+    }
+    const currentName=nameCell.textContent;
+    row.dataset.editOriginalName=currentName;
+    const input=document.createElement("input");
+    input.type="text";
+    input.value=currentName;
+    input.className="inline-edit-input";
+    nameCell.textContent="";
+    nameCell.appendChild(input);
+    input.focus();
+    let deptSelect=null;
+    if(deptCell){
+        deptSelect=document.createElement("select");
+        deptSelect.className="inline-dept-select";
+        deptCell.textContent="";
+        deptCell.appendChild(deptSelect);
+        fetch("../../api/admin/departments.php")
+            .then(r=>r.json())
+            .then(function(depts){
+                if(!Array.isArray(depts)) return;
+                let opts="";
+                depts.forEach(function(d){
+                    const selAttr=String(d.department_id)===String(departmentId)?" selected":"";
+                    opts+="<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
+                });
+                deptSelect.innerHTML=opts;
+            })
+            .catch(function(){});
+    }
+    function save(){
+        const newName=input.value.trim();
+        if(!newName) return;
+        const newDeptId=deptSelect&&deptSelect.value?deptSelect.value:departmentId;
+        fetch("../../api/admin/users.php",{
+            method:"PUT",
+            headers:{"Content-Type":"application/x-www-form-urlencoded"},
+            body:`user_id=${encodeURIComponent(userId)}&name=${encodeURIComponent(newName)}&department_id=${encodeURIComponent(newDeptId)}`
+        }).then(()=>loadUsers());
+    }
+    input.addEventListener("keydown", function(e){
+        if(e.key==="Enter") save();
     });
+}
+
+function deleteUserRow(ev){
+    const row=ev.target.closest("tr");
+    const id=row.dataset.userId;
+    if(!confirm("Delete this user?")) return;
+    fetch("../../api/admin/users.php",{
+        method:"DELETE",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`user_id=${encodeURIComponent(id)}`
+    }).then(()=>loadUsers());
 }
 
 function addUser(){
     const f=new FormData();
     f.append("name",document.getElementById("userName").value);
     f.append("department_id",document.getElementById("deptSelect").value);
-
     fetch("../../api/admin/users.php",{method:"POST",body:f})
     .then(()=>loadUsers());
-}
-
-function updateUser(){
-    const id   = document.getElementById("userIdEdit").value;
-    const name = document.getElementById("userNameEdit").value;
-    const dept = document.getElementById("userDeptEdit").value;
-
-    if(!id || !name || !dept) return;
-
-    fetch("../../api/admin/users.php",{
-        method:"PUT",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:
-            `user_id=${encodeURIComponent(id)}`+
-            `&name=${encodeURIComponent(name)}`+
-            `&department_id=${encodeURIComponent(dept)}`
-    }).then(()=>loadUsers());
-}
-
-function deleteUser(){
-    const id = document.getElementById("userIdEdit").value;
-    if(!id) return;
-
-    fetch("../../api/admin/users.php",{
-        method:"DELETE",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`user_id=${encodeURIComponent(id)}`
-    }).then(()=>loadUsers());
 }

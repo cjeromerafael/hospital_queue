@@ -1,9 +1,13 @@
 <?php
+/**
+ * Completes current serving: removes it from queue, promotes next waiting to serving.
+ * Used by: staff dashboard "Next (Complete Current)".
+ */
 require_once("../config.php");
 
 $department_id = $_POST['department_id'];
 
-/* find current serving */
+/* Find current serving */
 $current = $conn->query("
 SELECT queue_id FROM queueing
 WHERE department_id=$department_id AND status='serving'

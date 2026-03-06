@@ -1,13 +1,22 @@
-<?php
+ <?php
+/**
+ * User CRUD: GET list (with department name), POST create, PUT update, DELETE. Used by: admin dashboard.
+ */
 require_once("../config.php");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+/* READ */
 if ($method === "GET") {
-    $res = $conn->query("SELECT * FROM user");
+    $res = $conn->query("
+        SELECT u.user_id, u.name, u.department_id, d.department_name
+        FROM user u
+        LEFT JOIN department d ON d.department_id = u.department_id
+    ");
     echo json_encode($res->fetch_all(MYSQLI_ASSOC));
 }
 
+/* CREATE*/
 if ($method === "POST") {
     $name = $_POST['name'];
     $dept = $_POST['department_id'];

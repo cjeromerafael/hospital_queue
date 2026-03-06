@@ -1,4 +1,9 @@
 <?php
+/**
+ * User-id–based registration: creates a patient from staff user_id (department from role),
+ * auto-generates patient_number (uniqid), and adds the patient to the queue.
+ * Not used by any current page; kept for future kiosk/self-service flows.
+ */
 require_once("../config.php");
 
 $user_id = $_POST['user_id'] ?? null;

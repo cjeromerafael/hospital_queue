@@ -1,0 +1,14 @@
+{"sessionId":"bd739d","location":"patient-manage.js:28","message":"registerPatientManaged called","data":{"dept":"24"},"timestamp":1771829727094,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:36","message":"create.php response status (manage)","data":{"ok":true,"status":200},"timestamp":1771829727141,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:48","message":"create.php JSON payload (manage)","data":{"status":"success","patient_id":36,"patient_number":"2"},"timestamp":1771829727142,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:62","message":"registerPatientManaged error","data":{"message":"TypeError: Cannot set properties of null (setting 'value')"},"timestamp":1771829727144,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:28","message":"registerPatientManaged called","data":{"dept":"25"},"timestamp":1771829748174,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:36","message":"create.php response status (manage)","data":{"ok":true,"status":200},"timestamp":1771829748226,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:48","message":"create.php JSON payload (manage)","data":{"status":"success","patient_id":37,"patient_number":"3"},"timestamp":1771829748227,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:62","message":"registerPatientManaged error","data":{"message":"TypeError: Cannot set properties of null (setting 'value')"},"timestamp":1771829748228,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:28","message":"registerPatientManaged called","data":{"dept":"1"},"timestamp":1771829895271,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:36","message":"create.php response status (manage)","data":{"ok":true,"status":200},"timestamp":1771829895327,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:48","message":"create.php JSON payload (manage)","data":{"status":"success","patient_id":38,"patient_number":"4"},"timestamp":1771829895328,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:28","message":"registerPatientManaged called","data":{"dept":"16"},"timestamp":1771830020879,"runId":"initial","hypothesisId":"H1"}
+{"sessionId":"bd739d","location":"patient-manage.js:36","message":"create.php response status (manage)","data":{"ok":true,"status":200},"timestamp":1771830020923,"runId":"initial","hypothesisId":"H2"}
+{"sessionId":"bd739d","location":"patient-manage.js:48","message":"create.php JSON payload (manage)","data":{"status":"success","patient_id":39,"patient_number":"5"},"timestamp":1771830020925,"runId":"initial","hypothesisId":"H2"}
