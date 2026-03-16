@@ -1,6 +1,6 @@
 <?php
 /**
- * User-id–based registration: creates a patient from staff user_id (department from role),
+ * User-id–based registration: creates a patient from staff user_id (department from user table),
  * auto-generates patient_number (uniqid), and adds the patient to the queue.
  * Not used by any current page; kept for future kiosk/self-service flows.
  */
@@ -13,8 +13,8 @@ if (!$user_id) {
     exit;
 }
 
-/* find department via role */
-$r = $conn->prepare("SELECT department_id FROM role WHERE user_id=? LIMIT 1");
+/* find department via user */
+$r = $conn->prepare("SELECT department_id FROM user WHERE user_id=? LIMIT 1");
 $r->bind_param("i",$user_id);
 $r->execute();
 $res = $r->get_result();

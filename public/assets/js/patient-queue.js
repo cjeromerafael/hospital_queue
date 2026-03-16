@@ -3,9 +3,25 @@
  * Polls every 3s. Used by: public/patient/index.html (Patient Access).
  */
 document.addEventListener("DOMContentLoaded", function(){
+    checkDailyFlush();
     loadQueue();
     setInterval(loadQueue, 3000);
 });
+
+/** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
+function checkDailyFlush() {
+    fetch("../../api/daily_flush.php")
+        .then(r => r.json())
+        .then(d => {
+            const el = document.getElementById("currentDateDisplay");
+            if (el) el.textContent = d.current_date_display || "";
+            if (d.flushed) {
+                console.log("Daily flush performed (new day).");
+                if (typeof loadQueue === "function") loadQueue();
+            }
+        })
+        .catch(err => console.error("Daily flush check failed:", err));
+}
 
 function setMsg(text){
     const el = document.getElementById('msg');
@@ -29,17 +45,22 @@ function loadQueue(){
                 currentEl.innerText = "None";
             }
 
-            let html = "<tr><th>Queue No</th><th>Patient No</th><th>Patient Name</th><th>Department</th><th>Status</th></tr>";
+            let html = "<thead><tr><th>Queue No</th><th>Patient No</th><th>Department</th><th>Status</th></tr></thead><tbody>";
             data.forEach(q => {
                 const deptName = q.queue_department_name || q.patient_department_name || '';
-                html += `<tr>
-                    <td>${q.queue_number}</td>
-                    <td>${q.patient_number || q.patient_id}</td>
-                    <td>${escapeHtml(q.patient_name || '')}</td>
-                    <td>${escapeHtml(deptName)}</td>
-                    <td>${q.status === 'serving' ? 'Serving' : 'Waiting'}</td>
+                const isServing = q.status === 'serving';
+                html += `<tr class='hover:bg-gray-50/50 transition-colors'>
+                    <td class='font-black ${isServing ? 'text-green-600' : 'text-gray-900'}'>#${q.queue_number}</td>
+                    <td class='font-medium'>${q.patient_number || q.patient_id}</td>
+                    <td class='text-gray-500'>${escapeHtml(deptName)}</td>
+                    <td>
+                        <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isServing ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}'>
+                            ${isServing ? 'Serving' : 'Waiting'}
+                        </span>
+                    </td>
                 </tr>`;
             });
+            html += "</tbody>";
             table.innerHTML = html;
         })
         .catch(()=>{ setMsg('Unable to load queue.'); });

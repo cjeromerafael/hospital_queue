@@ -2,29 +2,88 @@
  * Patient management (staff): register patient, list with edit/delete.
  * Used in public/patient/manage.html. Calls create.php for register, list/update/delete for table.
  */
+const finance_departments = ["Billing - Admission", "Billing - OPD", "Cashier", "Medical Social Services Department"];
+let isEditingPatient = false;
+
 document.addEventListener('DOMContentLoaded', function(){
+    checkDailyFlush();
     loadDepartments();
     loadPatients();
     updateAssignQueueButton();
     const deptSelect = document.getElementById('patient_dept');
     if (deptSelect) deptSelect.addEventListener('change', updateAssignQueueButton);
+    
+    // Poll for new patients transferred to this department
+    setInterval(loadPatients, 3000);
 });
+
+/** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
+function checkDailyFlush() {
+    fetch('../../api/daily_flush.php')
+        .then(r => r.json())
+        .then(d => {
+            const el = document.getElementById('currentDateDisplay');
+            if (el) el.textContent = d.current_date_display || '';
+            if (d.flushed) {
+                console.log('Daily flush performed (new day).');
+                if (typeof loadPatients === 'function') loadPatients();
+                if (typeof updateAssignQueueButton === 'function') updateAssignQueueButton();
+            }
+        })
+        .catch(err => console.error('Daily flush check failed:', err));
+}
 
 function setRegisterMsg(text){
     const el = document.getElementById('register_msg'); if(el) el.innerText = text || '';
 }
 
-/** Fills patient_dept dropdown for registration form. */
+/** Fills patient_dept dropdown for registration form. 
+ * Restrictions:
+ * - Finance departments can only register patients for their own department.
+ * - Main staff cannot register patients for finance departments.
+ */
 function loadDepartments(){
+    const userDeptId = localStorage.getItem('department_id');
+    const role = localStorage.getItem('role');
+
     fetch('../../api/admin/departments.php')
     .then(r=>r.json())
     .then(data=>{
         const sel = document.getElementById('patient_dept');
+        if (!sel) return;
+        
+        // Find current user's department name
+        const userDept = data.find(d => String(d.department_id) === String(userDeptId));
+        const userDeptName = userDept ? (userDept.department_name || "").trim() : "";
+        
+        // Case-insensitive check for finance departments
+        const isFinance = finance_departments.some(fd => fd.toLowerCase() === userDeptName.toLowerCase());
+
+        // If finance staff, auto-select their department and hide the selector container
+        if (isFinance && role !== 'admin') {
+            sel.innerHTML = `<option value="${userDeptId}" selected>${escapeHtml(userDeptName)}</option>`;
+            const container = sel.closest('div');
+            if (container) container.classList.add('hidden');
+            // Immediately update the button label
+            updateAssignQueueButton();
+            return;
+        }
+
         let opts = '<option value="">Select department</option>';
-        // Exclude Admin department by name
-        data.filter(d => (d.department_name || '').trim().toLowerCase() !== 'admin').forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
+        data.filter(d => {
+            const name = (d.department_name || '').trim();
+            // Exclude Admin
+            if (name.toLowerCase() === 'admin') return false;
+            
+            // Admins can see all
+            if (role === 'admin') return true;
+
+            // Non-finance staff cannot register for finance departments
+            return !finance_departments.some(fd => fd.toLowerCase() === name.toLowerCase());
+        }).forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
+        
         sel.innerHTML = opts;
-    }).catch(()=>{});
+    }).catch(err => console.error("Error loading departments:", err));
 }
 
 /** Fetches the next patient number for the selected department and updates the assign-queue button label. */
@@ -73,32 +132,45 @@ function registerPatientManaged(){
 
 /** Fetches patient list; renders table with transfer/delete buttons. */
 function loadPatients(){
+    // Do not refresh table if user is currently editing (transferring) a patient
+    if (isEditingPatient) return;
+
     const el = document.getElementById('patientTable');
-    fetch('../../api/patient/list.php')
+    
+    const deptId = localStorage.getItem("department_id") || "0";
+    const role = localStorage.getItem("role") || "";
+
+    fetch(`../../api/patient/list.php?department_id=${deptId}&role=${role}&_=${Date.now()}`)
     .then(r=>r.json())
     .then(data=>{
-        if(!Array.isArray(data)){ el.innerHTML='<tr><td>No patients</td></tr>'; return; }
-        let html = '<tr><th>ID</th><th>Patient Number</th><th>Department</th><th>Transfer</th><th>Delete</th></tr>';
+        if(!Array.isArray(data)){ el.innerHTML='<tr><td class="p-8 text-center text-gray-400">No patients</td></tr>'; return; }
+        let html = '<thead><tr><th>ID</th><th>Patient Number</th><th>Department</th><th class="text-center">Actions</th></tr></thead><tbody>';
         data.forEach(p=>{
             const hasCode = p.patient_number && /^[A-Z0-9]{3}-\d{3}$/.test(String(p.patient_number));
             const deptDisplay = p.department_name
                 ? (hasCode ? p.department_name + ' (' + p.patient_number + ')' : p.department_name)
                 : (hasCode ? p.patient_number : '');
-            html += `<tr data-patient-id="${p.patient_id}" data-department-id="${p.department_id}">`+
-                    `<td>${p.patient_id}</td>`+
-                    `<td>${escapeHtml(p.patient_number)}</td>`+
-                    `<td class="patient-dept-cell td-scroll">${escapeHtml(deptDisplay)}</td>`+
-                    `<td style="min-width:72px;text-align:center"><button class="edit-patient-btn">Transfer</button></td>`+
-                    `<td style="min-width:72px;text-align:center"><button class="delete-patient-btn">Delete</button></td>`+
+            html += `<tr data-patient-id="${p.patient_id}" data-department-id="${p.department_id}" class='hover:bg-gray-50/50 transition-colors'>`+
+                    `<td class='text-gray-400 font-mono text-xs'>${p.patient_id}</td>`+
+                    `<td class='font-black text-green-600'>${escapeHtml(p.patient_number)}</td>`+
+                    `<td class="patient-dept-cell font-medium">${escapeHtml(deptDisplay)}</td>`+
+                    `<td class='flex justify-center gap-2'>`+
+                        `<button class="edit-patient-btn btn-ios-secondary !px-3 !py-2 !text-xs">Transfer</button>`+
+                        `<button class="delete-patient-btn btn-ios-danger !px-3 !py-2 !text-xs">Delete</button>`+
+                    `</td>`+
                     `</tr>`;
         });
+        html += "</tbody>";
         el.innerHTML = html;
         el.querySelectorAll('.edit-patient-btn').forEach(b=> b.addEventListener('click', startEditPatient));
         el.querySelectorAll('.delete-patient-btn').forEach(b=> b.addEventListener('click', deletePatientRow));
-    }).catch(()=> el.innerHTML='<tr><td colspan="5">Could not load patients.</td></tr>');
+    }).catch(()=> el.innerHTML='<tr><td colspan="4" class="p-8 text-center text-gray-400">Could not load patients.</td></tr>');
 }
 
 function startEditPatient(ev){
+    if (isEditingPatient) return; // Prevent multiple simultaneous edits
+    isEditingPatient = true;
+
     const btn = ev.target;
     const row = btn.closest('tr');
     const id = row.dataset.patientId;
@@ -107,7 +179,7 @@ function startEditPatient(ev){
     // replace dept cell with select (only department is editable now)
     const deptCell = row.querySelector('.patient-dept-cell');
     const select = document.createElement('select');
-    select.className = 'inline-dept-select';
+    select.className = 'input-ios !px-3 !py-2 !text-sm appearance-none';
 
     // populate departments
     fetch('../../api/admin/departments.php')
@@ -133,14 +205,37 @@ function startEditPatient(ev){
                 body:fBody
             })
             .then(r=>r.json())
-            .then(()=> loadPatients())
-            .catch(()=>{ alert('Update failed'); loadPatients(); });
+            .then(()=> {
+                isEditingPatient = false;
+                loadPatients();
+                updateAssignQueueButton();
+                setRegisterMsg('');
+            })
+            .catch(()=>{ 
+                alert('Update failed'); 
+                isEditingPatient = false;
+                loadPatients();
+                updateAssignQueueButton();
+            });
         } else {
+            isEditingPatient = false;
             loadPatients();
+            updateAssignQueueButton();
         }
     }
 
     select.addEventListener('change', save);
+    
+    // Also reset if user clicks away without changing
+    select.addEventListener('blur', function() {
+        setTimeout(() => {
+            if (isEditingPatient) {
+                isEditingPatient = false;
+                loadPatients();
+                updateAssignQueueButton();
+            }
+        }, 200);
+    });
 }
 
 /** Escape HTML for safe display (XSS). */

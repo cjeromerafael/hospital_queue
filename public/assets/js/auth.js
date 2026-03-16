@@ -1,12 +1,19 @@
 /**
- * Staff login: POST user_id to auth/login.php; on success stores user_id, department_id,
+ * Staff login: POST username and password to auth/login.php; on success stores user info,
  * role and redirects to admin or staff dashboard. Used in public/index.html.
  */
 function login(){
-    const user_id = document.getElementById("user_id").value;
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+        document.getElementById("msg").innerText = "Username and password required.";
+        return;
+    }
 
     const form = new FormData();
-    form.append("user_id", user_id);
+    form.append("username", username);
+    form.append("password", password);
 
     fetch("../api/auth/login.php", {
         method: "POST",
@@ -18,6 +25,7 @@ function login(){
         if(data.status === "success"){
 
             localStorage.setItem("user_id", data.user_id);
+            localStorage.setItem("username", data.username);
             localStorage.setItem("department_id", data.department_id);
             localStorage.setItem("role", data.department_role);
 
@@ -30,5 +38,9 @@ function login(){
         } else {
             document.getElementById("msg").innerText = data.message;
         }
+    })
+    .catch(err => {
+        console.error("Login error:", err);
+        document.getElementById("msg").innerText = "Login failed. Please try again.";
     });
 }

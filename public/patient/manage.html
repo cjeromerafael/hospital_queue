@@ -1,30 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="../assets/css/style.css">
-<title>Manage Patients</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .ios-blur { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+        .ios-card { background: rgba(255,255,255,0.88); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.65); border-radius: 1.6rem; box-shadow: 0 14px 40px rgba(0,0,0,0.08); padding: 1.5rem; }
+        .btn-ios { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 0.7rem 1rem; font-weight: 700; font-size: 0.95rem; gap: 0.4rem; cursor: pointer; transition: all 0.18s ease; }
+        .btn-ios:active { transform: translateY(1px) scale(0.98); }
+        .btn-ios-primary { background: #22c55e; color: white; box-shadow: 0 8px 18px rgba(34,197,94,0.32); }
+        .btn-ios-primary:hover { background: #16a34a; }
+        .btn-ios-secondary { background: #f3f4f6; color: #1f2937; }
+        .btn-ios-secondary:hover { background: #e5e7eb; }
+        .btn-ios-danger { background: #fee2e2; color: #b91c1c; }
+        .btn-ios-danger:hover { background: #fecaca; }
+        .input-ios { display: block; width: 100%; background: #f3f4f6; border: none; border-radius: 1rem; padding: 0.85rem 1rem; font-size: 1rem; color: #111827; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.04); }
+        .input-ios:focus { box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+        .label-ios { font-size: 0.72rem; font-weight: 700; color: #6b7280; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 0.35rem; margin-bottom: 0.2rem; display:block; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th { background: #f9fafb; color: #6b7280; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.65rem 0.85rem; text-align: left; }
+        td { padding: 0.65rem 0.85rem; font-size: 0.9rem; color: #111827; border-top: 1px solid rgba(229,231,235,0.8); }
+    </style>
 </head>
-<body>
-<div class="container">
 
-<h2>Patient Management</h2>
-<button onclick="window.location.href='../staff/dashboard.html'" style="float:right">Home</button>
+<body class="bg-[#F2F2F7] min-h-screen p-6 md:p-10">
+    <div class="max-w-5xl mx-auto space-y-8">
+        
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
+            <h1 class="text-4xl font-black text-gray-900 tracking-tight">Patient Management</h1>
+            <button onclick="window.location.href='../staff/dashboard.html'" class="btn-ios-secondary !rounded-full !px-4 !py-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                Home
+            </button>
+        </header>
 
-<h3>Register Patient</h3>
-<div>
-  <label for="patient_dept">Department</label>
-  <select id="patient_dept" style="width:40%;font-size:18px;"><option value="">Select department</option></select>
-</div>
-<button id="assign_queue_btn" onclick="registerPatientManaged()" style="font-size:18px;padding:14px 22px;min-width:240px;">Assign queue: ...</button>
-<p id="register_msg"></p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="ios-card md:col-span-1">
+                <span class="label-ios">Today's Date</span>
+                <span id="currentDateDisplay" class="text-2xl font-black text-green-600 tracking-tight">Loading...</span>
+            </div>
+            
+            <div class="ios-card md:col-span-2">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Register New Patient</h3>
+                <div class="flex flex-col md:flex-row gap-3 items-end">
+                    <div class="flex-1">
+                        <label for="patient_dept" class="label-ios">Select Department</label>
+                        <select id="patient_dept" class="input-ios">
+                            <option value="">Select department</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="assign_queue_btn" onclick="registerPatientManaged()" class="btn-ios btn-ios-primary px-4 py-2.5 h-11">
+                            Assign Queue
+                        </button>
+                    </div>
+                </div>
+                <p id="register_msg" class="mt-4 font-bold text-green-600 min-h-[1.5rem]"></p>
+            </div>
+        </div>
 
-<hr>
+        <div class="ios-card !p-0 overflow-hidden">
+            <div class="px-8 py-6 border-b border-gray-100/50">
+                <h3 class="text-lg font-bold text-gray-900">All Registered Patients</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="patientTable"></table>
+            </div>
+        </div>
 
-<h3>All Registered Patients</h3>
-<table id="patientTable"></table>
+    </div>
 
-</div>
-
-<script src="../assets/js/patient-manage.js"></script>
+    <script src="../assets/js/patient-manage.js"></script>
 </body>
 </html>

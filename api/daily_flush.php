@@ -48,12 +48,12 @@ if ($method === 'POST') {
         echo json_encode(["status" => "error", "message" => "manual=1 and user_id required"]);
         exit;
     }
-    $stmt = $conn->prepare("SELECT department_role FROM role WHERE user_id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ? LIMIT 1");
     $stmt->bind_param("s", $user_id_raw);
     $stmt->execute();
     $res = $stmt->get_result();
     $row = $res ? $res->fetch_assoc() : null;
-    if (!$row || (isset($row['department_role']) && strtolower(trim($row['department_role'])) !== 'admin')) {
+    if (!$row || (isset($row['role']) && strtolower(trim($row['role'])) !== 'admin')) {
         http_response_code(403);
         echo json_encode(["status" => "error", "message" => "Admin only"]);
         exit;

@@ -9,75 +9,114 @@ document.addEventListener('DOMContentLoaded', function(){
     setInterval(loadFinanceQueues, 1500);
 });
 
-/** Loads and displays the current queue for the selected department. */
+/** Loads and displays the current queue for the selected department or all main departments. */
 function loadQueue(){
     const params = new URLSearchParams(location.search);
-    const dept = params.get('dept') || params.get('department_id') || localStorage.getItem('department_id');
+    const requestedDept = params.get('dept') || params.get('department_id');
     const currentEl = document.getElementById('display_current');
     const infoEl = document.getElementById('display_info');
 
-    if(!dept){
-        if(currentEl) currentEl.innerText = 'None';
-        if(infoEl) infoEl.innerHTML = '';
+    const financeNames = [
+        'billing - admission',
+        'billing - opd',
+        'cashier',
+        'medical social services department'
+    ];
+
+    const statusIsServing = s => {
+        if (s === null || s === undefined) return false;
+        const ss = String(s).toLowerCase().trim();
+        return ss === 'serving' || ss === 'current' || ss === '1' || ss === 'active';
+    };
+
+    const statusIsWaiting = s => {
+        if (s === null || s === undefined) return false;
+        const ss = String(s).toLowerCase().trim();
+        return ss === 'waiting' || ss === '0' || ss === 'queued' || ss === 'pending';
+    };
+
+    // If department is explicitly provided, show queue for that department only
+    const loadForDept = (dept) => {
+        fetch(`../../api/queue/view.php?department_id=${dept}&_=${Date.now()}`)
+         .then(r=>r.json())
+         .then(data=>{
+             const cur = (data || []).find(q=> statusIsServing(q.status));
+             if(cur){
+                currentEl.innerText = '#' + (cur.queue_number || '');
+                const deptName = cur.queue_department_name || cur.patient_department_name || ('Department ' + (cur.department_id || ''));                
+                infoEl.innerHTML = `<div><span class="label">Department: </span>${escapeHtml(deptName)}</div>`;
+             } else {
+                currentEl.innerText = 'None';
+                infoEl.innerHTML = '';
+             }
+
+             const waitingRows = (data || []).filter(q => statusIsWaiting(q.status));
+             renderMainWaitingRows(waitingRows);
+         })
+         .catch(() => {
+             currentEl.innerText = 'None';
+             infoEl.innerHTML = '';
+             renderMainWaitingRows([]);
+         });
+    };
+
+    const renderMainWaitingRows = (rows) => {
+        const table = document.getElementById('display_waiting');
+        if(!table) return;
+        const tbody = table.querySelector('tbody');
+        if(!tbody) return;
+
+        if(rows.length === 0){
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-300 font-medium">No one waiting</td></tr>';
+            return;
+        }
+
+        let html = '';
+        rows.slice(0,20).forEach(w=>{
+            const patientNo = w.patient_number || w.patient_id || '';
+            const deptName = w.queue_department_name || w.patient_department_name || '';
+            html += `<tr class="hover:bg-gray-50/50 transition-colors">` +
+                    `<td class="py-4 px-4 text-green-600 font-black">#${escapeHtml(String(w.queue_number || ''))}</td>` +
+                    `<td class="py-4 px-4 text-center">${escapeHtml(String(patientNo))}</td>` +
+                    `<td class="py-4 px-4 text-right text-gray-400 font-medium">${escapeHtml(String(deptName))}</td>` +
+                    `</tr>`;
+        });
+        tbody.innerHTML = html;
+    };
+
+    if (requestedDept) {
+        loadForDept(requestedDept);
         return;
     }
 
-    fetch(`../../api/queue/view.php?department_id=${dept}&_=${Date.now()}`)
+    // No requested dept: show all non-finance queues on right
+    fetch(`../../api/queue/view.php?_=${Date.now()}`)
      .then(r=>r.json())
      .then(data=>{
-         // Robust status handling: accept 'serving', 'current', 1, '1'
-         const statusIsServing = s => {
-             if (s === null || s === undefined) return false;
-             const ss = String(s).toLowerCase().trim();
-             return ss === 'serving' || ss === 'current' || ss === '1' || ss === 'active';
-         };
+         const items = Array.isArray(data) ? data : [];
+         const nonFinance = items.filter(q => {
+             const queueDept = (q.queue_department_name || '').toString().toLowerCase();
+             return queueDept && !financeNames.includes(queueDept);
+         });
 
-         const cur = data.find(q=> statusIsServing(q.status) );
-
-         if(cur){
-            currentEl.innerText = '#' + cur.queue_number;
-            const patientNum = cur.patient_number || cur.patient_id || '';
-            const deptName = cur.patient_department_name || ('Department ' + (cur.patient_department_id || ''));
-            infoEl.innerHTML = '<div><span class="label">Department: </span>' + escapeHtml(deptName) + '</div>';
+         const serving = nonFinance.filter(q => statusIsServing(q.status));
+         const current = serving.length > 0 ? serving.reduce((a,b) => (Number(a.queue_number||0) < Number(b.queue_number||0) ? a : b)) : null;
+         if(current){
+             currentEl.innerText = '#' + (current.queue_number || '');
+             const deptName = current.queue_department_name || current.patient_department_name || '';
+             infoEl.innerHTML = '<div><span class="label">Department: </span>' + escapeHtml(deptName) + '</div>';
          } else {
-            currentEl.innerText = 'None';
-            infoEl.innerHTML = '';
+             currentEl.innerText = 'None';
+             infoEl.innerHTML = '';
          }
 
-         // Update general waiting queue on the right
-         const table = document.getElementById('display_waiting');
-         if(table){
-             const waiting = data.filter(q=> {
-                 const ss = (q.status === null || q.status === undefined) ? '' : String(q.status).toLowerCase().trim();
-                 return ss === 'waiting' || ss === '0' || ss === 'queued' || ss === 'pending';
-             }).slice(0,20);
-            if(waiting.length === 0){
-                 table.innerHTML = '<tr><td style="font-size:1.1em;color:#ccc;">No waiting entries</td></tr>';
-             } else {
-                let html = '<tr><th>Queue No</th><th>Patient No</th><th>Department</th></tr>';
-                waiting.forEach(w=>{
-                    const patientNo = w.patient_number || w.patient_id || '';
-                    html += '<tr>' +
-                        '<td>' + escapeHtml(String(w.queue_number || '')) + '</td>' +
-                        '<td>' + escapeHtml(String(patientNo)) + '</td>' +
-                        '<td>' + escapeHtml(String(w.patient_department_name || '')) + '</td>' +
-                        '</tr>';
-                 });
-                 table.innerHTML = html;
-             }
-         }
-
-         fetch(`../../api/queue/event.php?department_id=${dept}`)
-            .then(r=>r.json())
-            .then(ev=>{
-                if(ev && ev.type === 'skipped'){
-                    showEventBanner(ev);
-                }
-            }).catch(function(){});
-     }).catch(function(){
-         if(infoEl) infoEl.innerHTML = '';
-         var table = document.getElementById('display_waiting');
-         if(table) table.innerHTML = '<tr><td style="font-size:1.1em;color:#ccc;">Unable to load queue</td></tr>';
+         const waiting = nonFinance.filter(q => statusIsWaiting(q.status));
+         renderMainWaitingRows(waiting);
+     })
+     .catch(() => {
+         currentEl.innerText = 'None';
+         infoEl.innerHTML = '';
+         renderMainWaitingRows([]);
      });
 }
 
@@ -129,46 +168,25 @@ function updateFinanceQueuesDisplay(data){
     };
 
     Object.keys(financeQueues).forEach(queueId => {
-        const table = document.getElementById(queueId);
+        const waitingEl = document.getElementById(queueId + '-waiting');
         const curEl = document.getElementById(queueId + '-current');
-        if(table){
-            // Filter data for this department
-            const deptData = data.filter(q => normalize(q.department_name) === normalize(financeQueues[queueId]));
-            
-            // Build rows starting with current serving
-            let html = '<tr><th>Queue No</th><th>Patient No</th></tr>';
-            
-            // If exact match failed, try token-based fallback (handles small naming differences)
-            let deptDataFinal = deptData;
-            if((!deptDataFinal || deptDataFinal.length === 0) && Array.isArray(data) && data.length > 0){
-                const tokens = normalize(financeQueues[queueId]).split(/\W+/).filter(Boolean);
-                deptDataFinal = data.filter(q => tokens.some(t => normalize(q.department_name).includes(t)));
-            }
+        const deptData = data.filter(q => normalize(q.department_name) === normalize(financeQueues[queueId]));
 
-            // Show current serving separately (large display)
-            const current = (deptDataFinal || []).find(q => statusIsServing(q.status));
-            if(curEl){
-                if(current){
-                    curEl.innerHTML = '<div class="finance-current">#' + escapeHtml(String(current.queue_number || '')) + '</div>';
-                } else {
-                    curEl.innerHTML = '<div class="finance-current">None</div>';
-                }
-            }
+        const current = (deptData || []).find(q => statusIsServing(q.status));
+        if(curEl){
+            curEl.innerText = current ? ('#' + escapeHtml(String(current.queue_number || ''))) : 'None';
+        }
 
-            // Show up to 3 waiting entries (keep display compact)
-            const waiting = (deptDataFinal || []).filter(q => statusIsWaiting(q.status)).slice(0, 3);
+        if(waitingEl){
+            const waiting = (deptData || []).filter(q => statusIsWaiting(q.status));
             if(waiting.length === 0){
-                html = '<tr><td style="font-size:1.1em;color:#ccc;">No queue entries</td></tr>';
+                waitingEl.innerHTML = 'No one waiting';
             } else {
-                waiting.forEach(w => {
+                waitingEl.innerHTML = waiting.slice(0, 3).map(w => {
                     const patientNo = w.patient_number || w.patient_id || '';
-                    html += '<tr>' +
-                        '<td>' + escapeHtml(String(w.queue_number || '')) + '</td>' +
-                        '<td>' + escapeHtml(String(patientNo)) + '</td>' +
-                    '</tr>';
-                });
+                    return `<div class="rounded-lg border border-gray-200 bg-white p-2 mt-1 text-base font-semibold text-gray-700">#${escapeHtml(String(w.queue_number||''))} • ${escapeHtml(String(patientNo))}</div>`;
+                }).join('');
             }
-            table.innerHTML = html;
         }
     });
 }
