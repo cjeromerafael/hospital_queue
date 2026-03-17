@@ -10,7 +10,7 @@ $department_id = isset($_GET['department_id']) ? trim($_GET['department_id']) : 
 
 if ($department_id !== '') {
     $sql = "SELECT q.*, p.patient_number, p.department_id AS patient_department_id, pd.department_name AS patient_department_name,
-            dq.department_name AS queue_department_name
+            dq.department_name AS queue_department_name, dq.is_finance
             FROM queueing q
             LEFT JOIN patient p ON p.patient_id = q.patient_id
             LEFT JOIN department pd ON pd.department_id = p.department_id
@@ -23,7 +23,7 @@ if ($department_id !== '') {
     $res = $stmt->get_result();
 } else {
     $sql = "SELECT q.*, p.patient_number, p.department_id AS patient_department_id, pd.department_name AS patient_department_name,
-            dq.department_name AS queue_department_name
+            dq.department_name AS queue_department_name, dq.is_finance
             FROM queueing q
             LEFT JOIN patient p ON p.patient_id = q.patient_id
             LEFT JOIN department pd ON pd.department_id = p.department_id

@@ -83,12 +83,17 @@ function loadDepartments(){
     .then(data=>{
         if (!Array.isArray(data)) return;
         var options="";
-        var html="<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Actions</th></tr></thead><tbody>";
+        var html="<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Type</th><th class='text-center'>Actions</th></tr></thead><tbody>";
         data.forEach(function(d){
-            html+="<tr data-department-id=\""+d.department_id+"\" class='hover:bg-gray-50/50 transition-colors'>"+
+            const typePill = d.is_finance == 1 
+                ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>" 
+                : "<span class='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100'>Medical</span>";
+            
+            html+="<tr data-department-id=\""+d.department_id+"\" data-is-finance=\""+d.is_finance+"\" class='hover:bg-gray-50/50 transition-colors'>"+
                 "<td>"+d.department_id+"</td>"+
                 "<td class=\"dept-name-cell font-medium\">"+escapeHtml(d.department_name)+"</td>"+
                 "<td class=\"dept-code-cell\"><span class='bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold'>"+escapeHtml(d.department_code||"")+"</span></td>"+
+                "<td class=\"dept-finance-cell text-center\">"+typePill+"</td>"+
                 "<td class='flex justify-center gap-2'>"+
                     "<button type=\"button\" class=\"edit-dept-btn btn-ios-secondary !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z' /></svg><span>Edit</span></button>"+
                     "<button type=\"button\" class=\"delete-dept-btn btn-ios-danger !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg><span>Delete</span></button>"+
@@ -125,25 +130,27 @@ function startEditDepartment(ev){
     const id=row.dataset.departmentId;
     const nameCell=row.querySelector(".dept-name-cell");
     const codeCell=row.querySelector(".dept-code-cell");
+    const financeCell=row.querySelector(".dept-finance-cell");
     const existingInput=nameCell.querySelector("input.inline-edit-input");
     if(existingInput){
-        nameCell.textContent=row.dataset.editOriginalName||"";
-        if(codeCell) codeCell.textContent=row.dataset.editOriginalCode||"";
-        delete row.dataset.editOriginalName;
-        delete row.dataset.editOriginalCode;
+        loadDepartments();
         return;
     }
     const currentName=nameCell.textContent;
-    const currentCode=codeCell ? codeCell.textContent : "";
+    const currentCode=codeCell ? codeCell.querySelector('span').textContent : "";
+    const currentIsFinance = row.dataset.isFinance == "1";
+    
     row.dataset.editOriginalName=currentName;
     row.dataset.editOriginalCode=currentCode;
+    
     const input=document.createElement("input");
     input.type="text";
     input.value=currentName;
-    input.className="input-ios !px-3 !py-2 !text-sm";
+    input.className="input-ios inline-edit-input !px-3 !py-2 !text-sm";
     input.placeholder="Name";
     nameCell.textContent="";
     nameCell.appendChild(input);
+    
     const codeInput=document.createElement("input");
     codeInput.type="text";
     codeInput.value=currentCode;
@@ -155,15 +162,26 @@ function startEditDepartment(ev){
         codeCell.textContent="";
         codeCell.appendChild(codeInput);
     }
+
+    const financeCheck = document.createElement("input");
+    financeCheck.type = "checkbox";
+    financeCheck.checked = currentIsFinance;
+    financeCheck.className = "w-4 h-4";
+    if(financeCell){
+        financeCell.textContent = "";
+        financeCell.appendChild(financeCheck);
+    }
+
     input.focus();
     function save(){
         const newName=input.value.trim();
         if(!newName) return;
         const newCode=(codeInput&&codeInput.value.trim()!=="") ? codeInput.value.trim().toUpperCase().substring(0,3) : "";
+        const isFinance = financeCheck.checked ? 1 : 0;
         fetch("../../api/admin/departments.php",{
             method:"PUT",
             headers:{"Content-Type":"application/x-www-form-urlencoded"},
-            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}`
+            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}&is_finance=${isFinance}`
         }).then(()=>loadDepartments());
     }
     input.addEventListener("keydown", function(e){
@@ -188,10 +206,12 @@ function deleteDepartmentRow(ev){
 function addDepartment(){
     const nameEl=document.getElementById("deptName");
     const codeEl=document.getElementById("deptCode");
+    const isFinanceEl=document.getElementById("deptIsFinance");
     const name=nameEl&&nameEl.value ? nameEl.value.trim() : "";
     if(!name) return;
     const f=new FormData();
     f.append("department_name",name);
+    f.append("is_finance", isFinanceEl && isFinanceEl.checked ? 1 : 0);
     if(codeEl&&codeEl.value.trim()!=="") {
         f.append("department_code",codeEl.value.trim().toUpperCase().substring(0,3));
     }
@@ -219,7 +239,7 @@ function loadUsers(){
             html+="<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\" data-username=\""+escapeHtml(u.username)+"\" data-role=\""+u.role+"\" class='hover:bg-gray-50/50 transition-colors'>"+
                 "<td class='text-gray-400 font-mono text-xs'>"+u.user_id+"</td>"+
                 "<td class=\"user-username-cell font-bold text-gray-900\">"+escapeHtml(u.username)+"</td>"+
-                "<td class=\"user-dept-cell\"><span class='bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-semibold'>"+escapeHtml(u.department_name||"None")+"</span></td>"+
+                "<td class=\"user-dept-cell\"><span class='bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold'>"+escapeHtml(u.department_name||"None")+"</span></td>"+
                 "<td class=\"user-role-cell uppercase text-[11px] font-black tracking-widest text-gray-400\">"+escapeHtml(u.role)+"</td>"+
                 "<td class=\"user-password-cell font-mono text-xs text-gray-400\">"+escapeHtml(u.raw_password||"********")+"</td>"+
                 "<td class='flex justify-center gap-2'>"+

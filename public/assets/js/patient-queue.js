@@ -50,11 +50,11 @@ function loadQueue(){
                 const deptName = q.queue_department_name || q.patient_department_name || '';
                 const isServing = q.status === 'serving';
                 html += `<tr class='hover:bg-gray-50/50 transition-colors'>
-                    <td class='font-black ${isServing ? 'text-green-600' : 'text-gray-900'}'>#${q.queue_number}</td>
+                    <td class='font-black ${isServing ? 'text-blue-600' : 'text-gray-900'}'>#${q.queue_number}</td>
                     <td class='font-medium'>${q.patient_number || q.patient_id}</td>
                     <td class='text-gray-500'>${escapeHtml(deptName)}</td>
                     <td>
-                        <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isServing ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}'>
+                        <span class='px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isServing ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}'>
                             ${isServing ? 'Serving' : 'Waiting'}
                         </span>
                     </td>

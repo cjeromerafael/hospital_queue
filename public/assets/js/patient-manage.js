@@ -2,7 +2,6 @@
  * Patient management (staff): register patient, list with edit/delete.
  * Used in public/patient/manage.html. Calls create.php for register, list/update/delete for table.
  */
-const finance_departments = ["Billing - Admission", "Billing - OPD", "Cashier", "Medical Social Services Department"];
 let isEditingPatient = false;
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -55,9 +54,7 @@ function loadDepartments(){
         // Find current user's department name
         const userDept = data.find(d => String(d.department_id) === String(userDeptId));
         const userDeptName = userDept ? (userDept.department_name || "").trim() : "";
-        
-        // Case-insensitive check for finance departments
-        const isFinance = finance_departments.some(fd => fd.toLowerCase() === userDeptName.toLowerCase());
+        const isFinance = userDept && userDept.is_finance == 1;
 
         // If finance staff, auto-select their department and hide the selector container
         if (isFinance && role !== 'admin') {
@@ -79,7 +76,7 @@ function loadDepartments(){
             if (role === 'admin') return true;
 
             // Non-finance staff cannot register for finance departments
-            return !finance_departments.some(fd => fd.toLowerCase() === name.toLowerCase());
+            return d.is_finance != 1;
         }).forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
         
         sel.innerHTML = opts;
@@ -152,7 +149,7 @@ function loadPatients(){
                 : (hasCode ? p.patient_number : '');
             html += `<tr data-patient-id="${p.patient_id}" data-department-id="${p.department_id}" class='hover:bg-gray-50/50 transition-colors'>`+
                     `<td class='text-gray-400 font-mono text-xs'>${p.patient_id}</td>`+
-                    `<td class='font-black text-green-600'>${escapeHtml(p.patient_number)}</td>`+
+                    `<td class='font-black text-blue-600'>${escapeHtml(p.patient_number)}</td>`+
                     `<td class="patient-dept-cell font-medium">${escapeHtml(deptDisplay)}</td>`+
                     `<td class='flex justify-center gap-2'>`+
                         `<button class="edit-patient-btn btn-ios-secondary !px-3 !py-2 !text-xs">Transfer</button>`+

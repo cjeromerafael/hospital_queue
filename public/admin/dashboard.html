@@ -21,8 +21,8 @@
         tr:last-child td:last-child { border-bottom-right-radius:.8rem; }
         .btn-ios { display:inline-flex; align-items:center; justify-content:center; gap:0.3rem; border:none; border-radius:999px; padding:.55rem 1rem; font-size:.86rem; font-weight:600; transition:.2s ease; cursor:pointer; min-height:2.35rem; }
         .btn-pill { display:inline-flex; align-items:center; justify-content:center; gap:0.3rem; border-radius:999px; padding:.45rem .85rem; font-weight:600; font-size:.85rem; transition:.2s ease; }
-        .btn-ios-primary, .btn-pill-primary { background:#22c55e; color:#fff; box-shadow:0 8px 18px rgba(34,197,94,0.3); border-radius:999px; display:inline-flex; align-items:center; justify-content:center; }
-        .btn-ios-primary:hover, .btn-pill-primary:hover { background:#16a34a; }
+        .btn-ios-primary, .btn-pill-primary { background:#3b82f6; color:#fff; box-shadow:0 8px 18px rgba(59,130,246,0.3); border-radius:999px; display:inline-flex; align-items:center; justify-content:center; }
+        .btn-ios-primary:hover, .btn-pill-primary:hover { background:#2563eb; }
         .btn-ios-secondary, .btn-pill-secondary { background:#f3f4f6; color:#111827; }
         .btn-ios-secondary:hover, .btn-pill-secondary:hover { background:#e5e7eb; }
         .btn-ios-danger, .btn-pill-danger { background:#ef4444; color:#fff; }
@@ -50,7 +50,7 @@
             <div class="space-y-1">
                 <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Admin Dashboard</h1>
                 <p class="text-gray-500 font-medium flex items-center gap-2">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                     Logged in as <span id="userInfoDisplay" class="text-gray-700 font-semibold">Administrator</span>
                 </p>
             </div>
@@ -64,7 +64,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="ios-card md:col-span-2 p-4">
                 <span class="label-ios">Today's Date</span>
-                <span id="currentDateDisplay" class="text-4xl md:text-5xl font-black text-green-600 tracking-tight">Loading...</span>
+                <span id="currentDateDisplay" class="text-4xl md:text-5xl font-black text-blue-600 tracking-tight">Loading...</span>
             </div>
             <div class="ios-card flash-card p-4">
                 <div class="flex items-start justify-between gap-3">
@@ -93,6 +93,12 @@
                         <div class="w-full md:w-32">
                             <label class="label-ios">Code</label>
                             <input id="deptCode" placeholder="CAR" maxlength="3" class="input-ios uppercase">
+                        </div>
+                        <div class="flex items-center pt-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="deptIsFinance" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm font-semibold text-gray-700">Financial Service?</span>
+                            </label>
                         </div>
                     </div>
                     <button onclick="addDepartment()" class="btn-ios btn-ios-primary w-full mt-6">
