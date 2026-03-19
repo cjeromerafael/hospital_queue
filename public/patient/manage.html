@@ -38,28 +38,10 @@
             </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="ios-card md:col-span-1">
+        <div class="grid grid-cols-1 gap-6">
+            <div class="ios-card">
                 <span class="label-ios">Today's Date</span>
                 <span id="currentDateDisplay" class="text-2xl font-black text-blue-600 tracking-tight">Loading...</span>
-            </div>
-            
-            <div class="ios-card md:col-span-2">
-                <h3 class="text-xl font-bold text-gray-900 mb-6">Register New Patient</h3>
-                <div class="flex flex-col md:flex-row gap-3 items-end">
-                    <div class="flex-1">
-                        <label for="patient_dept" class="label-ios">Select Department</label>
-                        <select id="patient_dept" class="input-ios">
-                            <option value="">Select department</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button id="assign_queue_btn" onclick="registerPatientManaged()" class="btn-ios btn-ios-primary px-4 py-2.5 h-11">
-                            Assign Queue
-                        </button>
-                    </div>
-                </div>
-                <p id="register_msg" class="mt-4 font-bold text-blue-600 min-h-[1.5rem]"></p>
             </div>
         </div>
 

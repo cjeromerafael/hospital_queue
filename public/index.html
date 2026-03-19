@@ -13,8 +13,14 @@
     </style>
 </head>
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-6">
-    <div class="w-full max-w-md bg-white/70 ios-blur ios-shadow border border-white/40 rounded-[2.5rem] p-10 flex flex-col space-y-8">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-6 relative overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="fixed inset-0 z-0">
+        <img src="assets/CCH_background.png" alt="Background" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>
+    </div>
+
+    <div class="w-full max-w-md bg-white/80 ios-blur ios-shadow border border-white/50 rounded-[2.5rem] p-10 flex flex-col space-y-8 z-10 relative">
         
         <div class="text-center space-y-2">
             <div class="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-200">

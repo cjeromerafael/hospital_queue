@@ -6,14 +6,7 @@ let isEditingPatient = false;
 
 document.addEventListener('DOMContentLoaded', function(){
     checkDailyFlush();
-    loadDepartments();
     loadPatients();
-    updateAssignQueueButton();
-    const deptSelect = document.getElementById('patient_dept');
-    if (deptSelect) deptSelect.addEventListener('change', updateAssignQueueButton);
-    
-    // Poll for new patients transferred to this department
-    setInterval(loadPatients, 3000);
 });
 
 /** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
@@ -26,105 +19,9 @@ function checkDailyFlush() {
             if (d.flushed) {
                 console.log('Daily flush performed (new day).');
                 if (typeof loadPatients === 'function') loadPatients();
-                if (typeof updateAssignQueueButton === 'function') updateAssignQueueButton();
             }
         })
         .catch(err => console.error('Daily flush check failed:', err));
-}
-
-function setRegisterMsg(text){
-    const el = document.getElementById('register_msg'); if(el) el.innerText = text || '';
-}
-
-/** Fills patient_dept dropdown for registration form. 
- * Restrictions:
- * - Finance departments can only register patients for their own department.
- * - Main staff cannot register patients for finance departments.
- */
-function loadDepartments(){
-    const userDeptId = localStorage.getItem('department_id');
-    const role = localStorage.getItem('role');
-
-    fetch('../../api/admin/departments.php')
-    .then(r=>r.json())
-    .then(data=>{
-        const sel = document.getElementById('patient_dept');
-        if (!sel) return;
-        
-        // Find current user's department name
-        const userDept = data.find(d => String(d.department_id) === String(userDeptId));
-        const userDeptName = userDept ? (userDept.department_name || "").trim() : "";
-        const isFinance = userDept && userDept.is_finance == 1;
-
-        // If finance staff, auto-select their department and hide the selector container
-        if (isFinance && role !== 'admin') {
-            sel.innerHTML = `<option value="${userDeptId}" selected>${escapeHtml(userDeptName)}</option>`;
-            const container = sel.closest('div');
-            if (container) container.classList.add('hidden');
-            // Immediately update the button label
-            updateAssignQueueButton();
-            return;
-        }
-
-        let opts = '<option value="">Select department</option>';
-        data.filter(d => {
-            const name = (d.department_name || '').trim();
-            // Exclude Admin
-            if (name.toLowerCase() === 'admin') return false;
-            
-            // Admins can see all
-            if (role === 'admin') return true;
-
-            // Non-finance staff cannot register for finance departments
-            return d.is_finance != 1;
-        }).forEach(d=> opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`);
-        
-        sel.innerHTML = opts;
-    }).catch(err => console.error("Error loading departments:", err));
-}
-
-/** Fetches the next patient number for the selected department and updates the assign-queue button label. */
-function updateAssignQueueButton(){
-    const btn = document.getElementById('assign_queue_btn');
-    const deptSelect = document.getElementById('patient_dept');
-    if(!btn) return;
-    const deptId = deptSelect && deptSelect.value ? deptSelect.value : '';
-    if(!deptId){
-        btn.textContent = 'Assign queue: Select department';
-        return;
-    }
-    fetch('../../api/patient/next_number.php?department_id=' + encodeURIComponent(deptId))
-        .then(r => r.json())
-        .then(d => {
-            const n = d && d.next_number != null ? String(d.next_number) : null;
-            btn.textContent = n ? 'Assign queue: ' + n : 'Assign queue: Select department';
-        })
-        .catch(() => {
-            btn.textContent = 'Assign queue: ?';
-        });
-}
-
-/** Registers a new patient (department required, patient_number auto-generated) via create.php. */
-function registerPatientManaged(){
-    const dept = document.getElementById('patient_dept').value;
-    if(!dept){ setRegisterMsg('Department required'); return; }
-
-    const f = new FormData();
-    f.append('department_id', dept);
-    fetch('../../api/patient/create.php',{method:'POST',body:f})
-    .then(r=>r.json())
-    .then(d=>{
-        if(d.status === 'success'){
-            setRegisterMsg('Registered: ' + d.patient_number);
-            loadPatients();
-            updateAssignQueueButton();
-        } else {
-            setRegisterMsg(d.message || 'Registration failed');
-        }
-    })
-    .catch(()=>{
-        setRegisterMsg('Registration failed');
-    });
 }
 
 /** Fetches patient list; renders table with transfer/delete buttons. */
@@ -201,23 +98,25 @@ function startEditPatient(ev){
                 headers:{'Content-Type':'application/x-www-form-urlencoded'},
                 body:fBody
             })
-            .then(r=>r.json())
-            .then(()=> {
+            .then(r => r.json())
+            .then(d => {
                 isEditingPatient = false;
-                loadPatients();
-                updateAssignQueueButton();
-                setRegisterMsg('');
+                if(d && d.status === 'success') {
+                    loadPatients();
+                } else {
+                    alert(d.message || 'Update failed');
+                    loadPatients();
+                }
             })
-            .catch(()=>{ 
+            .catch(err => { 
+                console.error('Update error:', err);
                 alert('Update failed'); 
                 isEditingPatient = false;
                 loadPatients();
-                updateAssignQueueButton();
             });
         } else {
             isEditingPatient = false;
             loadPatients();
-            updateAssignQueueButton();
         }
     }
 
@@ -229,7 +128,6 @@ function startEditPatient(ev){
             if (isEditingPatient) {
                 isEditingPatient = false;
                 loadPatients();
-                updateAssignQueueButton();
             }
         }, 200);
     });
@@ -244,14 +142,16 @@ function deletePatientRow(ev){
     if(!confirm('Delete this patient?')) return;
     const f = new FormData(); f.append('patient_id', id);
     fetch('../../api/patient/delete.php',{method:'POST', body: f})
-    .then(r=>r.json())
-    .then(d=>{
+    .then(r => r.json())
+    .then(d => {
         if(d && d.status === 'success'){
             loadPatients();
-            updateAssignQueueButton();
         } else {
             alert(d.message || 'Delete failed');
         }
     })
-    .catch(()=>{ alert('Delete failed'); });
+    .catch(err => { 
+        console.error('Delete error:', err);
+        alert('Delete failed'); 
+    });
 }

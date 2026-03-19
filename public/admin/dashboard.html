@@ -97,7 +97,7 @@
                         <div class="flex items-center pt-6">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="deptIsFinance" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm font-semibold text-gray-700">Financial Service?</span>
+                                <span class="text-sm font-semibold text-gray-700">Financial</span>
                             </label>
                         </div>
                     </div>
@@ -137,15 +137,15 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="label-ios">Department</label>
-                                <select id="deptSelect" class="input-ios appearance-none"></select>
-                            </div>
-                            <div>
                                 <label class="label-ios">Role</label>
-                                <select id="userRole" class="input-ios appearance-none">
+                                <select id="userRole" onchange="toggleUserDeptVisibility()" class="input-ios appearance-none">
                                     <option value="staff">Staff</option>
                                     <option value="admin">Admin</option>
                                 </select>
+                            </div>
+                            <div id="deptSelectContainer">
+                                <label class="label-ios">Department</label>
+                                <select id="deptSelect" class="input-ios appearance-none"></select>
                             </div>
                         </div>
                     </div>

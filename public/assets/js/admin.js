@@ -2,6 +2,8 @@
  * Admin Dashboard: department and user CRUD. Loads departments (table + dropdown)
  * and users on DOMContentLoaded. Used by: public/admin/dashboard.html.
  */
+let departmentsData = [];
+
 document.addEventListener("DOMContentLoaded", function() {
     checkDailyFlush();
     loadDepartments();
@@ -82,6 +84,7 @@ function loadDepartments(){
     .then(r=>r.json())
     .then(data=>{
         if (!Array.isArray(data)) return;
+        departmentsData = data; // Store globally for user creation logic
         var options="";
         var html="<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Type</th><th class='text-center'>Actions</th></tr></thead><tbody>";
         data.forEach(function(d){
@@ -99,7 +102,10 @@ function loadDepartments(){
                     "<button type=\"button\" class=\"delete-dept-btn btn-ios-danger !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg><span>Delete</span></button>"+
                 "</td>"+
                 "</tr>";
-            options+="<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
+            // Do not add 'Admin' department to the dropdown for user creation
+            if ((d.department_name || "").trim().toLowerCase() !== "admin") {
+                options+="<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
+            }
         });
         html += "</tbody>";
         el.innerHTML=html;
@@ -329,6 +335,9 @@ function startEditUser(ev){
         .then(function(depts){
             let opts = '<option value="0">None</option>';
             depts.forEach(function(d){
+                // Do not show 'Admin' department in the edit dropdown
+                if ((d.department_name || "").trim().toLowerCase() === "admin") return;
+                
                 const selAttr=String(d.department_id)===String(departmentId)?" selected":"";
                 opts+="<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
             });
@@ -357,6 +366,8 @@ function startEditUser(ev){
 
     usernameInput.addEventListener("keydown", e => e.key === "Enter" && save());
     passwordInput.addEventListener("keydown", e => e.key === "Enter" && save());
+    deptSelect.addEventListener("keydown", e => e.key === "Enter" && save());
+    roleSelect.addEventListener("keydown", e => e.key === "Enter" && save());
 }
 
 function deleteUserRow(ev){
@@ -373,12 +384,23 @@ function deleteUserRow(ev){
 function addUser(){
     const username = document.getElementById("userUsername").value.trim();
     const password = document.getElementById("userPassword").value.trim();
-    const deptId = document.getElementById("deptSelect").value;
     const role = document.getElementById("userRole").value;
+    let deptId = document.getElementById("deptSelect").value;
 
     if(!username || !password) {
         alert("Username and Password are required.");
         return;
+    }
+
+    // If role is admin, automatically assign to 'Admin' department
+    if (role === "admin") {
+        const adminDept = departmentsData.find(d => (d.department_name || "").trim().toLowerCase() === "admin");
+        if (adminDept) {
+            deptId = adminDept.department_id;
+        } else {
+            alert("Critical Error: 'Admin' department not found in database. Please create it first.");
+            return;
+        }
     }
 
     const f=new FormData();
@@ -398,4 +420,17 @@ function addUser(){
             alert(d.message || "Error creating user");
         }
     });
+}
+
+/** Toggles department selector visibility based on selected role. */
+function toggleUserDeptVisibility() {
+    const role = document.getElementById("userRole").value;
+    const container = document.getElementById("deptSelectContainer");
+    if (!container) return;
+    
+    if (role === "admin") {
+        container.classList.add("hidden");
+    } else {
+        container.classList.remove("hidden");
+    }
 }

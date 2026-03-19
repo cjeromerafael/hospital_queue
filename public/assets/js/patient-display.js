@@ -60,7 +60,7 @@ function loadQueue(){
         if(!tbody) return;
 
         if(rows.length === 0){
-            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-300 font-medium">No one waiting</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-gray-300 font-medium">No active queue.</td></tr>';
             return;
         }
 
@@ -150,7 +150,7 @@ function updateFinanceQueuesDisplay(data){
     if(!container) return;
 
     if(!Array.isArray(data) || data.length === 0){
-        container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 font-medium italic text-sm">No active finance queues</div>';
+        container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 font-medium italic text-sm">No active finance queues.</div>';
         return;
     }
 
@@ -184,8 +184,8 @@ function updateFinanceQueuesDisplay(data){
                 <div class="flex items-center justify-between">
                     <h4 class="text-sm font-bold text-gray-600 truncate mr-2" title="${escapeHtml(deptName)}">${escapeHtml(deptName)}</h4>
                     <div class="text-right flex-none">
-                        <span class="text-2xl font-black text-red-600">${current ? '#' + escapeHtml(String(current.queue_number)) : 'None'}</span>
-                        ${current ? `<div class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${escapeHtml(String(current.patient_number || ''))}</div>` : ''}
+                        <span class="text-3xl font-black text-red-600 leading-none">${current ? '#' + escapeHtml(String(current.queue_number)) : 'None'}</span>
+                        ${current ? `<div class="text-sm font-black text-gray-700 uppercase tracking-tighter mt-1">${escapeHtml(String(current.patient_number || ''))}</div>` : ''}
                     </div>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2">
@@ -193,9 +193,9 @@ function updateFinanceQueuesDisplay(data){
                         ? '<div class="text-sm text-gray-400 italic">No one waiting</div>' 
                         : `<div class="flex flex-wrap gap-2">
                             ${waiting.slice(0, 5).map(w => `
-                                <div class="bg-white border border-gray-100 px-2 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2">
+                                <div class="bg-white border border-gray-100 px-3 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2">
                                     <span class="text-red-600">#${escapeHtml(String(w.queue_number))}</span>
-                                    <span class="text-gray-400 text-xs font-medium border-l border-gray-100 pl-2">${escapeHtml(String(w.patient_number || ''))}</span>
+                                    <span class="text-gray-800 text-sm font-black border-l border-gray-200 pl-2 leading-none">${escapeHtml(String(w.patient_number || ''))}</span>
                                 </div>
                             `).join('')}
                             ${waiting.length > 5 ? `<div class="text-[10px] font-bold text-gray-400 pt-2">+${waiting.length - 5} more</div>` : ''}

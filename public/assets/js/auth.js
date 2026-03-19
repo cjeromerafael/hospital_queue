@@ -44,3 +44,20 @@ function login(){
         document.getElementById("msg").innerText = "Login failed. Please try again.";
     });
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    if (usernameInput) {
+        usernameInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") login();
+        });
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") login();
+        });
+    }
+});
