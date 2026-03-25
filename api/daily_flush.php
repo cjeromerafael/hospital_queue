@@ -17,6 +17,12 @@ $events_dir = __DIR__ . '/queue/events';
 function runFlush($conn, $flush_date_file, $events_dir) {
     $conn->query("DELETE FROM queueing");
     $conn->query("DELETE FROM patient");
+
+    // v2 queue_state (number-only) is optional; clear it if present.
+    $qs = $conn->query("SHOW TABLES LIKE 'queue_state'");
+    if ($qs && $qs->num_rows > 0) {
+        $conn->query("DELETE FROM queue_state");
+    }
     if (is_dir($events_dir)) {
         foreach (glob($events_dir . '/event_*.json') as $f) {
             @unlink($f);

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard (v2)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .ios-card {
+            background: rgba(255,255,255,0.94);
+            border:1px solid rgba(233,239,255,1);
+            border-radius: 0.9rem;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+        }
+        .dept-card {
+            display:flex;
+            flex-direction:column;
+            gap:0.75rem;
+            padding: 1rem;
+            min-height: 240px;
+        }
+        .queue-number {
+            font-weight: 900;
+            font-size: clamp(3rem, 4.5vw, 4.5rem);
+            line-height: 0.95;
+            letter-spacing: -0.02em;
+        }
+        .btn-ios {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border:none;
+            border-radius:999px;
+            padding:.55rem .85rem;
+            font-weight:700;
+            font-size:.9rem;
+            cursor:pointer;
+            transition:.2s ease;
+            white-space:nowrap;
+            user-select:none;
+        }
+        .btn-ios-primary { background:#3b82f6; color:white; box-shadow:0 6px 16px rgba(59,130,246,0.24); }
+        .btn-ios-primary:hover { background:#2563eb; }
+        .btn-ios-danger { background:#ef4444; color:white; box-shadow:0 6px 16px rgba(239,68,68,0.20); }
+        .btn-ios-danger:hover { background:#dc2626; }
+        .btn-ios-secondary { background:#f3f4f6; color:#111827; }
+        .btn-ios-secondary:hover { background:#e5e7eb; }
+        .btn-ios:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8 overflow-hidden">
+    <div class="max-w-[1400px] mx-auto flex flex-col gap-5">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="space-y-1">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Queue Control (v2)</h1>
+                <p id="userInfoDisplay" class="text-gray-600 font-semibold">Loading user...</p>
+            </div>
+            <div class="ios-card px-5 py-3">
+                <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Current Date</div>
+                <div id="currentDateDisplay" class="text-2xl font-black text-blue-600 leading-tight">Loading...</div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto">
+            <div id="deptGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+        </div>
+
+        <p class="text-xs text-gray-500">
+            Tip: Use <span class="font-bold">Reset</span> per department to return it back to queue #0.
+        </p>
+    </div>
+
+    <script src="../assets/js/staff_v2.js"></script>
+</body>
+</html>
+

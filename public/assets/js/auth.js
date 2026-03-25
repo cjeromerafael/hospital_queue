@@ -19,7 +19,19 @@ function login(){
         method: "POST",
         body: form
     })
-    .then(res => res.json())
+    .then(async res => {
+        // The endpoint should return JSON, but if PHP fatals we may get an empty body.
+        const text = await res.text();
+        if (!text) {
+            throw new Error(`Login failed with HTTP ${res.status} (empty response).`);
+        }
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            // Helpful when the backend returns HTML.
+            throw new Error(`Login failed: backend returned non-JSON response.`);
+        }
+    })
     .then(data => {
 
         if(data.status === "success"){
@@ -41,7 +53,7 @@ function login(){
     })
     .catch(err => {
         console.error("Login error:", err);
-        document.getElementById("msg").innerText = "Login failed. Please try again.";
+        document.getElementById("msg").innerText = err.message || "Login failed. Please try again.";
     });
 }
 

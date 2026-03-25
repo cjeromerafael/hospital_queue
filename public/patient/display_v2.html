@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Display (v2)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        .ios-card {
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(233,239,255,1);
+            border-radius: 0.9rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+        }
+        .display-card {
+            padding: 1rem;
+            display:flex;
+            flex-direction:column;
+            gap: 0.6rem;
+            min-height: 180px;
+        }
+        .display-number {
+            font-weight: 900;
+            font-size: clamp(3.2rem, 4.8vw, 5.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.02em;
+            color: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8">
+    <div class="fixed top-6 right-6 z-50 ios-card px-5 py-3">
+        <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
+        <div id="displayDateTime" class="text-xl font-black text-gray-900 leading-tight">--:--</div>
+    </div>
+
+    <div class="h-full">
+        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2"></div>
+    </div>
+
+    <script src="../assets/js/patient-display_v2.js"></script>
+</body>
+</html>
+
