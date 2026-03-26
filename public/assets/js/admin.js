@@ -8,14 +8,29 @@ document.addEventListener("DOMContentLoaded", function() {
     checkDailyFlush();
     loadDepartments();
     loadUsers();
-    
-    // Display logged-in admin info
+
     const username = localStorage.getItem("username") || "Admin";
     const userInfoEl = document.getElementById("userInfoDisplay");
     if (userInfoEl) {
         userInfoEl.textContent = `Logged in as: ${username} (Administrator)`;
     }
 });
+
+/**
+ * Sanitizes a color value to a valid lowercase 6-digit hex string.
+ * Accepts #rrggbb or #rgb only. Anything else falls back to #3b82f6.
+ * Does NOT use canvas — avoids rgb() conversion bugs across browsers.
+ */
+function normalizeHex(color) {
+    if (!color || typeof color !== "string") return "#3b82f6";
+    const t = color.trim().toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(t)) return t;
+    // Expand 3-digit shorthand → 6-digit
+    if (/^#[0-9a-f]{3}$/.test(t)) {
+        return "#" + t[1]+t[1]+t[2]+t[2]+t[3]+t[3];
+    }
+    return "#3b82f6";
+}
 
 /** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
 function checkDailyFlush() {
@@ -36,7 +51,7 @@ function checkDailyFlush() {
 /** Manual flush for admins. Wipes all data to start the day. */
 function manualFlush() {
     if (!confirm("Are you SURE you want to flush all patient and queue data? This cannot be undone!")) return;
-    
+
     const userId = localStorage.getItem("user_id") || "";
     const f = new FormData();
     f.append("manual", "1");
@@ -77,95 +92,94 @@ function logout() {
 }
 
 /** Fetches departments; fills deptTable and deptSelect; wires edit/delete. */
-function loadDepartments(){
+function loadDepartments() {
     var el = document.getElementById("deptTable");
     if (!el) return;
     fetch("../../api/admin/departments.php")
-    .then(r=>r.json())
-    .then(data=>{
+    .then(r => r.json())
+    .then(data => {
         if (!Array.isArray(data)) return;
-        departmentsData = data; // Store globally for user creation logic
-        var options="";
-        var html="<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Type</th><th class='text-center'>Actions</th></tr></thead><tbody>";
-        data.forEach(function(d){
-            const typePill = d.is_finance == 1 
-                ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>" 
+        departmentsData = data;
+        var options = "";
+        var html = "<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Color</th><th class='text-center'>Type</th><th class='text-center'>Actions</th></tr></thead><tbody>";
+        data.forEach(function(d) {
+            const typePill = d.is_finance == 1
+                ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>"
                 : "<span class='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100'>Medical</span>";
-            
-            html+="<tr data-department-id=\""+d.department_id+"\" data-is-finance=\""+d.is_finance+"\" class='hover:bg-gray-50/50 transition-colors'>"+
+            const deptColor = normalizeHex(d.department_color);
+
+            html += "<tr data-department-id=\""+d.department_id+"\" data-is-finance=\""+d.is_finance+"\" data-dept-color=\""+deptColor+"\" class='hover:bg-gray-50/50 transition-colors'>"+
                 "<td>"+d.department_id+"</td>"+
                 "<td class=\"dept-name-cell font-medium\">"+escapeHtml(d.department_name)+"</td>"+
                 "<td class=\"dept-code-cell\"><span class='bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold'>"+escapeHtml(d.department_code||"")+"</span></td>"+
+                "<td class=\"dept-color-cell text-center\"><div style='width:32px; height:32px; background-color:"+deptColor+"; border-radius:0.5rem; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin:0 auto;'></div></td>"+
                 "<td class=\"dept-finance-cell text-center\">"+typePill+"</td>"+
                 "<td class='flex justify-center gap-2'>"+
                     "<button type=\"button\" class=\"edit-dept-btn btn-ios-secondary !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z' /></svg><span>Edit</span></button>"+
                     "<button type=\"button\" class=\"delete-dept-btn btn-ios-danger !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg><span>Delete</span></button>"+
                 "</td>"+
                 "</tr>";
-            // Do not add 'Admin' department to the dropdown for user creation
             if ((d.department_name || "").trim().toLowerCase() !== "admin") {
-                options+="<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
+                options += "<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
             }
         });
         html += "</tbody>";
-        el.innerHTML=html;
-        document.getElementById("deptSelect").innerHTML='<option value="0">None</option>' + options;
-        html += "</tbody>";
-        el.innerHTML=html;
-        document.getElementById("deptSelect").innerHTML=options;
-        el.querySelectorAll(".edit-dept-btn").forEach(function(btn){
+        el.innerHTML = html;
+        document.getElementById("deptSelect").innerHTML = '<option value="0">None</option>' + options;
+        el.querySelectorAll(".edit-dept-btn").forEach(function(btn) {
             btn.addEventListener("click", startEditDepartment);
         });
-        el.querySelectorAll(".delete-dept-btn").forEach(function(btn){
+        el.querySelectorAll(".delete-dept-btn").forEach(function(btn) {
             btn.addEventListener("click", deleteDepartmentRow);
         });
     })
-    .catch(function(){ el.innerHTML="<tr><td colspan=\"4\" class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
+    .catch(function() { el.innerHTML = "<tr><td colspan=\"6\" class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
 }
 
 /** Escape HTML for safe display (XSS). */
-function escapeHtml(s){
-    const div=document.createElement("div");
-    div.textContent=s;
+function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
     return div.innerHTML;
 }
 
-function startEditDepartment(ev){
-    const btn=ev.target;
-    const row=btn.closest("tr");
-    const id=row.dataset.departmentId;
-    const nameCell=row.querySelector(".dept-name-cell");
-    const codeCell=row.querySelector(".dept-code-cell");
-    const financeCell=row.querySelector(".dept-finance-cell");
-    const existingInput=nameCell.querySelector("input.inline-edit-input");
-    if(existingInput){
+function startEditDepartment(ev) {
+    const btn = ev.target.closest("button");
+    const row = btn.closest("tr");
+    const id = row.dataset.departmentId;
+    const nameCell = row.querySelector(".dept-name-cell");
+    const codeCell = row.querySelector(".dept-code-cell");
+    const financeCell = row.querySelector(".dept-finance-cell");
+    const colorCell = row.querySelector(".dept-color-cell");
+    const actionsCell = row.querySelector("td:last-child");
+    const existingInput = nameCell.querySelector("input.inline-edit-input");
+    if (existingInput) {
         loadDepartments();
         return;
     }
-    const currentName=nameCell.textContent;
-    const currentCode=codeCell ? codeCell.querySelector('span').textContent : "";
+    const currentName = nameCell.textContent;
+    const currentCode = codeCell ? codeCell.querySelector('span').textContent : "";
     const currentIsFinance = row.dataset.isFinance == "1";
-    
-    row.dataset.editOriginalName=currentName;
-    row.dataset.editOriginalCode=currentCode;
-    
-    const input=document.createElement("input");
-    input.type="text";
-    input.value=currentName;
-    input.className="input-ios inline-edit-input !px-3 !py-2 !text-sm";
-    input.placeholder="Name";
-    nameCell.textContent="";
+    // normalizeHex ensures colorInput.value always gets a valid #rrggbb string
+    const currentColor = normalizeHex(row.dataset.deptColor);
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = currentName;
+    input.className = "input-ios inline-edit-input !px-3 !py-2 !text-sm";
+    input.placeholder = "Name";
+    nameCell.textContent = "";
     nameCell.appendChild(input);
-    
-    const codeInput=document.createElement("input");
-    codeInput.type="text";
-    codeInput.value=currentCode;
-    codeInput.className="input-ios !px-3 !py-2 !text-sm uppercase";
-    codeInput.placeholder="Code";
-    codeInput.maxLength=3;
-    codeInput.style.width="5em";
-    if(codeCell){
-        codeCell.textContent="";
+
+    const codeInput = document.createElement("input");
+    codeInput.type = "text";
+    codeInput.value = currentCode;
+    codeInput.className = "input-ios !px-3 !py-2 !text-sm uppercase";
+    codeInput.placeholder = "Code";
+    codeInput.maxLength = 3;
+    codeInput.style.width = "5em";
+    if (codeCell) {
+        codeCell.textContent = "";
         codeCell.appendChild(codeInput);
     }
 
@@ -173,59 +187,104 @@ function startEditDepartment(ev){
     financeCheck.type = "checkbox";
     financeCheck.checked = currentIsFinance;
     financeCheck.className = "w-4 h-4";
-    if(financeCell){
+    if (financeCell) {
         financeCell.textContent = "";
         financeCell.appendChild(financeCheck);
     }
 
-    input.focus();
-    function save(){
-        const newName=input.value.trim();
-        if(!newName) return;
-        const newCode=(codeInput&&codeInput.value.trim()!=="") ? codeInput.value.trim().toUpperCase().substring(0,3) : "";
+    let colorInput = null;
+    if (colorCell) {
+        colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = currentColor; // always a valid #rrggbb thanks to normalizeHex
+        colorInput.style = "width:60px; height:40px; min-width:60px; min-height:40px; cursor:pointer; border:1px solid #e2e8f0; border-radius:0.5rem; padding:0;";
+        colorCell.textContent = "";
+        colorCell.appendChild(colorInput);
+    }
+
+    function save() {
+        const newName = input.value.trim();
+        if (!newName) return;
+        const newCode = (codeInput && codeInput.value.trim() !== "") ? codeInput.value.trim().toUpperCase().substring(0, 3) : "";
         const isFinance = financeCheck.checked ? 1 : 0;
-        fetch("../../api/admin/departments.php",{
-            method:"PUT",
-            headers:{"Content-Type":"application/x-www-form-urlencoded"},
-            body:`department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}&is_finance=${isFinance}`
-        }).then(()=>loadDepartments());
+        // normalizeHex on save guarantees a clean hex goes to the DB
+        const newColor = normalizeHex(colorInput ? colorInput.value : "#3b82f6");
+        fetch("../../api/admin/departments.php", {
+            method: "PUT",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}&is_finance=${isFinance}&department_color=${encodeURIComponent(newColor)}`
+        }).then(() => loadDepartments());
     }
-    input.addEventListener("keydown", function(e){
-        if(e.key==="Enter") save();
-    });
-    if(codeInput) codeInput.addEventListener("keydown", function(e){
-        if(e.key==="Enter") save();
-    });
+
+    function cancel() {
+        loadDepartments();
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === "Enter") save();
+    }
+    input.addEventListener("keydown", handleKeyDown);
+    if (codeInput) codeInput.addEventListener("keydown", handleKeyDown);
+
+    if (actionsCell) {
+        actionsCell.innerHTML = '';
+        const saveBtn = document.createElement("button");
+        saveBtn.type = "button";
+        saveBtn.className = "btn-ios btn-ios-primary !px-4 !py-2";
+        saveBtn.textContent = "Save";
+        saveBtn.addEventListener("click", save);
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "btn-ios btn-ios-secondary !px-4 !py-2";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", cancel);
+
+        actionsCell.className = "flex justify-center gap-2";
+        actionsCell.appendChild(saveBtn);
+        actionsCell.appendChild(cancelBtn);
+    }
+
+    input.focus();
 }
 
-function deleteDepartmentRow(ev){
-    const row=ev.target.closest("tr");
-    const id=row.dataset.departmentId;
-    if(!confirm("Delete this department?")) return;
-    fetch("../../api/admin/departments.php",{
-        method:"DELETE",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`department_id=${encodeURIComponent(id)}`
-    }).then(()=>loadDepartments());
+function deleteDepartmentRow(ev) {
+    const row = ev.target.closest("tr");
+    const id = row.dataset.departmentId;
+    if (!confirm("Delete this department?")) return;
+    fetch("../../api/admin/departments.php", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `department_id=${encodeURIComponent(id)}`
+    }).then(() => loadDepartments());
 }
 
-function addDepartment(){
-    const nameEl=document.getElementById("deptName");
-    const codeEl=document.getElementById("deptCode");
-    const isFinanceEl=document.getElementById("deptIsFinance");
-    const name=nameEl&&nameEl.value ? nameEl.value.trim() : "";
-    if(!name) return;
-    const f=new FormData();
-    f.append("department_name",name);
+function addDepartment() {
+    const nameEl = document.getElementById("deptName");
+    const codeEl = document.getElementById("deptCode");
+    const colorEl = document.getElementById("deptColor");
+    const isFinanceEl = document.getElementById("deptIsFinance");
+    const name = nameEl && nameEl.value ? nameEl.value.trim() : "";
+    if (!name) return;
+    const f = new FormData();
+    f.append("department_name", name);
     f.append("is_finance", isFinanceEl && isFinanceEl.checked ? 1 : 0);
-    if(codeEl&&codeEl.value.trim()!=="") {
-        f.append("department_code",codeEl.value.trim().toUpperCase().substring(0,3));
+    // normalizeHex ensures the color picker value is always a valid hex before POSTing
+    f.append("department_color", normalizeHex(colorEl ? colorEl.value : "#3b82f6"));
+    if (codeEl && codeEl.value.trim() !== "") {
+        f.append("department_code", codeEl.value.trim().toUpperCase().substring(0, 3));
     }
-    fetch("../../api/admin/departments.php",{method:"POST",body:f})
-    .then(()=>loadDepartments());
+    fetch("../../api/admin/departments.php", { method: "POST", body: f })
+    .then(() => {
+        nameEl.value = "";
+        codeEl.value = "";
+        colorEl.value = "#3b82f6";
+        isFinanceEl.checked = false;
+        loadDepartments();
+    });
 }
 
-/** Sets up dashboard visibility based on user department. */
+/** Toggles password field visibility. */
 function togglePasswordVisibility(id) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -233,16 +292,16 @@ function togglePasswordVisibility(id) {
 }
 
 /** Fetches users (with department name); fills userTable; wires edit/delete. */
-function loadUsers(){
+function loadUsers() {
     var el = document.getElementById("userTable");
     if (!el) return;
     fetch("../../api/admin/users.php")
-    .then(r=>r.json())
-    .then(data=>{
+    .then(r => r.json())
+    .then(data => {
         if (!Array.isArray(data)) return;
-        var html="<thead><tr><th>ID</th><th>Username</th><th>Department</th><th>Role</th><th>Password</th><th class='text-center'>Actions</th></tr></thead><tbody>";
-        data.forEach(function(u){
-            html+="<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\" data-username=\""+escapeHtml(u.username)+"\" data-role=\""+u.role+"\" class='hover:bg-gray-50/50 transition-colors'>"+
+        var html = "<thead><tr><th>ID</th><th>Username</th><th>Department</th><th>Role</th><th>Password</th><th class='text-center'>Actions</th></tr></thead><tbody>";
+        data.forEach(function(u) {
+            html += "<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\" data-username=\""+escapeHtml(u.username)+"\" data-role=\""+u.role+"\" class='hover:bg-gray-50/50 transition-colors'>"+
                 "<td class='text-gray-400 font-mono text-xs'>"+u.user_id+"</td>"+
                 "<td class=\"user-username-cell font-bold text-gray-900\">"+escapeHtml(u.username)+"</td>"+
                 "<td class=\"user-dept-cell\"><span class='bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold'>"+escapeHtml(u.department_name||"None")+"</span></td>"+
@@ -255,55 +314,53 @@ function loadUsers(){
                 "</tr>";
         });
         html += "</tbody>";
-        el.innerHTML=html;
-        el.querySelectorAll(".edit-user-btn").forEach(function(btn){
+        el.innerHTML = html;
+        el.querySelectorAll(".edit-user-btn").forEach(function(btn) {
             btn.addEventListener("click", startEditUser);
         });
-        el.querySelectorAll(".delete-user-btn").forEach(function(btn){
+        el.querySelectorAll(".delete-user-btn").forEach(function(btn) {
             btn.addEventListener("click", deleteUserRow);
         });
     })
-    .catch(function(err){ 
+    .catch(function(err) {
         console.error("Error loading users:", err);
-        el.innerHTML="<tr><td colspan=\"6\" class='p-8 text-center text-gray-400'>Could not load users.</td></tr>"; 
+        el.innerHTML = "<tr><td colspan=\"6\" class='p-8 text-center text-gray-400'>Could not load users.</td></tr>";
     });
 }
 
-function startEditUser(ev){
-    const btn=ev.target;
-    const row=btn.closest("tr");
-    const userId=row.dataset.userId;
-    const departmentId=row.dataset.departmentId;
+function startEditUser(ev) {
+    const btn = ev.target;
+    const row = btn.closest("tr");
+    const userId = row.dataset.userId;
+    const departmentId = row.dataset.departmentId;
     const username = row.dataset.username;
     const role = row.dataset.role;
 
-    const usernameCell=row.querySelector(".user-username-cell");
-    const deptCell=row.querySelector(".user-dept-cell");
-    const roleCell=row.querySelector(".user-role-cell");
-    const passwordCell=row.querySelector(".user-password-cell");
+    const usernameCell = row.querySelector(".user-username-cell");
+    const deptCell = row.querySelector(".user-dept-cell");
+    const roleCell = row.querySelector(".user-role-cell");
+    const passwordCell = row.querySelector(".user-password-cell");
 
-    if(usernameCell.querySelector("input")){
+    if (usernameCell.querySelector("input")) {
         loadUsers();
         return;
     }
 
-    // Inline edit for Username
     const usernameInput = document.createElement("input");
     usernameInput.value = username;
     usernameInput.className = "input-ios !px-3 !py-2 !text-sm";
     usernameCell.textContent = "";
     usernameCell.appendChild(usernameInput);
 
-    // Inline edit for Password
     const passwordContainer = document.createElement("div");
     passwordContainer.className = "relative flex items-center";
-    
+
     const passwordInput = document.createElement("input");
     passwordInput.type = "password";
     passwordInput.placeholder = "New Password";
     passwordInput.className = "input-ios !px-3 !py-2 !text-sm pr-8";
     passwordInput.style.flex = "1";
-    
+
     const toggleIcon = document.createElement("span");
     toggleIcon.innerHTML = "&#128065;";
     toggleIcon.className = "absolute right-2 cursor-pointer select-none text-sm";
@@ -316,13 +373,11 @@ function startEditUser(ev){
     passwordContainer.appendChild(toggleIcon);
     passwordCell.appendChild(passwordContainer);
 
-    // Inline edit for Department
     const deptSelect = document.createElement("select");
     deptSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
     deptCell.textContent = "";
     deptCell.appendChild(deptSelect);
 
-    // Inline edit for Role
     const roleSelect = document.createElement("select");
     roleSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
     roleSelect.innerHTML = '<option value="staff">Staff</option><option value="admin">Admin</option>';
@@ -331,37 +386,34 @@ function startEditUser(ev){
     roleCell.appendChild(roleSelect);
 
     fetch("../../api/admin/departments.php")
-        .then(r=>r.json())
-        .then(function(depts){
+        .then(r => r.json())
+        .then(function(depts) {
             let opts = '<option value="0">None</option>';
-            depts.forEach(function(d){
-                // Do not show 'Admin' department in the edit dropdown
+            depts.forEach(function(d) {
                 if ((d.department_name || "").trim().toLowerCase() === "admin") return;
-                
-                const selAttr=String(d.department_id)===String(departmentId)?" selected":"";
-                opts+="<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
+                const selAttr = String(d.department_id) === String(departmentId) ? " selected" : "";
+                opts += "<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
             });
-            deptSelect.innerHTML=opts;
+            deptSelect.innerHTML = opts;
         });
 
-    function save(){
+    function save() {
         const newUsername = usernameInput.value.trim();
         const newPassword = passwordInput.value.trim();
         const newDeptId = deptSelect.value;
         const newRole = roleSelect.value;
-
-        if(!newUsername) return;
+        if (!newUsername) return;
 
         let body = `user_id=${encodeURIComponent(userId)}&username=${encodeURIComponent(newUsername)}&department_id=${encodeURIComponent(newDeptId)}&role=${encodeURIComponent(newRole)}`;
-        if(newPassword) {
+        if (newPassword) {
             body += `&password=${encodeURIComponent(newPassword)}`;
         }
 
-        fetch("../../api/admin/users.php",{
-            method:"PUT",
-            headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        fetch("../../api/admin/users.php", {
+            method: "PUT",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: body
-        }).then(()=>loadUsers());
+        }).then(() => loadUsers());
     }
 
     usernameInput.addEventListener("keydown", e => e.key === "Enter" && save());
@@ -370,29 +422,28 @@ function startEditUser(ev){
     roleSelect.addEventListener("keydown", e => e.key === "Enter" && save());
 }
 
-function deleteUserRow(ev){
-    const row=ev.target.closest("tr");
-    const id=row.dataset.userId;
-    if(!confirm("Delete this user?")) return;
-    fetch("../../api/admin/users.php",{
-        method:"DELETE",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`user_id=${encodeURIComponent(id)}`
-    }).then(()=>loadUsers());
+function deleteUserRow(ev) {
+    const row = ev.target.closest("tr");
+    const id = row.dataset.userId;
+    if (!confirm("Delete this user?")) return;
+    fetch("../../api/admin/users.php", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `user_id=${encodeURIComponent(id)}`
+    }).then(() => loadUsers());
 }
 
-function addUser(){
+function addUser() {
     const username = document.getElementById("userUsername").value.trim();
     const password = document.getElementById("userPassword").value.trim();
     const role = document.getElementById("userRole").value;
     let deptId = document.getElementById("deptSelect").value;
 
-    if(!username || !password) {
+    if (!username || !password) {
         alert("Username and Password are required.");
         return;
     }
 
-    // If role is admin, automatically assign to 'Admin' department
     if (role === "admin") {
         const adminDept = departmentsData.find(d => (d.department_name || "").trim().toLowerCase() === "admin");
         if (adminDept) {
@@ -403,16 +454,16 @@ function addUser(){
         }
     }
 
-    const f=new FormData();
+    const f = new FormData();
     f.append("username", username);
     f.append("password", password);
     f.append("department_id", deptId);
     f.append("role", role);
 
-    fetch("../../api/admin/users.php",{method:"POST",body:f})
+    fetch("../../api/admin/users.php", { method: "POST", body: f })
     .then(r => r.json())
     .then(d => {
-        if(d.status === "success") {
+        if (d.status === "success") {
             document.getElementById("userUsername").value = "";
             document.getElementById("userPassword").value = "";
             loadUsers();
@@ -427,7 +478,6 @@ function toggleUserDeptVisibility() {
     const role = document.getElementById("userRole").value;
     const container = document.getElementById("deptSelectContainer");
     if (!container) return;
-    
     if (role === "admin") {
         container.classList.add("hidden");
     } else {

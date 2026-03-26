@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const deptIdRaw = localStorage.getItem("department_id");
     const role = localStorage.getItem("role") || "";
     const deptId = parseInt(deptIdRaw || "0", 10);
+    const username = localStorage.getItem("username") || "";
 
     const userInfoDisplay = document.getElementById("userInfoDisplay");
     const currentDateDisplay = document.getElementById("currentDateDisplay");
@@ -17,6 +18,10 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!deptId || !role) {
         if (userInfoDisplay) userInfoDisplay.textContent = "Please log in to access this page.";
         return;
+    }
+
+    if (userInfoDisplay && username) {
+        userInfoDisplay.textContent = `Logged in as: ${username}`;
     }
 
     checkDailyFlush().then(() => {
@@ -75,11 +80,13 @@ async function loadDepartmentsAndRender(userDeptId, role) {
 
         const badgeText = Number(d.is_finance) === 1 ? "FINANCE" : "MAIN";
         const badgeClass = Number(d.is_finance) === 1 ? "bg-red-50 text-red-700 border-red-100" : "bg-blue-50 text-blue-700 border-blue-100";
+        const deptColor = (d.department_color || "#3b82f6").toLowerCase();
 
+        card.style.setProperty('--dept-color', deptColor);
         card.innerHTML = `
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <div class="text-sm font-extrabold text-gray-900 truncate" title="${escapeHtml(d.department_name)}">
+                    <div class="text-sm font-extrabold text-white truncate" title="${escapeHtml(d.department_name)}">
                         ${escapeHtml(d.department_name)}
                     </div>
                 </div>
@@ -88,7 +95,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                 </span>
             </div>
 
-            <div class="queue-number text-blue-700" id="queue_num_${d.department_id}">0</div>
+            <div class="queue-number" id="queue_num_${d.department_id}">0</div>
 
             <div class="flex flex-wrap gap-2 mt-auto">
                 <button

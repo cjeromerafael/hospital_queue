@@ -18,6 +18,17 @@ function ensureDepartmentCodeColumn($conn) {
 }
 
 /**
+ * Ensures the department table has a department_color column. Safe to call repeatedly.
+ * @param mysqli $conn
+ */
+function ensureDepartmentColorColumn($conn) {
+    $check = $conn->query("SHOW COLUMNS FROM department LIKE 'department_color'");
+    if ($check && $check->num_rows === 0) {
+        $conn->query("ALTER TABLE department ADD COLUMN department_color VARCHAR(7) DEFAULT '#3b82f6'");
+    }
+}
+
+/**
  * Returns 3-letter uppercase code for a department. Uses department_code if set,
  * otherwise fallback: first 3 letters of first word of department_name, or D + zero-padded id.
  * @param mysqli $conn

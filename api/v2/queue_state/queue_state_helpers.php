@@ -79,6 +79,7 @@ function loadAllDepartmentsWithCurrentNumbers($conn) {
         SELECT d.department_id,
                d.department_name,
                d.is_finance,
+               d.department_color,
                COALESCE(qs.current_number, 0) AS current_number
         FROM department d
         LEFT JOIN queue_state qs ON qs.department_id = d.department_id

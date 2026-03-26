@@ -4,10 +4,10 @@
  * - Shows only current queue numbers (no waiting lists).
  * - Polls queue_state view every ~1.5s.
  * - Shows live date/time in the top-right corner.
+ * - Infinite marquee for department names longer than 20 characters.
  */
 
 document.addEventListener("DOMContentLoaded", function() {
-    // v2 queue_state should be reset on day rollover.
     checkDailyFlush().finally(() => {
         init();
     });
@@ -17,7 +17,6 @@ async function checkDailyFlush() {
     try {
         await fetch("../../api/daily_flush.php");
     } catch (e) {
-        // Non-fatal.
         console.warn("daily_flush check failed:", e);
     }
 }
@@ -29,7 +28,6 @@ function escapeHtml(s) {
 }
 
 function formatDateTime(d) {
-    // Keep it readable on display screens.
     const date = d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
     const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     return `${date} ${time}`;
@@ -44,12 +42,50 @@ function updateClock() {
 async function init() {
     updateClock();
     setInterval(updateClock, 1000);
-
     await refreshAndRender();
     setInterval(refreshAndRender, 1500);
 }
 
 let renderedDeptIds = new Set();
+
+/**
+ * Builds the inner HTML for a department name cell.
+ *
+ * For SHORT names (≤20 chars): single span, no animation.
+ * For LONG names (>20 chars):  two identical spans side-by-side inside a
+ *   scrolling track. The animation moves the track left by exactly 50%
+ *   (= one copy width), then loops — creating a seamless infinite scroll.
+ *   Duration scales with name length so speed stays constant regardless
+ *   of how long the text is (~0.35s per character, min 8s).
+ */
+function buildNameHTML(name) {
+    const safe = escapeHtml(name);
+    const shouldScroll = name.length > 20;
+
+    if (!shouldScroll) {
+        // Static — single span, no animation overhead
+        return `
+            <div class="dept-name-container">
+                <div class="dept-name-track" style="height:100%; align-items:center;">
+                    <span class="dept-name-text">${safe}</span>
+                </div>
+            </div>`;
+    }
+
+    // Duration scales with character count so scroll speed feels consistent.
+    // Formula: ~0.35s per character, clamped to a minimum of 8s.
+    const duration = Math.max(8, Math.round(name.length * 0.35)) + "s";
+
+    // Two identical copies side-by-side. translateX(-50%) shifts by exactly
+    // one copy, which is seamless because both copies are identical.
+    return `
+        <div class="dept-name-container">
+            <div class="dept-name-track scrolling" style="--marquee-duration: ${duration};">
+                <span class="dept-name-text" aria-hidden="true">${safe}</span>
+                <span class="dept-name-text" aria-hidden="true">${safe}</span>
+            </div>
+        </div>`;
+}
 
 async function refreshAndRender() {
     const grid = document.getElementById("displayGrid");
@@ -60,29 +96,38 @@ async function refreshAndRender() {
     const data = await r.json().catch(() => null);
     if (!Array.isArray(data)) return;
 
-    // If departments set changes (rare), re-render structure.
-    const incomingIds = new Set(data.map(d => String(d.department_id)));
-    if (incomingIds.size !== renderedDeptIds.size || Array.from(incomingIds).some(id => !renderedDeptIds.has(id))) {
+    // Only show departments with an active queue number
+    const filteredData = data.filter(d => Number(d.current_number || 0) > 0);
+
+    const incomingIds = new Set(filteredData.map(d => String(d.department_id)));
+    const setsMatch = incomingIds.size === renderedDeptIds.size &&
+                      Array.from(incomingIds).every(id => renderedDeptIds.has(id));
+
+    if (!setsMatch) {
+        // Department set changed — rebuild all cards
         grid.innerHTML = "";
         renderedDeptIds = incomingIds;
-        data.forEach(d => {
+
+        filteredData.forEach(d => {
             const card = document.createElement("div");
             card.className = "ios-card display-card";
             card.dataset.departmentId = String(d.department_id);
+
+            const deptColor = (d.department_color || "#3b82f6").toLowerCase();
+            card.style.setProperty("--dept-color", deptColor);
+
             card.innerHTML = `
-                <div class="text-sm font-black text-gray-900 truncate" title="${escapeHtml(d.department_name)}">
-                    ${escapeHtml(d.department_name)}
-                </div>
+                ${buildNameHTML(d.department_name || "")}
                 <div class="display-number" id="display_num_${d.department_id}">${Number(d.current_number || 0)}</div>
             `;
             grid.appendChild(card);
         });
     } else {
-        data.forEach(d => {
+        // Same departments — just update the numbers, leave the DOM (and animations) untouched
+        filteredData.forEach(d => {
             const el = document.getElementById(`display_num_${d.department_id}`);
             if (!el) return;
             el.textContent = Number(d.current_number || 0);
         });
     }
 }
-

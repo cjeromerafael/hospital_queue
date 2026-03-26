@@ -21,24 +21,63 @@
             flex-direction:column;
             gap: 0.6rem;
             min-height: 180px;
+            border: 3px solid black;
+            border-radius: 1.2rem;
+            background-color: var(--dept-color, #3b82f6);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+        }
+        .dept-name-container {
+            position: relative;
+            overflow: hidden;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .dept-name-track {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            will-change: transform;
+        }
+        .dept-name-text {
+            display: inline-block;
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 900;
+            color: white;
+            white-space: nowrap;
+            padding-right: 2rem;
+        }
+        .dept-name-track.scrolling {
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
         .display-number {
             font-weight: 900;
             font-size: clamp(3.2rem, 4.8vw, 5.2rem);
             line-height: 0.95;
             letter-spacing: -0.02em;
-            color: #1d4ed8;
+            color: white;
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.6);
+            text-stroke: 2px rgba(255, 255, 255, 0.6);
         }
     </style>
 </head>
 
-<body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8">
+<body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8 flex flex-col">
     <div class="fixed top-6 right-6 z-50 ios-card px-5 py-3">
         <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
         <div id="displayDateTime" class="text-xl font-black text-gray-900 leading-tight">--:--</div>
     </div>
 
-    <div class="h-full">
+    <div class="text-center mb-6">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
+        <p class="text-lg md:text-xl text-gray-600 font-semibold mt-2">Currently serving</p>
+    </div>
+
+    <div class="flex-1 overflow-hidden">
         <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2"></div>
     </div>
 

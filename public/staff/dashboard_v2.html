@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Dashboard (v2)</title>
+    <title>Staff Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -22,17 +22,25 @@
             gap:0.75rem;
             padding: 1rem;
             min-height: 240px;
+            border: 3px solid black;
+            border-radius: 1.2rem;
+            background-color: var(--dept-color, #3b82f6);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
         }
         .queue-number {
             font-weight: 900;
             font-size: clamp(3rem, 4.5vw, 4.5rem);
             line-height: 0.95;
             letter-spacing: -0.02em;
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.6);
+            text-stroke: 2px rgba(255, 255, 255, 0.6);
+            color: white;
         }
         .btn-ios {
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 0.35rem;
             border:none;
             border-radius:999px;
             padding:.55rem .85rem;
@@ -56,16 +64,39 @@
     </style>
 </head>
 
-<body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8 overflow-hidden">
+<body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8">
     <div class="max-w-[1400px] mx-auto flex flex-col gap-5">
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div class="space-y-1">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Queue Control (v2)</h1>
-                <p id="userInfoDisplay" class="text-gray-600 font-semibold">Loading user...</p>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Queue Control</h1>
+                <p id="userInfoDisplay" class="text-gray-600 font-semibold">-</p>
             </div>
-            <div class="ios-card px-5 py-3">
-                <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Current Date</div>
-                <div id="currentDateDisplay" class="text-2xl font-black text-blue-600 leading-tight">Loading...</div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Date display -->
+                <div class="ios-card px-5 py-3">
+                    <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Current Date</div>
+                    <div id="currentDateDisplay" class="text-2xl font-black text-blue-600 leading-tight">Loading...</div>
+                </div>
+
+                <!-- Queue Display button -->
+                <a href="../patient/display_v2.html"
+                   class="btn-ios btn-ios-secondary !px-4 !py-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Queue Display
+                </a>
+
+                <!-- Logout button -->
+                <button onclick="logout()" class="btn-ios btn-ios-danger !px-4 !py-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Logout
+                </button>
             </div>
         </header>
 
@@ -79,6 +110,14 @@
     </div>
 
     <script src="../assets/js/staff_v2.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("department_id");
+            localStorage.removeItem("role");
+            localStorage.removeItem("username");
+            window.location.href = "../index.html";
+        }
+    </script>
 </body>
 </html>
-
