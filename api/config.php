@@ -32,7 +32,7 @@ function decrypt_password($data) {
 }
 // -------------------------------------------------------------
 
-$conn = new mysqli("localhost:3306", "root", "", "hospital_queue");
+$conn = new mysqli("localhost", "root", "", "hospital_queue");
 
 if ($conn->connect_error) {
     echo json_encode([
