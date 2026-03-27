@@ -1,40 +1,85 @@
 <?php
 /**
- * Staff login by user_id. Looks up department and role; returns department_id and department_role
+ * Staff login by username and password. Looks up department and role; returns user info
  * for redirect to admin or staff dashboard. Used by: index.html (auth.js).
+ *
+ * Important: this endpoint must return JSON even when the DB/schema is wrong,
+ * otherwise the frontend fails with "Unexpected token '<' ... is not valid JSON".
  */
+header("Content-Type: application/json");
+ini_set('display_errors', '0'); // Prevent HTML error output from breaking JSON parsing.
+error_reporting(E_ALL);
+
+// Capture any stray output so we can decide what to return to the client.
+ob_start();
+
 require_once("../config.php");
 
-$user_id = $_POST['user_id'] ?? null;
+try {
+    $username = $_POST['username'] ?? null;
+    $password = $_POST['password'] ?? null;
 
-if (!$user_id) {
-    echo json_encode(["status"=>"error","message"=>"User ID required"]);
-    exit;
-}
+    if (!$username || !$password) {
+        ob_end_clean();
+        echo json_encode(["status"=>"error","message"=>"Username and password required"]);
+        exit;
+    }
 
-// get first role of user (simple version)
-$sql = "
-SELECT r.department_id, r.department_role
-FROM role r
-WHERE r.user_id = ?
+    $sql = "
+SELECT user_id, username, password, department_id, role
+FROM user
+WHERE username = ?
 LIMIT 1
 ";
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$res = $stmt->get_result();
+    // Using bind_result() avoids mysqli->get_result() which depends on mysqlnd.
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("DB prepare failed: " . ($conn->error ?: "unknown error"));
+    }
 
-if ($res->num_rows === 0) {
-    echo json_encode(["status"=>"error","message"=>"User not found or no role"]);
-    exit;
+    $stmt->bind_param("s", $username);
+    if (!$stmt->execute()) {
+        throw new Exception("DB execute failed: " . ($stmt->error ?: $conn->error ?: "unknown error"));
+    }
+
+    $stmt->bind_result($user_id, $db_username, $password_hash, $department_id, $role);
+    $fetched = $stmt->fetch();
+
+    if (!$fetched) {
+        ob_end_clean();
+        echo json_encode(["status"=>"error","message"=>"Invalid username or password"]);
+        exit;
+    }
+
+    // Verify password (must be bcrypt hash stored in `user.password`)
+    if (!password_verify($password, $password_hash)) {
+        ob_end_clean();
+        echo json_encode(["status"=>"error","message"=>"Invalid username or password"]);
+        exit;
+    }
+
+    ob_end_clean();
+    echo json_encode([
+        "status" => "success",
+        "user_id" => $user_id,
+        "username" => $db_username,
+        "department_id" => $department_id,
+        "department_role" => $role
+    ]);
+} catch (Throwable $e) {
+    $buffer = ob_get_clean();
+    // Return JSON so the frontend doesn't fail JSON.parse on HTML error pages.
+    // Include a short fragment of any buffered output for debugging.
+    $fragment = '';
+    if (is_string($buffer) && $buffer !== '') {
+        // Use substr() to avoid requiring the optional mbstring extension.
+        $fragment = substr(trim($buffer), 0, 300);
+    }
+
+    echo json_encode([
+        "status" => "error",
+        "message" => "Server error during login: " . $e->getMessage(),
+        "debug" => $fragment
+    ]);
 }
-
-$row = $res->fetch_assoc();
-
-echo json_encode([
-    "status" => "success",
-    "user_id" => $user_id,
-    "department_id" => $row['department_id'],
-    "department_role" => $row['department_role']
-]);

@@ -1,26 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Hospital Queue Login</title>
-<link rel="stylesheet" href="assets/css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Queue Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .ios-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05); }
+    </style>
 </head>
 
-<body>
-<div class="container">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-6 relative overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="fixed inset-0 z-0">
+        <img src="assets/CCH_background.png" alt="Background" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>
+    </div>
 
-<h2>Queueing System Login</h2>
+    <div class="w-full max-w-md bg-white/80 ios-blur ios-shadow border border-white/50 rounded-[2.5rem] p-10 flex flex-col space-y-8 z-10 relative">
+        
+        <div class="text-center space-y-2">
+            <div class="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-200">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 pt-4">Queueing System</h1>
+            <p class="text-gray-500 font-medium">Please sign in to continue</p>
+        </div>
 
-<input id="user_id" placeholder="Enter User ID">
-<button onclick="login()">Login</button>
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label for="username" class="text-[13px] font-semibold text-gray-500 ml-4 uppercase tracking-wider">Username</label>
+                <input id="username" placeholder="Enter username" 
+                    class="w-full bg-gray-100/50 border-none rounded-2xl px-6 py-4 text-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+            </div>
+            
+            <div class="space-y-1">
+                <label for="password" class="text-[13px] font-semibold text-gray-500 ml-4 uppercase tracking-wider">Password</label>
+                <input id="password" type="password" placeholder="Enter password" 
+                    class="w-full bg-gray-100/50 border-none rounded-2xl px-6 py-4 text-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+            </div>
+        </div>
 
-<p id="msg"></p>
+        <div class="space-y-4">
+            <button onclick="login()" 
+                class="w-full bg-blue-500 hover:bg-blue-600 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-lg shadow-lg shadow-blue-200 transition-all">
+                Sign In
+            </button>
+            <p id="msg" class="text-center text-red-500 font-medium min-h-[1.5rem]"></p>
+        </div>
 
-<!-- <div style="margin-top:12px;">
-  <button onclick="window.location.href='patient/index.html'" class="btn-yellow">Patient Access</button>
-</div> -->
+    </div>
 
-</div>
-
-<script src="assets/js/auth.js"></script>
+    <script src="assets/js/auth.js"></script>
 </body>
 </html>

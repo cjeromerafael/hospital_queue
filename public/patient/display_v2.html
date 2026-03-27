@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Display (v2)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        .ios-card {
+            background: rgba(255,255,255,0.92);
+            border: 1px solid rgba(233,239,255,1);
+            border-radius: 0.9rem;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+        }
+        .display-card {
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            height: 260px;
+            border-radius: 1.4rem;
+            background-color: var(--dept-color, #3b82f6);
+            background-image:
+                radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
+                linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.35) inset,
+                0 -1px 0 rgba(0,0,0,0.18) inset,
+                0 2px 4px rgba(0,0,0,0.10),
+                0 8px 16px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255,255,255,0.22);
+            position: relative;
+            overflow: hidden;
+        }
+        .display-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 55%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
+            border-radius: 1.4rem 1.4rem 60% 60% / 1.4rem 1.4rem 40% 40%;
+            pointer-events: none;
+        }
+
+        /* ── Marquee container ── */
+        .dept-name-container {
+            position: relative;
+            overflow: hidden;          /* clips the scrolling text        */
+            height: 2.5rem;
+            /* width is naturally 100% of the card — that's the viewport  */
+        }
+
+        /* Static (short name): just show it left-aligned, no animation */
+        .dept-name-track {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            will-change: transform;
+        }
+
+        /* Scrolling (long name): duplicate spans + CSS custom-property duration */
+        .dept-name-track.scrolling {
+            /* duration is set inline via style="--marquee-duration: Xs" */
+            animation: marquee var(--marquee-duration, 18s) linear infinite;
+        }
+
+        @keyframes marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }   /* exactly one copy-width */
+        }
+
+        .dept-name-text {
+            display: inline-block;
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-weight: 900;
+            color: white;
+            white-space: nowrap;
+            padding-right: 3rem;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+        }
+
+        .display-number {
+            font-weight: 900;
+            font-size: 20vmin;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            color: white;
+            text-align: center;
+            width: 100%;
+            text-shadow:
+                0 1px 0 rgba(255,255,255,0.25),
+                0 2px 6px rgba(0,0,0,0.30),
+                0 8px 20px rgba(0,0,0,0.20);
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8 flex flex-col">
+    <div class="fixed top-6 right-6 z-50 ios-card px-5 py-3">
+        <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
+        <div id="displayDateTime" class="text-xl font-black text-gray-900 leading-tight">--:--</div>
+    </div>
+
+    <div class="text-center mb-6">
+        <div class="flex items-center justify-center gap-4">
+            <img src="../assets/images/Ph_seal_cabuyao_city.png"
+                 alt="Lungsod ng Cabuyao seal"
+                 width="80" height="80"
+                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+
+            <div>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
+                <p class="text-lg md:text-xl text-gray-600 font-semibold mt-2">Currently serving</p>
+            </div>
+
+            <img src="../assets/images/CCH_logo.png"
+                 alt="CCH logo"
+                 width="80" height="80"
+                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-hidden">
+        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2 content-start"></div>
+    </div>
+
+    <script src="../assets/js/patient-display_v2.js"></script>
+</body>
+</html>

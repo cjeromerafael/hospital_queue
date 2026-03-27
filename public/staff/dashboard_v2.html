@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        .ios-card {
+            background: rgba(255,255,255,0.94);
+            border:1px solid rgba(233,239,255,1);
+            border-radius: 0.9rem;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+        }
+        .dept-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.1rem;
+            height: 240px;
+            border-radius: 1.4rem;
+            background-color: var(--dept-color, #3b82f6);
+            background-image:
+                radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
+                linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.35) inset,
+                0 -1px 0 rgba(0,0,0,0.18) inset,
+                0 16px 32px rgba(0,0,0,0.18),
+                0 4px 8px rgba(0,0,0,0.10);
+            border: 1px solid rgba(255,255,255,0.22);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .dept-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 55%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
+            border-radius: 1.4rem 1.4rem 60% 60% / 1.4rem 1.4rem 40% 40%;
+            pointer-events: none;
+        }
+        .queue-number {
+            font-weight: 900;
+            font-size: 16vmin;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            color: white;
+            text-align: center;
+            width: 100%;
+            text-shadow:
+                0 1px 0 rgba(255,255,255,0.25),
+                0 2px 4px rgba(0,0,0,0.30),
+                0 6px 16px rgba(0,0,0,0.20);
+            position: relative;
+            z-index: 1;
+        }
+        .btn-ios {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            border: none;
+            border-radius: 999px;
+            padding: .55rem .85rem;
+            font-weight: 700;
+            font-size: .9rem;
+            cursor: pointer;
+            transition: .15s ease;
+            white-space: nowrap;
+            user-select: none;
+            position: relative;
+            z-index: 1;
+        }
+        .btn-ios-primary {
+            background: linear-gradient(160deg, #3dd668 0%, #28a745 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(52,199,89,0.35), 0 1px 0 rgba(255,255,255,0.25) inset;
+        }
+        .btn-ios-primary:hover { background: linear-gradient(160deg, #44e070 0%, #2cb84e 100%); transform: translateY(-1px); }
+        .btn-ios-danger {
+            background: linear-gradient(160deg, #ffb340 0%, #e08000 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,159,10,0.35), 0 1px 0 rgba(255,255,255,0.25) inset;
+        }
+        .btn-ios-danger:hover { background: linear-gradient(160deg, #ffc060 0%, #f08800 100%); transform: translateY(-1px); }
+        .btn-ios-secondary {
+            background: rgba(255,255,255,0.88);
+            color: #111827;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.9) inset;
+        }
+        .btn-ios-secondary:hover { background: rgba(255,255,255,1); transform: translateY(-1px); }
+        .btn-ios:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .dept-name-text-shadow {
+            text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+        }
+    </style>
+</head>
+
+<body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8">
+    <div class="max-w-[1400px] mx-auto flex flex-col gap-5">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="space-y-1">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Staff Queue Controls</h1>
+                <p id="userInfoDisplay" class="text-gray-600 font-semibold">-</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Date display -->
+                <div class="ios-card px-5 py-3">
+                    <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
+                    <div id="currentDateDisplay" class="text-lg font-black text-gray-900 leading-tight">Loading...</div>
+                </div>
+
+                <!-- Queue Display button -->
+                <a href="../patient/display_v2.html" target="_blank" rel="noopener noreferrer"
+                class="btn-ios btn-ios-secondary group relative overflow-hidden
+                        !px-4 !py-2.5
+                        bg-white/80 backdrop-blur-sm
+                        text-gray-700
+                        shadow-sm
+                        transition-all duration-200 ease-out
+                        hover:bg-white hover:shadow-md hover:-translate-y-[1px]
+                        active:scale-95">
+
+                    <!-- subtle glow -->
+                    <span class="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300
+                                bg-gradient-to-r from-transparent via-[#34c759]/10 to-transparent"></span>
+
+                    <svg class="w-5 h-5 text-gray-500 group-hover:text-[#34c759] transition relative z-10"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+
+                    <span class="relative z-10">Queue Display</span>
+                </a>
+
+                <!-- Logout button -->
+                <button onclick="logout()"
+                    class="btn-ios group relative overflow-hidden
+                        !px-4 !py-2.5
+                        bg-[#ff9f0a]/90 backdrop-blur-sm
+                        text-white
+                        shadow-sm
+                        transition-all duration-200 ease-out
+                        hover:bg-[#ff9f0a] hover:shadow-md hover:-translate-y-[1px]
+                        active:scale-95">
+
+                    <!-- subtle glow -->
+                    <span class="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300
+                                bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
+
+                    <svg class="w-5 h-5 text-white/90 group-hover:text-white transition relative z-10"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+
+                    <span class="relative z-10">Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-auto">
+            <div id="deptGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 content-start"></div>
+        </div>
+
+        <p class="text-xs text-gray-500">
+            Tip: Use <span class="font-bold">Reset</span> per department to return it back to queue #0.
+        </p>
+    </div>
+
+    <script src="../assets/js/staff_v2.js"></script>
+    <script>
+        function logout() {
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("department_id");
+            localStorage.removeItem("role");
+            localStorage.removeItem("username");
+            window.location.href = "../index.html";
+        }
+    </script>
+</body>
+</html>

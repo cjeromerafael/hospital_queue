@@ -1,7 +1,7 @@
 <?php
 /**
- * Updates patient name and/or department. Expects PUT with patient_id and optional
- * patient_name, department_id. Used in patient manage page (edit row).
+ * Updates patient department. Expects PUT with patient_id and
+ * department_id. Used in patient manage page (edit row).
  * When department_id is changed (transfer), assigns new patient_number (XXX-NNN) for the new department.
  */
 require_once("../config.php");
@@ -15,7 +15,6 @@ if ($method !== 'PUT') {
 
 parse_str(file_get_contents('php://input'), $_PUT);
 $patient_id = $_PUT['patient_id'] ?? null;
-$patient_name = trim($_PUT['patient_name'] ?? '');
 $department_id = isset($_PUT['department_id']) && $_PUT['department_id'] !== '' ? (int)$_PUT['department_id'] : null;
 
 if (!$patient_id) {
@@ -27,16 +26,12 @@ $fields = [];
 $params = [];
 $types = '';
 
-if ($patient_name !== '') {
-    $fields[] = "patient_name=?";
-    $params[] = $patient_name;
-    $types .= 's';
-}
-
+$source_department_id = null;
 if (!is_null($department_id)) {
     $curr = $conn->query("SELECT department_id FROM patient WHERE patient_id = " . (int)$patient_id);
     $current_dept = ($curr && $row = $curr->fetch_assoc()) ? (int)$row['department_id'] : null;
     if ($current_dept !== $department_id) {
+        $source_department_id = $current_dept;
         ensureDepartmentCodeColumn($conn);
         $new_patient_number = getNextPatientNumberForDepartment($conn, $department_id);
         $fields[] = "patient_number=?";
@@ -60,5 +55,16 @@ $types .= 'i';
 
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
+
+// After a transfer, renumber remaining patients in the source department so there are no gaps (PRR-003 -> PRR-002, etc.)
+if ($source_department_id !== null) {
+    renumberDepartmentPatients($conn, $source_department_id);
+    
+    // When a patient is transferred, mark any active queue entries (waiting/serving) as 'completed'
+    // This allows them to be re-added to the queue in the new department.
+    $stmt_queue = $conn->prepare("UPDATE queueing SET status = 'completed' WHERE patient_id = ? AND (status = 'waiting' OR status = 'serving')");
+    $stmt_queue->bind_param("i", $patient_id);
+    $stmt_queue->execute();
+}
 
 echo json_encode(["status"=>"success"]);

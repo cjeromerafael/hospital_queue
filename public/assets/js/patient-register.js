@@ -16,11 +16,28 @@ function loadDepartmentsForPatient(){
 }
 
 document.addEventListener("DOMContentLoaded", function(){
+    checkDailyFlush();
     loadDepartmentsForPatient();
     updateAssignQueueButtonPublic();
     const deptSelect = document.getElementById("patient_department");
     if (deptSelect) deptSelect.addEventListener("change", updateAssignQueueButtonPublic);
 });
+
+/** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
+function checkDailyFlush() {
+    fetch("../../api/daily_flush.php")
+        .then(r => r.json())
+        .then(d => {
+            const el = document.getElementById("currentDateDisplay");
+            if (el) el.textContent = d.current_date_display || "";
+            if (d.flushed) {
+                console.log("Daily flush performed (new day).");
+                if (typeof loadDepartmentsForPatient === "function") loadDepartmentsForPatient();
+                if (typeof updateAssignQueueButtonPublic === "function") updateAssignQueueButtonPublic();
+            }
+        })
+        .catch(err => console.error("Daily flush check failed:", err));
+}
 
 /** Submits registration (department required, patient_number auto-generated) to create.php. */
 function registerPatient(){

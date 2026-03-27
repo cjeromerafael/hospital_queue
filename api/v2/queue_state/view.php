@@ -1,0 +1,8 @@
+<?php
+require_once(__DIR__ . "/queue_state_helpers.php");
+
+ensureQueueStateTable($conn);
+
+$data = loadAllDepartmentsWithCurrentNumbers($conn);
+echo json_encode($data);
+

@@ -1,67 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<link rel="stylesheet" href="../assets/css/style.css">
-<style>
-  /* Admin tables: force Edit and Delete columns and buttons to be visible */
-  #deptTable th:nth-child(4), #deptTable th:nth-child(5),
-  #deptTable td:nth-child(4), #deptTable td:nth-child(5),
-  #userTable th:nth-child(4), #userTable th:nth-child(5),
-  #userTable td:nth-child(4), #userTable td:nth-child(5) {
-    min-width: 72px;
-    width: 72px;
-    text-align: center;
-    white-space: nowrap;
-  }
-  #deptTable .edit-dept-btn, #deptTable .delete-dept-btn,
-  #userTable .edit-user-btn, #userTable .delete-user-btn {
-    display: inline-block;
-    padding: 8px 12px;
-    margin: 2px;
-    font-size: 14px;
-    background-color: #1e90ff;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  #deptTable .delete-dept-btn, #userTable .delete-user-btn {
-    background-color: #c62828;
-  }
-  #deptTable .edit-dept-btn:hover, #userTable .edit-user-btn:hover { background-color: #187bcd; }
-  #deptTable .delete-dept-btn:hover, #userTable .delete-user-btn:hover { background-color: #b71c1c; }
-  td.td-scroll { max-width: 200px; overflow-x: auto; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; overflow-x: hidden; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f3f4f6; min-height: 100vh; }
+        .page-shell { width: min(1300px, 100%); margin: 0 auto; padding: 1rem 1.2rem; }
+        .ios-card { background: rgba(255,255,255,0.95); border:1px solid rgba(243,244,246,0.8); border-radius:1.4rem; box-shadow:0 8px 24px rgba(0,0,0,0.06); padding:1rem; }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: #111827; margin-bottom: 0.55rem; }
+        .flash-card { background:#fff5f5; border:1px solid #fee2e2; padding:0.9rem; border-radius:1rem; }
+        table { width:100%; border-collapse:separate; border-spacing:0; }
+        th { background:#f8fafc; color:#6b7280; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:.6rem .8rem; text-align:left; }
+        td { padding:.6rem .8rem; color:#111827; border-top:1px solid #e5e7eb; }
+        tr:last-child td:first-child { border-bottom-left-radius:.8rem; }
+        tr:last-child td:last-child { border-bottom-right-radius:.8rem; }
+        .btn-ios { display:inline-flex; align-items:center; justify-content:center; gap:0.3rem; border:none; border-radius:999px; padding:.55rem 1rem; font-size:.86rem; font-weight:600; transition:.2s ease; cursor:pointer; min-height:2.35rem; }
+        .btn-pill { display:inline-flex; align-items:center; justify-content:center; gap:0.3rem; border-radius:999px; padding:.45rem .85rem; font-weight:600; font-size:.85rem; transition:.2s ease; }
+        .btn-ios-primary, .btn-pill-primary { background:#3b82f6; color:#fff; box-shadow:0 8px 18px rgba(59,130,246,0.3); border-radius:999px; display:inline-flex; align-items:center; justify-content:center; }
+        .btn-ios-primary:hover, .btn-pill-primary:hover { background:#2563eb; }
+        .btn-ios-secondary, .btn-pill-secondary { background:#f3f4f6; color:#111827; }
+        .btn-ios-secondary:hover, .btn-pill-secondary:hover { background:#e5e7eb; }
+        .btn-ios-danger, .btn-pill-danger { background:#ef4444; color:#fff; }
+        table { width:100%; border-collapse:separate; border-spacing:0; }
+        .table-scroll { overflow-x:auto; width:100%; }
+        .btn-ios-danger:hover, .btn-pill-danger:hover { background:#dc2626; }
+        .input-ios { width:100%; background:#f9fafb; border:1px solid #e2e8f0; border-radius:.9rem; padding:.7rem .9rem; font-size:.95rem; }
+        .input-ios:focus { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.16); outline:none; }
+        .label-ios { display:block; margin-bottom:.2rem; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:#6b7280; font-weight:700; }
+        .card-head { font-size:1rem; font-weight:800; margin-bottom:.5rem; color:#111827; }
+        .inline-action { display:flex; gap:.45rem; flex-wrap:wrap; }
+        .edit-dept-btn, .delete-dept-btn, .edit-user-btn, .delete-user-btn { border-radius:999px; padding:.45rem .8rem; font-size:.78rem; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:.2rem; }
+        .edit-dept-btn svg, .delete-dept-btn svg, .edit-user-btn svg, .delete-user-btn svg { margin-right:0; }
+        .pill { border-radius:999px; padding:0.3rem 0.55rem; font-size:.72rem; font-weight:700; background:#f1f5f9; color:#1f2937; }
+        .flex-gap { display:flex; gap:0.4rem; flex-wrap:wrap; }
+
+    </style>
 </head>
 
-<body>
-<!-- Dashboard -->
-<div class="container">
+<body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8">
+    <div class="page-shell w-full space-y-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
+            <div class="space-y-1">
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Admin Dashboard</h1>
+                <p class="text-gray-500 font-medium flex items-center gap-2">
+                    <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                    Logged in as <span id="userInfoDisplay" class="text-gray-700 font-semibold">Administrator</span>
+                </p>
+            </div>
+            <button onclick="logout()" class="btn-ios btn-ios-danger !bg-red-500 !text-white !px-3 !py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                Logout
+            </button>
+        </header>
 
-<h2>Admin Dashboard</h2>
-<button onclick="logout()" style="float: right;">Logout</button>
+        <!-- Stats/Date Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="ios-card md:col-span-2 p-4">
+                <span class="label-ios">Today's Date</span>
+                <span id="currentDateDisplay" class="text-4xl md:text-5xl font-black text-blue-600 tracking-tight">Loading...</span>
+            </div>
+            <div class="ios-card flash-card p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <span class="pill">System Maintenance</span>
+                        <h3 class="text-xl font-bold text-red-900 mt-2 mb-1">Flush All Data</h3>
+                        <p class="text-sm text-red-700">Use only in emergencies.</p>
+                    </div>
+                    <button onclick="manualFlush()" class="btn-pill btn-pill-danger">Flush</button>
+                </div>
+                <p id="flushMsg" class="mt-3 text-xs font-medium text-red-600"></p>
+            </div>
+        </div>
 
-<!-- Add Department section -->
-<h3>Add Department</h3>
-<input id="deptName" placeholder="Department name">
-<input id="deptCode" placeholder="Code (3 letters)" maxlength="3" style="width: 8em;">
-<button onclick="addDepartment()">Add</button>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Departments Section -->
+            <section class="space-y-6">
+                <div class="ios-card">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Add Department</h3>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="label-ios">Name</label>
+                            <input id="deptName" placeholder="e.g. Cardiology" class="input-ios">
+                        </div>
+                        <div class="w-full md:w-32">
+                            <label class="label-ios">Code</label>
+                            <input id="deptCode" placeholder="CAR" maxlength="3" class="input-ios uppercase">
+                        </div>
+                        <div class="w-full md:w-32">
+                            <label class="label-ios">Color</label>
+                            <input id="deptColor" type="color" value="#062e6f" class="w-full h-10 border rounded-lg cursor-pointer input-ios" style="padding: 0.25rem; border: 1px solid #e2e8f0;">
+                        </div>
+                        <div class="flex items-center pt-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="deptIsFinance" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm font-semibold text-gray-700">Financial</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button onclick="addDepartment()" class="btn-ios btn-ios-primary w-full mt-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        Add Department
+                    </button>
+                </div>
 
-<!-- Table -->
-<table id="deptTable"></table>
+                <div class="ios-card !p-0 overflow-hidden">
+                    <div class="px-8 py-6 border-b border-gray-100/50">
+                        <h3 class="text-lg font-bold text-gray-900">Departments List</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="deptTable"></table>
+                    </div>
+                </div>
+            </section>
 
-<hr>
+            <!-- Users Section -->
+            <section class="space-y-6">
+                <div class="ios-card">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">Create New User</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label-ios">Username</label>
+                            <input id="userUsername" placeholder="Enter username" class="input-ios">
+                        </div>
+                        <div>
+                            <label class="label-ios">Password</label>
+                            <div class="relative">
+                                <input id="userPassword" type="password" placeholder="Enter password" class="input-ios pr-12">
+                                <button onclick="togglePasswordVisibility('userPassword')" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <span class="text-xl">&#128065;</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label-ios">Role</label>
+                                <select id="userRole" onchange="toggleUserDeptVisibility()" class="input-ios appearance-none">
+                                    <option value="staff">Staff</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="sysadmin">SysAdmin</option>
+                                </select>
+                            </div>
+                            <div id="deptSelectContainer">
+                                <label class="label-ios">Department</label>
+                                <select id="deptSelect" class="input-ios appearance-none"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="addUser()" class="btn-ios btn-ios-primary w-full mt-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                        Create User
+                    </button>
+                </div>
 
-<!-- Add User section -->
-<h3>Add User</h3>
-<input id="userName" placeholder="Name">
-<select id="deptSelect"></select>
-<button onclick="addUser()">Create</button>
+                <div class="ios-card !p-0 overflow-hidden">
+                    <div class="px-8 py-6 border-b border-gray-100/50">
+                        <h3 class="text-lg font-bold text-gray-900">System Users</h3>
+                    </div>
+                    <div class="table-scroll">
+                        <table id="userTable"></table>
+                    </div>
+                </div>
+            </section>
 
-<!-- Table -->
-<table id="userTable"></table>
-</div>
+        </div>
+    </div>
 
-<script src="../assets/js/admin.js?v=2"></script>
+    <script src="../assets/js/admin.js?v=2"></script>
 </body>
 </html>
