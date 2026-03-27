@@ -16,52 +16,86 @@
             box-shadow: 0 12px 28px rgba(0,0,0,0.08);
         }
         .display-card {
-            padding: 1rem;
-            display:flex;
-            flex-direction:column;
+            padding: 1.1rem;
+            display: flex;
+            flex-direction: column;
             gap: 0.6rem;
-            min-height: 180px;
-            border: 3px solid black;
-            border-radius: 1.2rem;
+            height: 260px;
+            border-radius: 1.4rem;
             background-color: var(--dept-color, #3b82f6);
-            box-shadow: 0 12px 28px rgba(0,0,0,0.15);
-        }
-        .dept-name-container {
+            background-image:
+                radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
+                linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
+            box-shadow:
+                0 1px 0 rgba(255,255,255,0.35) inset,
+                0 -1px 0 rgba(0,0,0,0.18) inset,
+                0 2px 4px rgba(0,0,0,0.10),
+                0 8px 16px rgba(0,0,0,0.12);
+            border: 1px solid rgba(255,255,255,0.22);
             position: relative;
             overflow: hidden;
-            height: 2.5rem;
-            display: flex;
-            align-items: center;
         }
+        .display-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 55%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
+            border-radius: 1.4rem 1.4rem 60% 60% / 1.4rem 1.4rem 40% 40%;
+            pointer-events: none;
+        }
+
+        /* ── Marquee container ── */
+        .dept-name-container {
+            position: relative;
+            overflow: hidden;          /* clips the scrolling text        */
+            height: 2.5rem;
+            /* width is naturally 100% of the card — that's the viewport  */
+        }
+
+        /* Static (short name): just show it left-aligned, no animation */
         .dept-name-track {
             display: inline-flex;
             align-items: center;
             white-space: nowrap;
             will-change: transform;
         }
+
+        /* Scrolling (long name): duplicate spans + CSS custom-property duration */
+        .dept-name-track.scrolling {
+            /* duration is set inline via style="--marquee-duration: Xs" */
+            animation: marquee var(--marquee-duration, 18s) linear infinite;
+        }
+
+        @keyframes marquee {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }   /* exactly one copy-width */
+        }
+
         .dept-name-text {
             display: inline-block;
             font-size: clamp(1.25rem, 3vw, 1.75rem);
             font-weight: 900;
             color: white;
             white-space: nowrap;
-            padding-right: 2rem;
+            padding-right: 3rem;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.35);
         }
-        .dept-name-track.scrolling {
-            animation: marquee 20s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
+
         .display-number {
             font-weight: 900;
-            font-size: clamp(3.2rem, 4.8vw, 5.2rem);
+            font-size: 20vmin;
             line-height: 0.95;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.04em;
             color: white;
-            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.6);
-            text-stroke: 2px rgba(255, 255, 255, 0.6);
+            text-align: center;
+            width: 100%;
+            text-shadow:
+                0 1px 0 rgba(255,255,255,0.25),
+                0 2px 6px rgba(0,0,0,0.30),
+                0 8px 20px rgba(0,0,0,0.20);
+            position: relative;
+            z-index: 1;
         }
     </style>
 </head>
@@ -73,15 +107,28 @@
     </div>
 
     <div class="text-center mb-6">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
-        <p class="text-lg md:text-xl text-gray-600 font-semibold mt-2">Currently serving</p>
+        <div class="flex items-center justify-center gap-4">
+            <img src="../assets/images/Ph_seal_cabuyao_city.png"
+                 alt="Lungsod ng Cabuyao seal"
+                 width="80" height="80"
+                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+
+            <div>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
+                <p class="text-lg md:text-xl text-gray-600 font-semibold mt-2">Currently serving</p>
+            </div>
+
+            <img src="../assets/images/CCH_logo.png"
+                 alt="CCH logo"
+                 width="80" height="80"
+                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+        </div>
     </div>
 
     <div class="flex-1 overflow-hidden">
-        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2"></div>
+        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2 content-start"></div>
     </div>
 
     <script src="../assets/js/patient-display_v2.js"></script>
 </body>
 </html>
-

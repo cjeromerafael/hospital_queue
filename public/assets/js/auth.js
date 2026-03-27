@@ -41,10 +41,10 @@ function login(){
             localStorage.setItem("department_id", data.department_id);
             localStorage.setItem("role", data.department_role);
 
-            if(data.department_role === "admin"){
+            if(data.department_role === "sysadmin"){
                 window.location = "admin/dashboard.html";
             } else {
-                window.location = "staff/dashboard.html";
+                window.location = "staff/dashboard_v2.html";
             }
 
         } else {

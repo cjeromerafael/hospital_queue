@@ -18,18 +18,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
 /**
  * Sanitizes a color value to a valid lowercase 6-digit hex string.
- * Accepts #rrggbb or #rgb only. Anything else falls back to #3b82f6.
+ * Accepts #rrggbb or #rgb only. Anything else falls back to #062e6f.
  * Does NOT use canvas — avoids rgb() conversion bugs across browsers.
  */
 function normalizeHex(color) {
-    if (!color || typeof color !== "string") return "#3b82f6";
+    if (!color || typeof color !== "string") return "#062e6f";
     const t = color.trim().toLowerCase();
     if (/^#[0-9a-f]{6}$/.test(t)) return t;
     // Expand 3-digit shorthand → 6-digit
     if (/^#[0-9a-f]{3}$/.test(t)) {
         return "#" + t[1]+t[1]+t[2]+t[2]+t[3]+t[3];
     }
-    return "#3b82f6";
+    return "#062e6f";
 }
 
 /** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
@@ -208,7 +208,7 @@ function startEditDepartment(ev) {
         const newCode = (codeInput && codeInput.value.trim() !== "") ? codeInput.value.trim().toUpperCase().substring(0, 3) : "";
         const isFinance = financeCheck.checked ? 1 : 0;
         // normalizeHex on save guarantees a clean hex goes to the DB
-        const newColor = normalizeHex(colorInput ? colorInput.value : "#3b82f6");
+        const newColor = normalizeHex(colorInput ? colorInput.value : "#062e6f");
         fetch("../../api/admin/departments.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -270,7 +270,7 @@ function addDepartment() {
     f.append("department_name", name);
     f.append("is_finance", isFinanceEl && isFinanceEl.checked ? 1 : 0);
     // normalizeHex ensures the color picker value is always a valid hex before POSTing
-    f.append("department_color", normalizeHex(colorEl ? colorEl.value : "#3b82f6"));
+    f.append("department_color", normalizeHex(colorEl ? colorEl.value : "#062e6f"));
     if (codeEl && codeEl.value.trim() !== "") {
         f.append("department_code", codeEl.value.trim().toUpperCase().substring(0, 3));
     }
@@ -278,7 +278,7 @@ function addDepartment() {
     .then(() => {
         nameEl.value = "";
         codeEl.value = "";
-        colorEl.value = "#3b82f6";
+        colorEl.value = "#062e6f";
         isFinanceEl.checked = false;
         loadDepartments();
     });
@@ -380,7 +380,7 @@ function startEditUser(ev) {
 
     const roleSelect = document.createElement("select");
     roleSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
-    roleSelect.innerHTML = '<option value="staff">Staff</option><option value="admin">Admin</option>';
+    roleSelect.innerHTML = '<option value="staff">Staff</option><option value="admin">Admin</option><option value="sysadmin">SysAdmin</option>';
     roleSelect.value = role;
     roleCell.textContent = "";
     roleCell.appendChild(roleSelect);
@@ -444,14 +444,14 @@ function addUser() {
         return;
     }
 
-    if (role === "admin") {
+    // Force both admin and sysadmin accounts into the Admin department
+    if (role === "admin" || role === "sysadmin") {
         const adminDept = departmentsData.find(d => (d.department_name || "").trim().toLowerCase() === "admin");
-        if (adminDept) {
-            deptId = adminDept.department_id;
-        } else {
+        if (!adminDept) {
             alert("Critical Error: 'Admin' department not found in database. Please create it first.");
             return;
         }
+        deptId = adminDept.department_id;
     }
 
     const f = new FormData();
@@ -461,16 +461,16 @@ function addUser() {
     f.append("role", role);
 
     fetch("../../api/admin/users.php", { method: "POST", body: f })
-    .then(r => r.json())
-    .then(d => {
-        if (d.status === "success") {
-            document.getElementById("userUsername").value = "";
-            document.getElementById("userPassword").value = "";
-            loadUsers();
-        } else {
-            alert(d.message || "Error creating user");
-        }
-    });
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === "success") {
+                document.getElementById("userUsername").value = "";
+                document.getElementById("userPassword").value = "";
+                loadUsers();
+            } else {
+                alert(d.message || "Error creating user");
+            }
+        });
 }
 
 /** Toggles department selector visibility based on selected role. */
@@ -478,7 +478,7 @@ function toggleUserDeptVisibility() {
     const role = document.getElementById("userRole").value;
     const container = document.getElementById("deptSelectContainer");
     if (!container) return;
-    if (role === "admin") {
+    if (role === "admin" || role === "sysadmin") {
         container.classList.add("hidden");
     } else {
         container.classList.remove("hidden");

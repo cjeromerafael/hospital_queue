@@ -3,7 +3,9 @@
  * - One card per department (4-column responsive grid).
  * - Polls queue_state view for current numbers.
  * - Buttons: Next / Skip / Reset.
- * - Finance permission: finance staff can only control their own department.
+ * - Permission: each account can only see and control their own department.
+ *   role="admin" is the master staff account — sees and controls all departments.
+ *   role="sysadmin" is redirected to the admin dashboard at login (handled in auth.js).
  */
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -21,33 +23,51 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     if (userInfoDisplay && username) {
-        userInfoDisplay.textContent = `Logged in as: ${username}`;
+        (async () => {
+            const deptName = await getDepartmentName(deptId);
+            userInfoDisplay.textContent = deptName
+                ? `Logged in as: ${username} (${deptName})`
+                : `Logged in as: ${username}`;
+        })();
     }
 
     checkDailyFlush().then(() => {
         loadDepartmentsAndRender(deptId, role);
     });
 
-    // Keep a lightweight clock on this page too.
-    // (The plan requires it on display_v2; this is just for staff usability.)
-    setInterval(() => {
-        if (!currentDateDisplay) return;
+    // Live clock — updates every second
+    function updateDashboardClock() {
+        const dateEl = document.getElementById("currentDateDisplay");
+        if (!dateEl) return;
         const d = new Date();
-        currentDateDisplay.textContent = d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
-    }, 60000);
+        const date = d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+        const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        dateEl.textContent = `${date} ${time}`;
+    }
+    updateDashboardClock();
+    setInterval(updateDashboardClock, 1000);
 });
 
 async function checkDailyFlush() {
     try {
-        const r = await fetch("../../api/daily_flush.php");
-        const d = await r.json();
-        const el = document.getElementById("currentDateDisplay");
-        if (el && d && d.current_date_display) {
-            el.textContent = d.current_date_display;
-        }
+        await fetch("../../api/daily_flush.php");
     } catch (e) {
         // Non-fatal: the v2 endpoints will still work.
         console.warn("Daily flush check failed:", e);
+    }
+}
+
+async function getDepartmentName(departmentId) {
+    if (!departmentId) return "";
+    try {
+        const res = await fetch("../../api/admin/departments.php");
+        const departments = await res.json();
+        if (!Array.isArray(departments)) return "";
+        const dept = departments.find(d => Number(d.department_id) === Number(departmentId));
+        return dept ? dept.department_name : "";
+    } catch (err) {
+        console.error("Failed to fetch department name:", err);
+        return "";
     }
 }
 
@@ -61,32 +81,35 @@ async function loadDepartmentsAndRender(userDeptId, role) {
     const grid = document.getElementById("deptGrid");
     if (!grid) return;
 
+    // admin = master staff account, sees and controls all departments
+    const isPrivileged = role === "admin";
+
     const departments = await fetch("../../api/admin/departments.php").then(r => r.json()).catch(() => []);
     const filtered = (Array.isArray(departments) ? departments : []).filter(d => {
-        return (d && (d.department_name || "").trim().toLowerCase() !== "admin");
+        if (!d) return false;
+        if ((d.department_name || "").trim().toLowerCase() === "admin") return false;
+        if (!isPrivileged && Number(d.department_id) !== Number(userDeptId)) return false;
+        return true;
     });
-
-    const userDept = filtered.find(d => Number(d.department_id) === Number(userDeptId));
-    const userIsFinance = !!(userDept && Number(userDept.is_finance) === 1);
 
     // Pre-render cards. Numbers will be filled by polling.
     grid.innerHTML = "";
     filtered.forEach(d => {
-        const canControl = (role === "admin") || !userIsFinance || Number(d.department_id) === Number(userDeptId);
+        const canControl = isPrivileged || (Number(d.department_id) === Number(userDeptId));
 
         const card = document.createElement("div");
         card.className = "ios-card dept-card";
         card.dataset.departmentId = String(d.department_id);
 
-        const badgeText = Number(d.is_finance) === 1 ? "FINANCE" : "MAIN";
+        const badgeText = Number(d.is_finance) === 1 ? "FINANCE" : "MEDICAL";
         const badgeClass = Number(d.is_finance) === 1 ? "bg-red-50 text-red-700 border-red-100" : "bg-blue-50 text-blue-700 border-blue-100";
-        const deptColor = (d.department_color || "#3b82f6").toLowerCase();
+        const deptColor = (d.department_color || "#062e6f").toLowerCase();
 
         card.style.setProperty('--dept-color', deptColor);
         card.innerHTML = `
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <div class="text-sm font-extrabold text-white truncate" title="${escapeHtml(d.department_name)}">
+                    <div class="text-base font-extrabold text-white truncate dept-name-text-shadow" title="${escapeHtml(d.department_name)}">
                         ${escapeHtml(d.department_name)}
                     </div>
                 </div>
@@ -124,8 +147,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
 
     grid.addEventListener("click", async (e) => {
         const btn = e.target.closest("button[data-action][data-department-id]");
-        if (!btn) return;
-        if (btn.disabled) return;
+        if (!btn || btn.disabled) return;
 
         const action = btn.dataset.action;
         const departmentId = parseInt(btn.dataset.departmentId, 10);
@@ -155,13 +177,9 @@ async function loadDepartmentsAndRender(userDeptId, role) {
             alert("Action failed.");
         } finally {
             btn.textContent = btnOriginalText;
-            // Re-enable based on permission rule.
             const card = btn.closest(".ios-card.dept-card");
-            const deptIdCard = card ? parseInt(card.dataset.departmentId, 10) : 0;
-            const userDeptIdCard = userDeptId;
-            const userDept = (filtered || []).find(x => Number(x.department_id) === Number(userDeptIdCard));
-            const userIsFinance = !!(userDept && Number(userDept.is_finance) === 1);
-            const canControlNow = (role === "admin") || !userIsFinance || Number(deptIdCard) === Number(userDeptIdCard);
+            const cardDeptId = card ? parseInt(card.dataset.departmentId, 10) : 0;
+            const canControlNow = isPrivileged || (Number(cardDeptId) === Number(userDeptId));
             btn.disabled = !canControlNow;
         }
     }, { passive: true });
@@ -183,8 +201,8 @@ async function refreshNumbers() {
     data.forEach(d => {
         const el = document.getElementById(`queue_num_${d.department_id}`);
         if (!el) return;
-        const n = (typeof d.current_number !== "undefined" && d.current_number !== null) ? String(d.current_number) : "0";
-        el.textContent = n;
+        el.textContent = (typeof d.current_number !== "undefined" && d.current_number !== null)
+            ? String(d.current_number)
+            : "0";
     });
 }
-
