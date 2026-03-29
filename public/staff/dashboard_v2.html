@@ -19,11 +19,10 @@
         .dept-card {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
-            padding: 0.75rem;
+            gap: 0.5rem;
+            padding: 1rem;
             height: auto;
-            min-height: 160px;
-            max-height: 180px;
+            min-height: 180px;
             border-radius: 1.4rem;
             background-color: var(--dept-color, #3b82f6);
             background-image:
@@ -50,7 +49,7 @@
         }
         .queue-number {
             font-weight: 900;
-            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-size: clamp(3rem, 8vw, 7rem);
             line-height: 0.95;
             letter-spacing: -0.04em;
             color: white;
@@ -189,7 +188,7 @@
         </header>
 
         <div class="flex-1 overflow-auto">
-            <div id="deptGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 content-start"></div>
+            <div id="deptGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 content-start"></div>
         </div>
 
         <p class="text-xs text-gray-500">
