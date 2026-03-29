@@ -2,6 +2,44 @@
 
 Queue management for departments: staff dashboard (next/skip/create entry), patient registration, queue display, and admin (departments/users).
 
+## Setup Instructions
+
+To set up this project on a new machine and avoid environment-related issues:
+
+### Prerequisites
+- XAMPP (or similar Apache + MySQL stack)
+- PHP 8.2+
+- MySQL 8.0+
+
+### Installation Steps
+1. **Clone/Download the project** to your web server root (e.g., `C:\xampp\htdocs\hospital_queue`)
+
+2. **Database Setup**
+   - Start XAMPP MySQL
+   - Create database: `hospital_queue`
+   - Import the schema: Run `backup_db/hospital_queue.sql` in phpMyAdmin or MySQL command line
+   - **Important:** Verify foreign key constraints are present (the backup may not include all live constraints)
+
+3. **Configuration**
+   - Update `api/config.php` with your database credentials if different from localhost/root/no password
+   - Change the `ENCRYPTION_KEY` for production security
+
+4. **Access the Application**
+   - Start Apache in XAMPP
+   - Visit `http://localhost/hospital_queue/public/index.html`
+
+### Development Best Practices
+- **Version Control:** Use Git to track changes and avoid code conflicts
+- **Database Migrations:** When schema changes, update `backup_db/hospital_queue.sql` and commit to Git
+- **Environment Consistency:** Use the same XAMPP version across machines
+- **Testing:** Test user creation/editing on a fresh database import to catch constraint issues early
+- **Backup:** Regularly export the full database schema with constraints for accurate backups
+
+### Troubleshooting
+- If user creation fails with JSON parsing errors, check database foreign key constraints
+- Ensure `department_id` assignments match your database schema (admin=22, sysadmin=null, staff=valid dept)
+- Verify PHP error logs if requests fail silently
+
 ## Structure
 
 - **public/** – Front-end: `index.html` (staff login), `admin/dashboard.html`, `staff/dashboard.html`, `patient/index.html` (queue status), `patient/register.html` (register patient), `patient/manage.html` (staff manage patients), `patient/display.html` (queue display screen).
