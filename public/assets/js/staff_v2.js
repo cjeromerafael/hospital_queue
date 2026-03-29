@@ -109,7 +109,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
         card.innerHTML = `
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
-                    <div class="text-base font-extrabold text-white dept-name-text-shadow leading-tight" title="${escapeHtml(d.department_name)}">
+                    <div class="text-base font-extrabold text-white dept-name-text-shadow line-clamp-2" title="${escapeHtml(d.department_name)}">
                         ${escapeHtml(d.department_name)}
                     </div>
                 </div>
