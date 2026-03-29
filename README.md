@@ -17,8 +17,8 @@ To set up this project on a new machine and avoid environment-related issues:
 2. **Database Setup**
    - Start XAMPP MySQL
    - Create database: `hospital_queue`
-   - Import the schema: Run `backup_db/hospital_queue.sql` in phpMyAdmin or MySQL command line
-   - **Important:** Verify foreign key constraints are present (the backup may not include all live constraints)
+   - Import the schema: Run `backup_db/hospital_queue_full.sql` in phpMyAdmin or MySQL command line (includes all constraints)
+   - Alternative: Use `backup_db/hospital_queue.sql` for basic structure (may miss some constraints)
 
 3. **Configuration**
    - Update `api/config.php` with your database credentials if different from localhost/root/no password
@@ -30,7 +30,7 @@ To set up this project on a new machine and avoid environment-related issues:
 
 ### Development Best Practices
 - **Version Control:** Use Git to track changes and avoid code conflicts
-- **Database Migrations:** When schema changes, update `backup_db/hospital_queue.sql` and commit to Git
+- **Database Migrations:** When schema changes, update `backup_db/hospital_queue_full.sql` and commit to Git
 - **Environment Consistency:** Use the same XAMPP version across machines
 - **Testing:** Test user creation/editing on a fresh database import to catch constraint issues early
 - **Backup:** Regularly export the full database schema with constraints for accurate backups

@@ -6,9 +6,10 @@ config.local.php
 *.log
 logs/
 
-# Database backups (keep only the main one)
+# Database backups (keep only the main ones)
 backup_db/*.sql
 !backup_db/hospital_queue.sql
+!backup_db/hospital_queue_full.sql
 
 # IDE files
 .vscode/
