@@ -108,12 +108,12 @@ async function loadDepartmentsAndRender(userDeptId, role) {
         card.style.setProperty('--dept-color', deptColor);
         card.innerHTML = `
             <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                    <div class="text-base font-extrabold text-white truncate dept-name-text-shadow" title="${escapeHtml(d.department_name)}">
+                <div class="min-w-0 flex-1">
+                    <div class="text-base font-extrabold text-white dept-name-text-shadow line-clamp-2" title="${escapeHtml(d.department_name)}">
                         ${escapeHtml(d.department_name)}
                     </div>
                 </div>
-                <span class="inline-flex items-center px-2 py-1 rounded-full border ${badgeClass} text-[11px] font-black tracking-widest">
+                <span class="inline-flex items-center px-2 py-1 rounded-full border ${badgeClass} text-[11px] font-black tracking-widest flex-shrink-0">
                     ${badgeText}
                 </span>
             </div>

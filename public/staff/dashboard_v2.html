@@ -19,9 +19,10 @@
         .dept-card {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            padding: 1.1rem;
-            height: 240px;
+            gap: 0.5rem;
+            padding: 1rem;
+            height: auto;
+            min-height: 180px;
             border-radius: 1.4rem;
             background-color: var(--dept-color, #3b82f6);
             background-image:
@@ -48,7 +49,7 @@
         }
         .queue-number {
             font-weight: 900;
-            font-size: 16vmin;
+            font-size: clamp(3rem, 8vw, 7rem);
             line-height: 0.95;
             letter-spacing: -0.04em;
             color: white;
@@ -60,6 +61,10 @@
                 0 6px 16px rgba(0,0,0,0.20);
             position: relative;
             z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-ios {
             display: inline-flex;
@@ -68,15 +73,16 @@
             gap: 0.35rem;
             border: none;
             border-radius: 999px;
-            padding: .55rem .85rem;
+            padding: .45rem .75rem;
             font-weight: 700;
-            font-size: .9rem;
+            font-size: .8rem;
             cursor: pointer;
             transition: .15s ease;
             white-space: nowrap;
             user-select: none;
             position: relative;
             z-index: 1;
+            flex-shrink: 0;
         }
         .btn-ios-primary {
             background: linear-gradient(160deg, #3dd668 0%, #28a745 100%);
@@ -104,18 +110,27 @@
         .dept-name-text-shadow {
             text-shadow: 0 1px 3px rgba(0,0,0,0.35);
         }
+
+        /* Multi-line text clamping for department names */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.2;
+        }
     </style>
 </head>
 
 <body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8">
     <div class="max-w-[1400px] mx-auto flex flex-col gap-5">
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="space-y-1">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">Staff Queue Controls</h1>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight">Staff Queue Controls</h1>
                 <p id="userInfoDisplay" class="text-gray-600 font-semibold">-</p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                 <!-- Date display -->
                 <div class="ios-card px-5 py-3">
                     <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>

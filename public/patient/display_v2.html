@@ -16,12 +16,13 @@
             box-shadow: 0 12px 28px rgba(0,0,0,0.08);
         }
         .display-card {
-            padding: 1.1rem;
+            padding: 1.1rem 1.4rem;
             display: flex;
             flex-direction: column;
-            gap: 0.6rem;
-            height: 260px;
-            border-radius: 1.4rem;
+            gap: 0.4rem;
+            min-height: 0;
+            height: 100%;
+            border-radius: 0.6rem;
             background-color: var(--dept-color, #3b82f6);
             background-image:
                 radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
@@ -41,19 +42,17 @@
             top: 0; left: 0; right: 0;
             height: 55%;
             background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
-            border-radius: 1.4rem 1.4rem 60% 60% / 1.4rem 1.4rem 40% 40%;
+            border-radius: 0.6rem 0.6rem 60% 60% / 0.6rem 0.6rem 40% 40%;
             pointer-events: none;
         }
 
-        /* ── Marquee container ── */
         .dept-name-container {
             position: relative;
-            overflow: hidden;          /* clips the scrolling text        */
-            height: 2.5rem;
-            /* width is naturally 100% of the card — that's the viewport  */
+            overflow: hidden;
+            height: 2.2rem;
+            flex-shrink: 0;
         }
 
-        /* Static (short name): just show it left-aligned, no animation */
         .dept-name-track {
             display: inline-flex;
             align-items: center;
@@ -61,20 +60,18 @@
             will-change: transform;
         }
 
-        /* Scrolling (long name): duplicate spans + CSS custom-property duration */
         .dept-name-track.scrolling {
-            /* duration is set inline via style="--marquee-duration: Xs" */
             animation: marquee var(--marquee-duration, 18s) linear infinite;
         }
 
         @keyframes marquee {
             0%   { transform: translateX(0); }
-            100% { transform: translateX(-50%); }   /* exactly one copy-width */
+            100% { transform: translateX(-50%); }
         }
 
         .dept-name-text {
             display: inline-block;
-            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
             font-weight: 900;
             color: white;
             white-space: nowrap;
@@ -84,7 +81,7 @@
 
         .display-number {
             font-weight: 900;
-            font-size: 20vmin;
+            font-size: clamp(4rem, 10vw, 10rem);
             line-height: 0.95;
             letter-spacing: -0.04em;
             color: white;
@@ -96,37 +93,42 @@
                 0 8px 20px rgba(0,0,0,0.20);
             position: relative;
             z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
 
 <body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8 flex flex-col">
-    <div class="fixed top-6 right-6 z-50 ios-card px-5 py-3">
-        <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
-        <div id="displayDateTime" class="text-xl font-black text-gray-900 leading-tight">--:--</div>
-    </div>
 
-    <div class="text-center mb-6">
-        <div class="flex items-center justify-center gap-4">
+    <div class="text-center mb-4 sm:mb-6">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             <img src="../assets/images/Ph_seal_cabuyao_city.png"
                  alt="Lungsod ng Cabuyao seal"
-                 width="80" height="80"
+                 class="w-16 h-16 sm:w-20 sm:h-20"
                  style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
 
-            <div>
-                <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
-                <p class="text-lg md:text-xl text-gray-600 font-semibold mt-2">Currently serving</p>
+            <div class="text-center">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
+                <p class="text-base sm:text-lg lg:text-xl text-gray-600 font-semibold mt-1 sm:mt-2">Currently serving</p>
             </div>
 
             <img src="../assets/images/CCH_logo.png"
                  alt="CCH logo"
-                 width="80" height="80"
+                 class="w-16 h-16 sm:w-20 sm:h-20"
                  style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+        </div>
+
+        <div class="ios-card inline-block px-5 py-2 mt-3">
+            <div class="text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">Date & Time</div>
+            <div id="displayDateTime" class="text-xl font-black text-gray-900 leading-tight">--:--</div>
         </div>
     </div>
 
     <div class="flex-1 overflow-hidden">
-        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-auto p-2 content-start"></div>
+        <div id="displayGrid" class="h-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-5 p-2" style="grid-template-rows: repeat(2, 1fr);"></div>
     </div>
 
     <script src="../assets/js/patient-display_v2.js"></script>

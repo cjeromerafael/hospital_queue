@@ -59,7 +59,8 @@ if ($method === 'POST') {
     $stmt->execute();
     $res = $stmt->get_result();
     $row = $res ? $res->fetch_assoc() : null;
-    if (!$row || (isset($row['role']) && strtolower(trim($row['role'])) !== 'admin')) {
+    $allowedRoles = ['admin', 'sysadmin'];
+    if (!$row || !in_array(strtolower(trim($row['role'] ?? '')), $allowedRoles)) {
         http_response_code(403);
         echo json_encode(["status" => "error", "message" => "Admin only"]);
         exit;

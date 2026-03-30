@@ -12,7 +12,6 @@
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f3f4f6; min-height: 100vh; }
         .page-shell { width: min(1300px, 100%); margin: 0 auto; padding: 1rem 1.2rem; }
         .ios-card { background: rgba(255,255,255,0.95); border:1px solid rgba(243,244,246,0.8); border-radius:1.4rem; box-shadow:0 8px 24px rgba(0,0,0,0.06); padding:1rem; }
-        .section-title { font-size: 1.1rem; font-weight: 700; color: #111827; margin-bottom: 0.55rem; }
         .flash-card { background:#fff5f5; border:1px solid #fee2e2; padding:0.9rem; border-radius:1rem; }
         table { width:100%; border-collapse:separate; border-spacing:0; }
         th { background:#f8fafc; color:#6b7280; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; padding:.6rem .8rem; text-align:left; }
@@ -26,25 +25,19 @@
         .btn-ios-secondary, .btn-pill-secondary { background:#f3f4f6; color:#111827; }
         .btn-ios-secondary:hover, .btn-pill-secondary:hover { background:#e5e7eb; }
         .btn-ios-danger, .btn-pill-danger { background:#ef4444; color:#fff; }
-        table { width:100%; border-collapse:separate; border-spacing:0; }
-        .table-scroll { overflow-x:auto; width:100%; }
         .btn-ios-danger:hover, .btn-pill-danger:hover { background:#dc2626; }
+        .table-scroll { overflow-x:auto; width:100%; }
         .input-ios { width:100%; background:#f9fafb; border:1px solid #e2e8f0; border-radius:.9rem; padding:.7rem .9rem; font-size:.95rem; }
         .input-ios:focus { border-color:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.16); outline:none; }
         .label-ios { display:block; margin-bottom:.2rem; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:#6b7280; font-weight:700; }
-        .card-head { font-size:1rem; font-weight:800; margin-bottom:.5rem; color:#111827; }
-        .inline-action { display:flex; gap:.45rem; flex-wrap:wrap; }
         .edit-dept-btn, .delete-dept-btn, .edit-user-btn, .delete-user-btn { border-radius:999px; padding:.45rem .8rem; font-size:.78rem; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap:.2rem; }
-        .edit-dept-btn svg, .delete-dept-btn svg, .edit-user-btn svg, .delete-user-btn svg { margin-right:0; }
         .pill { border-radius:999px; padding:0.3rem 0.55rem; font-size:.72rem; font-weight:700; background:#f1f5f9; color:#1f2937; }
-        .flex-gap { display:flex; gap:0.4rem; flex-wrap:wrap; }
-
     </style>
 </head>
 
 <body class="bg-[#F2F2F7] min-h-screen p-4 md:p-8">
     <div class="page-shell w-full space-y-8">
-        
+
         <!-- Header -->
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4">
             <div class="space-y-1">
@@ -55,12 +48,12 @@
                 </p>
             </div>
             <button onclick="logout()" class="btn-ios btn-ios-danger !bg-red-500 !text-white !px-3 !py-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 Logout
             </button>
         </header>
 
-        <!-- Stats/Date Grid -->
+        <!-- Date / Flush -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="ios-card md:col-span-2 p-4">
                 <span class="label-ios">Today's Date</span>
@@ -72,6 +65,7 @@
                         <span class="pill">System Maintenance</span>
                         <h3 class="text-xl font-bold text-red-900 mt-2 mb-1">Flush All Data</h3>
                         <p class="text-sm text-red-700">Use only in emergencies.</p>
+                        <p class="text-xs text-red-500 mt-1">Admin only</p>
                     </div>
                     <button onclick="manualFlush()" class="btn-pill btn-pill-danger">Flush</button>
                 </div>
@@ -80,8 +74,8 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            
-            <!-- Departments Section -->
+
+            <!-- Departments -->
             <section class="space-y-6">
                 <div class="ios-card">
                     <h3 class="text-xl font-bold text-gray-900 mb-6">Add Department</h3>
@@ -96,17 +90,17 @@
                         </div>
                         <div class="w-full md:w-32">
                             <label class="label-ios">Color</label>
-                            <input id="deptColor" type="color" value="#062e6f" class="w-full h-10 border rounded-lg cursor-pointer input-ios" style="padding: 0.25rem; border: 1px solid #e2e8f0;">
+                            <input id="deptColor" type="color" value="#062e6f" class="w-full h-10 cursor-pointer input-ios" style="padding:0.25rem;border:1px solid #e2e8f0;">
                         </div>
                         <div class="flex items-center pt-6">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="deptIsFinance" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <input type="checkbox" id="deptIsFinance" class="w-5 h-5 rounded border-gray-300 text-blue-600">
                                 <span class="text-sm font-semibold text-gray-700">Financial</span>
                             </label>
                         </div>
                     </div>
                     <button onclick="addDepartment()" class="btn-ios btn-ios-primary w-full mt-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                         Add Department
                     </button>
                 </div>
@@ -121,7 +115,7 @@
                 </div>
             </section>
 
-            <!-- Users Section -->
+            <!-- Users -->
             <section class="space-y-6">
                 <div class="ios-card">
                     <h3 class="text-xl font-bold text-gray-900 mb-6">Create New User</h3>
@@ -148,14 +142,15 @@
                                     <option value="sysadmin">SysAdmin</option>
                                 </select>
                             </div>
+                            <!-- id is userDeptSelect (not deptSelect) to avoid conflict with dept table -->
                             <div id="deptSelectContainer">
                                 <label class="label-ios">Department</label>
-                                <select id="deptSelect" class="input-ios appearance-none"></select>
+                                <select id="userDeptSelect" class="input-ios appearance-none"></select>
                             </div>
                         </div>
                     </div>
                     <button onclick="addUser()" class="btn-ios btn-ios-primary w-full mt-6">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
                         Create User
                     </button>
                 </div>
@@ -173,6 +168,6 @@
         </div>
     </div>
 
-    <script src="../assets/js/admin.js?v=2"></script>
+    <script src="../assets/js/admin.js?v=3"></script>
 </body>
 </html>

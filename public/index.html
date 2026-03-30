@@ -10,6 +10,79 @@
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .ios-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05); }
+
+        /* Login card — scales with viewport height so it fits both 768px and 1080px screens */
+        .login-card {
+            width: 100%;
+            max-width: 28rem;
+            padding: clamp(1.25rem, 3.5vh, 2.5rem);
+            gap: clamp(0.875rem, 2.5vh, 2rem);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-icon {
+            width: clamp(2.75rem, 7.5vh, 5rem);
+            height: clamp(2.75rem, 7.5vh, 5rem);
+        }
+        .login-icon svg {
+            width: 55%;
+            height: 55%;
+        }
+
+        .login-title {
+            font-size: clamp(1.2rem, 3vh, 1.875rem);
+            font-weight: 700;
+            color: #111827;
+            padding-top: clamp(0.125rem, 0.8vh, 1rem);
+            line-height: 1.2;
+        }
+
+        .login-input {
+            width: 100%;
+            background: rgba(243, 244, 246, 0.5);
+            border: none;
+            border-radius: 1rem;
+            padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
+            font-size: clamp(0.875rem, 1.7vh, 1.125rem);
+            outline: none;
+            transition: box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        .login-input:focus {
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            font-weight: 700;
+            padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
+            border-radius: 1rem;
+            font-size: clamp(0.875rem, 1.7vh, 1.125rem);
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+        }
+        .login-btn:hover { background: #2563eb; }
+        .login-btn:active { transform: scale(0.98); }
+
+        .icon-section {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(0.25rem, 0.8vh, 0.5rem);
+        }
+        .fields-section {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.5rem, 1.5vh, 1rem);
+        }
+        .field-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .actions-section { display: flex; flex-direction: column; gap: 0.5rem; }
     </style>
 </head>
 
@@ -20,38 +93,32 @@
         <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>
     </div>
 
-    <div class="w-full max-w-md bg-white/80 ios-blur ios-shadow border border-white/50 rounded-[2.5rem] p-10 flex flex-col space-y-8 z-10 relative">
-        
-        <div class="text-center space-y-2">
-            <div class="w-20 h-20 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-blue-200">
-                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="login-card bg-white/80 ios-blur ios-shadow border border-white/50 rounded-[2.5rem] z-10 relative">
+
+        <div class="icon-section">
+            <div class="login-icon bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                <svg class="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 pt-4">Queueing System</h1>
-            <p class="text-gray-500 font-medium">Please sign in to continue</p>
+            <h1 class="login-title">Queueing System</h1>
+            <p class="text-gray-500 font-medium text-sm">Please sign in to continue</p>
         </div>
 
-        <div class="space-y-4">
-            <div class="space-y-1">
+        <div class="fields-section">
+            <div class="field-group">
                 <label for="username" class="text-[13px] font-semibold text-gray-500 ml-4 uppercase tracking-wider">Username</label>
-                <input id="username" placeholder="Enter username" 
-                    class="w-full bg-gray-100/50 border-none rounded-2xl px-6 py-4 text-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                <input id="username" placeholder="Enter username" class="login-input">
             </div>
-            
-            <div class="space-y-1">
+            <div class="field-group">
                 <label for="password" class="text-[13px] font-semibold text-gray-500 ml-4 uppercase tracking-wider">Password</label>
-                <input id="password" type="password" placeholder="Enter password" 
-                    class="w-full bg-gray-100/50 border-none rounded-2xl px-6 py-4 text-lg focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                <input id="password" type="password" placeholder="Enter password" class="login-input">
             </div>
         </div>
 
-        <div class="space-y-4">
-            <button onclick="login()" 
-                class="w-full bg-blue-500 hover:bg-blue-600 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-lg shadow-lg shadow-blue-200 transition-all">
-                Sign In
-            </button>
-            <p id="msg" class="text-center text-red-500 font-medium min-h-[1.5rem]"></p>
+        <div class="actions-section">
+            <button onclick="login()" class="login-btn">Sign In</button>
+            <p id="msg" class="text-center text-red-500 font-medium min-h-[1.25rem] text-sm"></p>
         </div>
 
     </div>

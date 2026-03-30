@@ -1,57 +1,46 @@
 /**
- * Admin Dashboard: department and user CRUD. Loads departments (table + dropdown)
- * and users on DOMContentLoaded. Used by: public/admin/dashboard.html.
+ * Admin Dashboard: department and user CRUD.
+ * Used by: public/admin/dashboard.html
  */
 let departmentsData = [];
+let adminDeptId = 0;
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     checkDailyFlush();
     loadDepartments();
     loadUsers();
 
     const username = localStorage.getItem("username") || "Admin";
-    const userInfoEl = document.getElementById("userInfoDisplay");
-    if (userInfoEl) {
-        userInfoEl.textContent = `Logged in as: ${username} (Administrator)`;
-    }
+    const el = document.getElementById("userInfoDisplay");
+    if (el) el.textContent = `${username} (Administrator)`;
 });
 
-/**
- * Sanitizes a color value to a valid lowercase 6-digit hex string.
- * Accepts #rrggbb or #rgb only. Anything else falls back to #062e6f.
- * Does NOT use canvas — avoids rgb() conversion bugs across browsers.
- */
 function normalizeHex(color) {
     if (!color || typeof color !== "string") return "#062e6f";
     const t = color.trim().toLowerCase();
     if (/^#[0-9a-f]{6}$/.test(t)) return t;
-    // Expand 3-digit shorthand → 6-digit
-    if (/^#[0-9a-f]{3}$/.test(t)) {
-        return "#" + t[1]+t[1]+t[2]+t[2]+t[3]+t[3];
-    }
+    if (/^#[0-9a-f]{3}$/.test(t)) return "#" + t[1]+t[1]+t[2]+t[2]+t[3]+t[3];
     return "#062e6f";
 }
 
-/** Auto-flush on page load. Checks if a new day has started and wipes data if needed. */
+function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+}
+
 function checkDailyFlush() {
     fetch("../../api/daily_flush.php")
         .then(r => r.json())
         .then(d => {
             const el = document.getElementById("currentDateDisplay");
             if (el) el.textContent = d.current_date_display || "";
-            if (d.flushed) {
-                console.log("Daily flush performed (new day).");
-                if (typeof loadDepartments === "function") loadDepartments();
-                if (typeof loadUsers === "function") loadUsers();
-            }
         })
         .catch(err => console.error("Daily flush check failed:", err));
 }
 
-/** Manual flush for admins. Wipes all data to start the day. */
 function manualFlush() {
     if (!confirm("Are you SURE you want to flush all patient and queue data? This cannot be undone!")) return;
-
     const userId = localStorage.getItem("user_id") || "";
     const f = new FormData();
     f.append("manual", "1");
@@ -62,85 +51,98 @@ function manualFlush() {
         .then(d => {
             const msgEl = document.getElementById("flushMsg");
             if (d.status === "error") {
-                if (msgEl) {
-                    msgEl.style.color = "#c62828";
-                    msgEl.textContent = d.message || "Flush failed.";
-                }
+                if (msgEl) { msgEl.style.color = "#c62828"; msgEl.textContent = d.message || "Flush failed."; }
                 alert(d.message || "Flush failed.");
             } else {
-                if (msgEl) {
-                    msgEl.style.color = "#43a047";
-                    msgEl.textContent = "All data cleared successfully for " + d.current_date_display;
-                }
+                if (msgEl) { msgEl.style.color = "#43a047"; msgEl.textContent = "Cleared for " + d.current_date_display; }
                 alert("All patient and queue data has been cleared.");
                 loadDepartments();
                 loadUsers();
             }
         })
-        .catch(err => {
-            console.error("Manual flush failed:", err);
-            alert("Request failed. Please check the console for details.");
-        });
+        .catch(err => { console.error("Manual flush failed:", err); alert("Request failed."); });
 }
 
-/** Logs out by clearing localStorage and redirecting to index.html. */
 function logout() {
     localStorage.removeItem("user_id");
     localStorage.removeItem("department_id");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
     window.location.href = "../index.html";
 }
 
-/** Fetches departments; fills deptTable and deptSelect; wires edit/delete. */
+/* ─── DEPARTMENTS ─────────────────────────────────────────────── */
+
 function loadDepartments() {
-    var el = document.getElementById("deptTable");
+    const el = document.getElementById("deptTable");
     if (!el) return;
+
     fetch("../../api/admin/departments.php")
-    .then(r => r.json())
-    .then(data => {
-        if (!Array.isArray(data)) return;
-        departmentsData = data;
-        var options = "";
-        var html = "<thead><tr><th>ID</th><th>Name</th><th>Code</th><th class='text-center'>Color</th><th class='text-center'>Type</th><th class='text-center'>Actions</th></tr></thead><tbody>";
-        data.forEach(function(d) {
-            const typePill = d.is_finance == 1
-                ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>"
-                : "<span class='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100'>Medical</span>";
-            const deptColor = normalizeHex(d.department_color);
+        .then(r => r.json())
+        .then(data => {
+            if (!Array.isArray(data)) return;
+            departmentsData = data;
 
-            html += "<tr data-department-id=\""+d.department_id+"\" data-is-finance=\""+d.is_finance+"\" data-dept-color=\""+deptColor+"\" class='hover:bg-gray-50/50 transition-colors'>"+
-                "<td>"+d.department_id+"</td>"+
-                "<td class=\"dept-name-cell font-medium\">"+escapeHtml(d.department_name)+"</td>"+
-                "<td class=\"dept-code-cell\"><span class='bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold'>"+escapeHtml(d.department_code||"")+"</span></td>"+
-                "<td class=\"dept-color-cell text-center\"><div style='width:32px; height:32px; background-color:"+deptColor+"; border-radius:0.5rem; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.1); margin:0 auto;'></div></td>"+
-                "<td class=\"dept-finance-cell text-center\">"+typePill+"</td>"+
-                "<td class='flex justify-center gap-2'>"+
-                    "<button type=\"button\" class=\"edit-dept-btn btn-ios-secondary !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z' /></svg><span>Edit</span></button>"+
-                    "<button type=\"button\" class=\"delete-dept-btn btn-ios-danger !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg><span>Delete</span></button>"+
-                "</td>"+
-                "</tr>";
-            if ((d.department_name || "").trim().toLowerCase() !== "admin") {
-                options += "<option value=\""+d.department_id+"\">"+escapeHtml(d.department_name)+"</option>";
+            // Find Admin department ID for admin/sysadmin users
+            const adminDept = data.find(d => d.department_name && d.department_name.toLowerCase() === 'admin');
+            if (adminDept) adminDeptId = adminDept.department_id;
+
+            // Rebuild the user-create department dropdown (separate element: #userDeptSelect)
+            const userDeptSel = document.getElementById("userDeptSelect");
+            if (userDeptSel) {
+                let opts = '<option value="0">None</option>';
+                data.forEach(d => {
+                    if ((d.department_name || "").trim().toLowerCase() === "admin") return;
+                    opts += `<option value="${d.department_id}">${escapeHtml(d.department_name)}</option>`;
+                });
+                userDeptSel.innerHTML = opts;
             }
-        });
-        html += "</tbody>";
-        el.innerHTML = html;
-        document.getElementById("deptSelect").innerHTML = '<option value="0">None</option>' + options;
-        el.querySelectorAll(".edit-dept-btn").forEach(function(btn) {
-            btn.addEventListener("click", startEditDepartment);
-        });
-        el.querySelectorAll(".delete-dept-btn").forEach(function(btn) {
-            btn.addEventListener("click", deleteDepartmentRow);
-        });
-    })
-    .catch(function() { el.innerHTML = "<tr><td colspan=\"6\" class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
-}
 
-/** Escape HTML for safe display (XSS). */
-function escapeHtml(s) {
-    const div = document.createElement("div");
-    div.textContent = s;
-    return div.innerHTML;
+            let html = `<thead><tr>
+                <th>ID</th><th>Name</th><th>Code</th>
+                <th class="text-center">Color</th>
+                <th class="text-center">Type</th>
+                <th class="text-center">Actions</th>
+            </tr></thead><tbody>`;
+
+            data.forEach(d => {
+                const typePill = d.is_finance == 1
+                    ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>"
+                    : "<span class='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100'>Medical</span>";
+                const deptColor = normalizeHex(d.department_color);
+
+                html += `<tr
+                    data-department-id="${d.department_id}"
+                    data-is-finance="${d.is_finance}"
+                    data-dept-color="${deptColor}"
+                    class="hover:bg-gray-50/50 transition-colors">
+                    <td>${d.department_id}</td>
+                    <td class="dept-name-cell font-medium">${escapeHtml(d.department_name)}</td>
+                    <td class="dept-code-cell"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${escapeHtml(d.department_code || "")}</span></td>
+                    <td class="dept-color-cell text-center">
+                        <div style="width:32px;height:32px;background-color:${deptColor};border-radius:0.5rem;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin:0 auto;"></div>
+                    </td>
+                    <td class="dept-finance-cell text-center">${typePill}</td>
+                    <td class="flex justify-center gap-2">
+                        <button type="button" class="edit-dept-btn btn-ios-secondary !px-4 !py-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
+                            <span>Edit</span>
+                        </button>
+                        <button type="button" class="delete-dept-btn btn-ios-danger !px-4 !py-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>Delete</span>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            html += "</tbody>";
+            el.innerHTML = html;
+
+            el.querySelectorAll(".edit-dept-btn").forEach(btn => btn.addEventListener("click", startEditDepartment));
+            el.querySelectorAll(".delete-dept-btn").forEach(btn => btn.addEventListener("click", deleteDepartmentRow));
+        })
+        .catch(() => { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
 }
 
 function startEditDepartment(ev) {
@@ -152,99 +154,58 @@ function startEditDepartment(ev) {
     const financeCell = row.querySelector(".dept-finance-cell");
     const colorCell = row.querySelector(".dept-color-cell");
     const actionsCell = row.querySelector("td:last-child");
-    const existingInput = nameCell.querySelector("input.inline-edit-input");
-    if (existingInput) {
-        loadDepartments();
-        return;
-    }
-    const currentName = nameCell.textContent;
-    const currentCode = codeCell ? codeCell.querySelector('span').textContent : "";
-    const currentIsFinance = row.dataset.isFinance == "1";
-    // normalizeHex ensures colorInput.value always gets a valid #rrggbb string
+
+    if (nameCell.querySelector("input.inline-edit-input")) { loadDepartments(); return; }
+
     const currentColor = normalizeHex(row.dataset.deptColor);
 
     const input = document.createElement("input");
-    input.type = "text";
-    input.value = currentName;
-    input.className = "input-ios inline-edit-input !px-3 !py-2 !text-sm";
-    input.placeholder = "Name";
-    nameCell.textContent = "";
-    nameCell.appendChild(input);
+    input.type = "text"; input.value = nameCell.textContent;
+    input.className = "input-ios inline-edit-input !px-3 !py-2 !text-sm"; input.placeholder = "Name";
+    nameCell.textContent = ""; nameCell.appendChild(input);
 
     const codeInput = document.createElement("input");
-    codeInput.type = "text";
-    codeInput.value = currentCode;
-    codeInput.className = "input-ios !px-3 !py-2 !text-sm uppercase";
-    codeInput.placeholder = "Code";
-    codeInput.maxLength = 3;
-    codeInput.style.width = "5em";
-    if (codeCell) {
-        codeCell.textContent = "";
-        codeCell.appendChild(codeInput);
-    }
+    codeInput.type = "text"; codeInput.value = codeCell ? codeCell.querySelector("span").textContent : "";
+    codeInput.className = "input-ios !px-3 !py-2 !text-sm uppercase"; codeInput.placeholder = "Code";
+    codeInput.maxLength = 3; codeInput.style.width = "5em";
+    if (codeCell) { codeCell.textContent = ""; codeCell.appendChild(codeInput); }
 
     const financeCheck = document.createElement("input");
-    financeCheck.type = "checkbox";
-    financeCheck.checked = currentIsFinance;
-    financeCheck.className = "w-4 h-4";
-    if (financeCell) {
-        financeCell.textContent = "";
-        financeCell.appendChild(financeCheck);
-    }
+    financeCheck.type = "checkbox"; financeCheck.checked = row.dataset.isFinance == "1"; financeCheck.className = "w-4 h-4";
+    if (financeCell) { financeCell.textContent = ""; financeCell.appendChild(financeCheck); }
 
     let colorInput = null;
     if (colorCell) {
         colorInput = document.createElement("input");
-        colorInput.type = "color";
-        colorInput.value = currentColor; // always a valid #rrggbb thanks to normalizeHex
-        colorInput.style = "width:60px; height:40px; min-width:60px; min-height:40px; cursor:pointer; border:1px solid #e2e8f0; border-radius:0.5rem; padding:0;";
-        colorCell.textContent = "";
-        colorCell.appendChild(colorInput);
+        colorInput.type = "color"; colorInput.value = currentColor;
+        colorInput.style = "width:60px;height:40px;cursor:pointer;border:1px solid #e2e8f0;border-radius:0.5rem;padding:0;";
+        colorCell.textContent = ""; colorCell.appendChild(colorInput);
     }
 
     function save() {
         const newName = input.value.trim();
         if (!newName) return;
-        const newCode = (codeInput && codeInput.value.trim() !== "") ? codeInput.value.trim().toUpperCase().substring(0, 3) : "";
-        const isFinance = financeCheck.checked ? 1 : 0;
-        // normalizeHex on save guarantees a clean hex goes to the DB
-        const newColor = normalizeHex(colorInput ? colorInput.value : "#062e6f");
         fetch("../../api/admin/departments.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent(newCode)}&is_finance=${isFinance}&department_color=${encodeURIComponent(newColor)}`
+            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent((codeInput?.value.trim().toUpperCase().substring(0,3)) || "")}&is_finance=${financeCheck.checked ? 1 : 0}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#062e6f"))}`
         }).then(() => loadDepartments());
     }
 
-    function cancel() {
-        loadDepartments();
-    }
-
-    function handleKeyDown(e) {
-        if (e.key === "Enter") save();
-    }
-    input.addEventListener("keydown", handleKeyDown);
-    if (codeInput) codeInput.addEventListener("keydown", handleKeyDown);
+    input.addEventListener("keydown", e => e.key === "Enter" && save());
+    if (codeInput) codeInput.addEventListener("keydown", e => e.key === "Enter" && save());
 
     if (actionsCell) {
-        actionsCell.innerHTML = '';
-        const saveBtn = document.createElement("button");
-        saveBtn.type = "button";
-        saveBtn.className = "btn-ios btn-ios-primary !px-4 !py-2";
-        saveBtn.textContent = "Save";
-        saveBtn.addEventListener("click", save);
-
-        const cancelBtn = document.createElement("button");
-        cancelBtn.type = "button";
-        cancelBtn.className = "btn-ios btn-ios-secondary !px-4 !py-2";
-        cancelBtn.textContent = "Cancel";
-        cancelBtn.addEventListener("click", cancel);
-
+        actionsCell.innerHTML = "";
         actionsCell.className = "flex justify-center gap-2";
-        actionsCell.appendChild(saveBtn);
-        actionsCell.appendChild(cancelBtn);
+        const saveBtn = document.createElement("button"); saveBtn.type = "button";
+        saveBtn.className = "btn-ios btn-ios-primary !px-4 !py-2"; saveBtn.textContent = "Save";
+        saveBtn.addEventListener("click", save);
+        const cancelBtn = document.createElement("button"); cancelBtn.type = "button";
+        cancelBtn.className = "btn-ios btn-ios-secondary !px-4 !py-2"; cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", () => loadDepartments());
+        actionsCell.appendChild(saveBtn); actionsCell.appendChild(cancelBtn);
     }
-
     input.focus();
 }
 
@@ -264,195 +225,241 @@ function addDepartment() {
     const codeEl = document.getElementById("deptCode");
     const colorEl = document.getElementById("deptColor");
     const isFinanceEl = document.getElementById("deptIsFinance");
-    const name = nameEl && nameEl.value ? nameEl.value.trim() : "";
-    if (!name) return;
+    const name = nameEl?.value.trim() || "";
+    if (!name) { alert("Department name is required."); return; }
+
     const f = new FormData();
     f.append("department_name", name);
-    f.append("is_finance", isFinanceEl && isFinanceEl.checked ? 1 : 0);
-    // normalizeHex ensures the color picker value is always a valid hex before POSTing
-    f.append("department_color", normalizeHex(colorEl ? colorEl.value : "#062e6f"));
-    if (codeEl && codeEl.value.trim() !== "") {
-        f.append("department_code", codeEl.value.trim().toUpperCase().substring(0, 3));
-    }
+    f.append("is_finance", isFinanceEl?.checked ? 1 : 0);
+    f.append("department_color", normalizeHex(colorEl?.value || "#062e6f"));
+    if (codeEl?.value.trim()) f.append("department_code", codeEl.value.trim().toUpperCase().substring(0, 3));
+
     fetch("../../api/admin/departments.php", { method: "POST", body: f })
-    .then(() => {
-        nameEl.value = "";
-        codeEl.value = "";
-        colorEl.value = "#062e6f";
-        isFinanceEl.checked = false;
-        loadDepartments();
-    });
+        .then(() => {
+            nameEl.value = ""; if (codeEl) codeEl.value = "";
+            if (colorEl) colorEl.value = "#062e6f"; if (isFinanceEl) isFinanceEl.checked = false;
+            loadDepartments();
+        });
 }
 
-/** Toggles password field visibility. */
+/* ─── USERS ───────────────────────────────────────────────────── */
+
 function togglePasswordVisibility(id) {
     const el = document.getElementById(id);
     if (!el) return;
     el.type = el.type === "password" ? "text" : "password";
 }
 
-/** Fetches users (with department name); fills userTable; wires edit/delete. */
+function toggleUserDeptVisibility() {
+    const role = document.getElementById("userRole")?.value;
+    const container = document.getElementById("deptSelectContainer");
+    if (!container) return;
+    container.classList.toggle("hidden", role === "admin" || role === "sysadmin");
+}
+
 function loadUsers() {
-    var el = document.getElementById("userTable");
+    const el = document.getElementById("userTable");
     if (!el) return;
+
     fetch("../../api/admin/users.php")
-    .then(r => r.json())
-    .then(data => {
-        if (!Array.isArray(data)) return;
-        var html = "<thead><tr><th>ID</th><th>Username</th><th>Department</th><th>Role</th><th>Password</th><th class='text-center'>Actions</th></tr></thead><tbody>";
-        data.forEach(function(u) {
-            html += "<tr data-user-id=\""+u.user_id+"\" data-department-id=\""+(u.department_id||"")+"\" data-username=\""+escapeHtml(u.username)+"\" data-role=\""+u.role+"\" class='hover:bg-gray-50/50 transition-colors'>"+
-                "<td class='text-gray-400 font-mono text-xs'>"+u.user_id+"</td>"+
-                "<td class=\"user-username-cell font-bold text-gray-900\">"+escapeHtml(u.username)+"</td>"+
-                "<td class=\"user-dept-cell\"><span class='bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold'>"+escapeHtml(u.department_name||"None")+"</span></td>"+
-                "<td class=\"user-role-cell uppercase text-[11px] font-black tracking-widest text-gray-400\">"+escapeHtml(u.role)+"</td>"+
-                "<td class=\"user-password-cell font-mono text-xs text-gray-400\">"+escapeHtml(u.raw_password||"********")+"</td>"+
-                "<td class='flex justify-center gap-2'>"+
-                    "<button type=\"button\" class=\"edit-user-btn btn-ios-secondary !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z' /></svg><span>Edit</span></button>"+
-                    "<button type=\"button\" class=\"delete-user-btn btn-ios-danger !px-4 !py-2\"><svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg><span>Delete</span></button>"+
-                "</td>"+
-                "</tr>";
+        .then(r => r.json())
+        .then(data => {
+            if (!Array.isArray(data)) { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>No users found.</td></tr>"; return; }
+
+            let html = `<thead><tr>
+                <th>ID</th><th>Username</th><th>Department</th>
+                <th>Role</th><th>Password</th>
+                <th class="text-center">Actions</th>
+            </tr></thead><tbody>`;
+
+            data.forEach(u => {
+                html += `<tr
+                    data-user-id="${u.user_id}"
+                    data-department-id="${u.department_id || 0}"
+                    data-role="${escapeHtml(u.role)}"
+                    class="hover:bg-gray-50/50 transition-colors">
+                    <td class="text-gray-400 font-mono text-xs">${u.user_id}</td>
+                    <td class="user-username-cell font-bold text-gray-900">${escapeHtml(u.username)}</td>
+                    <td class="user-dept-cell"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">${escapeHtml(u.department_name || "None")}</span></td>
+                    <td class="user-role-cell uppercase text-[11px] font-black tracking-widest text-gray-400">${escapeHtml(u.role)}</td>
+                    <td class="user-password-cell font-mono text-xs text-gray-400">${escapeHtml(u.raw_password || "********")}</td>
+                    <td class="flex justify-center gap-2">
+                        <button type="button" class="edit-user-btn btn-ios-secondary !px-4 !py-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
+                            <span>Edit</span>
+                        </button>
+                        <button type="button" class="delete-user-btn btn-ios-danger !px-4 !py-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>Delete</span>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            html += "</tbody>";
+            el.innerHTML = html;
+
+            el.querySelectorAll(".edit-user-btn").forEach(btn => btn.addEventListener("click", startEditUser));
+            el.querySelectorAll(".delete-user-btn").forEach(btn => btn.addEventListener("click", deleteUserRow));
+        })
+        .catch(err => {
+            console.error("Error loading users:", err);
+            el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Could not load users.</td></tr>";
         });
-        html += "</tbody>";
-        el.innerHTML = html;
-        el.querySelectorAll(".edit-user-btn").forEach(function(btn) {
-            btn.addEventListener("click", startEditUser);
-        });
-        el.querySelectorAll(".delete-user-btn").forEach(function(btn) {
-            btn.addEventListener("click", deleteUserRow);
-        });
-    })
-    .catch(function(err) {
-        console.error("Error loading users:", err);
-        el.innerHTML = "<tr><td colspan=\"6\" class='p-8 text-center text-gray-400'>Could not load users.</td></tr>";
-    });
 }
 
 function startEditUser(ev) {
-    const btn = ev.target;
-    const row = btn.closest("tr");
-    const userId = row.dataset.userId;
+    const btn = ev.target.closest("button");
+    const row = btn ? btn.closest("tr") : null;
+    if (!row) return;
+
+    const userId       = row.dataset.userId;
     const departmentId = row.dataset.departmentId;
-    const username = row.dataset.username;
-    const role = row.dataset.role;
+    const role         = row.dataset.role;
 
     const usernameCell = row.querySelector(".user-username-cell");
-    const deptCell = row.querySelector(".user-dept-cell");
-    const roleCell = row.querySelector(".user-role-cell");
+    const deptCell     = row.querySelector(".user-dept-cell");
+    const roleCell     = row.querySelector(".user-role-cell");
     const passwordCell = row.querySelector(".user-password-cell");
+    const actionsCell  = row.querySelector("td:last-child");
 
-    if (usernameCell.querySelector("input")) {
-        loadUsers();
-        return;
-    }
+    if (usernameCell.querySelector("input")) { loadUsers(); return; }
+
+    const currentUsername = usernameCell.textContent.trim();
 
     const usernameInput = document.createElement("input");
-    usernameInput.value = username;
+    usernameInput.type = "text"; usernameInput.value = currentUsername;
     usernameInput.className = "input-ios !px-3 !py-2 !text-sm";
-    usernameCell.textContent = "";
-    usernameCell.appendChild(usernameInput);
+    usernameCell.textContent = ""; usernameCell.appendChild(usernameInput);
 
-    const passwordContainer = document.createElement("div");
-    passwordContainer.className = "relative flex items-center";
-
+    const pwWrap = document.createElement("div");
+    pwWrap.className = "relative flex items-center";
     const passwordInput = document.createElement("input");
-    passwordInput.type = "password";
-    passwordInput.placeholder = "New Password";
-    passwordInput.className = "input-ios !px-3 !py-2 !text-sm pr-8";
+    passwordInput.type = "password"; passwordInput.placeholder = "New password (leave blank to keep)";
+    passwordInput.className = "input-ios !px-3 !py-2 !text-sm";
     passwordInput.style.flex = "1";
-
-    const toggleIcon = document.createElement("span");
-    toggleIcon.innerHTML = "&#128065;";
-    toggleIcon.className = "absolute right-2 cursor-pointer select-none text-sm";
-    toggleIcon.onclick = () => {
-        passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-    };
-
-    passwordCell.textContent = "";
-    passwordContainer.appendChild(passwordInput);
-    passwordContainer.appendChild(toggleIcon);
-    passwordCell.appendChild(passwordContainer);
-
-    const deptSelect = document.createElement("select");
-    deptSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
-    deptCell.textContent = "";
-    deptCell.appendChild(deptSelect);
+    const eyeBtn = document.createElement("span");
+    eyeBtn.innerHTML = "&#128065;"; eyeBtn.className = "absolute right-2 cursor-pointer select-none text-sm";
+    eyeBtn.onclick = () => { passwordInput.type = passwordInput.type === "password" ? "text" : "password"; };
+    pwWrap.appendChild(passwordInput); pwWrap.appendChild(eyeBtn);
+    passwordCell.textContent = ""; passwordCell.appendChild(pwWrap);
 
     const roleSelect = document.createElement("select");
     roleSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
     roleSelect.innerHTML = '<option value="staff">Staff</option><option value="admin">Admin</option><option value="sysadmin">SysAdmin</option>';
+    roleCell.textContent = ""; roleCell.appendChild(roleSelect);
     roleSelect.value = role;
-    roleCell.textContent = "";
-    roleCell.appendChild(roleSelect);
 
-    fetch("../../api/admin/departments.php")
-        .then(r => r.json())
-        .then(function(depts) {
-            let opts = '<option value="0">None</option>';
-            depts.forEach(function(d) {
-                if ((d.department_name || "").trim().toLowerCase() === "admin") return;
-                const selAttr = String(d.department_id) === String(departmentId) ? " selected" : "";
-                opts += "<option value=\""+d.department_id+"\""+selAttr+">"+escapeHtml(d.department_name)+"</option>";
-            });
-            deptSelect.innerHTML = opts;
-        });
+    // Update department selection when role changes
+    roleSelect.addEventListener('change', () => {
+        if (roleSelect.value === 'admin') {
+            deptSelect.value = adminDeptId;
+            deptSelect.disabled = true;
+        } else if (roleSelect.value === 'sysadmin') {
+            deptSelect.value = "";
+            deptSelect.disabled = true;
+        } else {
+            deptSelect.disabled = false;
+        }
+    });
+
+    const deptSelect = document.createElement("select");
+    deptSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
+    deptCell.textContent = ""; deptCell.appendChild(deptSelect);
+
+    let deptOpts = '<option value="0">None</option>';
+    departmentsData.forEach(d => {
+        if ((d.department_name || "").trim().toLowerCase() === "admin") return;
+        const sel = String(d.department_id) === String(departmentId) ? " selected" : "";
+        deptOpts += `<option value="${d.department_id}"${sel}>${escapeHtml(d.department_name)}</option>`;
+    });
+    deptSelect.innerHTML = deptOpts;
+
+    // Handle admin/sysadmin department assignment
+    if (role === 'admin') {
+        deptSelect.value = adminDeptId;
+        deptSelect.disabled = true;
+    } else if (role === 'sysadmin') {
+        deptSelect.value = "";
+        deptSelect.disabled = true;
+    } else {
+        deptSelect.disabled = false;
+    }
 
     function save() {
         const newUsername = usernameInput.value.trim();
-        const newPassword = passwordInput.value.trim();
-        const newDeptId = deptSelect.value;
-        const newRole = roleSelect.value;
-        if (!newUsername) return;
+        if (!newUsername) { alert("Username cannot be empty."); return; }
 
-        let body = `user_id=${encodeURIComponent(userId)}&username=${encodeURIComponent(newUsername)}&department_id=${encodeURIComponent(newDeptId)}&role=${encodeURIComponent(newRole)}`;
-        if (newPassword) {
-            body += `&password=${encodeURIComponent(newPassword)}`;
-        }
+        if (roleSelect.value === "staff" && deptSelect.value == 0) { alert("Staff must be assigned to a department."); return; }
+
+        let body = `user_id=${encodeURIComponent(userId)}&username=${encodeURIComponent(newUsername)}&department_id=${encodeURIComponent(deptSelect.value)}&role=${encodeURIComponent(roleSelect.value)}`;
+        const newPassword = passwordInput.value.trim();
+        if (newPassword) body += `&password=${encodeURIComponent(newPassword)}`;
 
         fetch("../../api/admin/users.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: body
-        }).then(() => loadUsers());
+        })
+        .then(r => r.json())
+        .then(d => {
+            if (d.status === "error") { alert(d.message || "Update failed."); return; }
+            loadUsers();
+        })
+        .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     }
 
-    usernameInput.addEventListener("keydown", e => e.key === "Enter" && save());
-    passwordInput.addEventListener("keydown", e => e.key === "Enter" && save());
-    deptSelect.addEventListener("keydown", e => e.key === "Enter" && save());
-    roleSelect.addEventListener("keydown", e => e.key === "Enter" && save());
+    [usernameInput, passwordInput, deptSelect, roleSelect].forEach(el => {
+        el.addEventListener("keydown", e => e.key === "Enter" && save());
+    });
+
+    if (actionsCell) {
+        actionsCell.innerHTML = "";
+        actionsCell.className = "flex justify-center gap-2";
+
+        const saveBtn = document.createElement("button"); saveBtn.type = "button";
+        saveBtn.className = "btn-ios btn-ios-primary !px-4 !py-2"; saveBtn.textContent = "Save";
+        saveBtn.addEventListener("click", save);
+
+        const cancelBtn = document.createElement("button"); cancelBtn.type = "button";
+        cancelBtn.className = "btn-ios btn-ios-secondary !px-4 !py-2"; cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", () => loadUsers());
+
+        actionsCell.appendChild(saveBtn);
+        actionsCell.appendChild(cancelBtn);
+    }
+
+    usernameInput.focus();
 }
 
 function deleteUserRow(ev) {
     const row = ev.target.closest("tr");
-    const id = row.dataset.userId;
-    if (!confirm("Delete this user?")) return;
+    const id = row?.dataset.userId;
+    if (!id || !confirm("Delete this user?")) return;
     fetch("../../api/admin/users.php", {
         method: "DELETE",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `user_id=${encodeURIComponent(id)}`
-    }).then(() => loadUsers());
+    })
+    .then(r => r.json())
+    .then(d => { if (d.status === "error") alert(d.message); else loadUsers(); })
+    .catch(err => { console.error("Delete failed:", err); alert("Request failed."); });
 }
 
 function addUser() {
-    const username = document.getElementById("userUsername").value.trim();
-    const password = document.getElementById("userPassword").value.trim();
-    const role = document.getElementById("userRole").value;
-    let deptId = document.getElementById("deptSelect").value;
+    const usernameEl = document.getElementById("userUsername");
+    const passwordEl = document.getElementById("userPassword");
+    const roleEl     = document.getElementById("userRole");
+    const deptEl     = document.getElementById("userDeptSelect");
 
-    if (!username || !password) {
-        alert("Username and Password are required.");
-        return;
-    }
+    const username = usernameEl?.value.trim() || "";
+    const password = passwordEl?.value.trim() || "";
+    const role     = roleEl?.value || "staff";
+    let   deptId   = (role === "admin") ? adminDeptId : (role === "sysadmin") ? "" : (deptEl?.value || 0);
 
-    // Force both admin and sysadmin accounts into the Admin department
-    if (role === "admin" || role === "sysadmin") {
-        const adminDept = departmentsData.find(d => (d.department_name || "").trim().toLowerCase() === "admin");
-        if (!adminDept) {
-            alert("Critical Error: 'Admin' department not found in database. Please create it first.");
-            return;
-        }
-        deptId = adminDept.department_id;
-    }
+    if (role === "staff" && deptId == 0) { alert("Staff must be assigned to a department."); return; }
+
+    if (!username || !password) { alert("Username and Password are required."); return; }
 
     const f = new FormData();
     f.append("username", username);
@@ -464,23 +471,12 @@ function addUser() {
         .then(r => r.json())
         .then(d => {
             if (d.status === "success") {
-                document.getElementById("userUsername").value = "";
-                document.getElementById("userPassword").value = "";
+                if (usernameEl) usernameEl.value = "";
+                if (passwordEl) passwordEl.value = "";
                 loadUsers();
             } else {
                 alert(d.message || "Error creating user");
             }
-        });
-}
-
-/** Toggles department selector visibility based on selected role. */
-function toggleUserDeptVisibility() {
-    const role = document.getElementById("userRole").value;
-    const container = document.getElementById("deptSelectContainer");
-    if (!container) return;
-    if (role === "admin" || role === "sysadmin") {
-        container.classList.add("hidden");
-    } else {
-        container.classList.remove("hidden");
-    }
+        })
+        .catch(err => { console.error("Create user failed:", err); alert("Request failed."); });
 }
