@@ -7,7 +7,6 @@ require_once("../helpers/department_queue.php");
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-ensureDepartmentCodeColumn($conn);
 ensureDepartmentColorColumn($conn);
 
 /* READ */
@@ -19,19 +18,11 @@ if ($method === "GET") {
 /* CREATE */
 if ($method === "POST") {
     $name  = $_POST['department_name'] ?? '';
-    $code  = isset($_POST['department_code']) ? trim($_POST['department_code']) : null;
     $is_finance = isset($_POST['is_finance']) ? (int)$_POST['is_finance'] : 0;
     $color = isset($_POST['department_color']) ? trim($_POST['department_color']) : '#3b82f6';
 
-    if ($code !== null && $code !== '') {
-        $code = strtoupper(substr($code, 0, 3));
-    } else {
-        $code = null;
-    }
-
-    // Types: s=name, s=code, i=is_finance, s=color  ← correct order
-    $stmt = $conn->prepare("INSERT INTO department(department_name, department_code, is_finance, department_color) VALUES(?, ?, ?, ?)");
-    $stmt->bind_param("ssis", $name, $code, $is_finance, $color);
+    $stmt = $conn->prepare("INSERT INTO department(department_name, is_finance, department_color) VALUES(?, ?, ?)");
+    $stmt->bind_param("sis", $name, $is_finance, $color);
     $stmt->execute();
     echo json_encode(["status" => "success"]);
 }
@@ -41,19 +32,11 @@ if ($method === "PUT") {
     parse_str(file_get_contents("php://input"), $_PUT);
     $id         = (int)($_PUT['department_id'] ?? 0);
     $name       = $_PUT['department_name'] ?? '';
-    $code       = isset($_PUT['department_code']) ? trim($_PUT['department_code']) : null;
     $is_finance = isset($_PUT['is_finance']) ? (int)$_PUT['is_finance'] : 0;
     $color      = isset($_PUT['department_color']) ? trim($_PUT['department_color']) : '#3b82f6';
 
-    if ($code !== null && $code !== '') {
-        $code = strtoupper(substr($code, 0, 3));
-    } else {
-        $code = null;
-    }
-
-    // Types: s=name, s=code, i=is_finance, s=color, i=id  ← fixed (was "sssii" before)
-    $stmt = $conn->prepare("UPDATE department SET department_name=?, department_code=?, is_finance=?, department_color=? WHERE department_id=?");
-    $stmt->bind_param("ssisi", $name, $code, $is_finance, $color, $id);
+    $stmt = $conn->prepare("UPDATE department SET department_name=?, is_finance=?, department_color=? WHERE department_id=?");
+    $stmt->bind_param("sisi", $name, $is_finance, $color, $id);
     $stmt->execute();
     echo json_encode(["status" => "updated"]);
 }

@@ -11,6 +11,9 @@ backup_db/*.sql
 !backup_db/hospital_queue.sql
 !backup_db/hospital_queue_full.sql
 
+# Archived legacy files
+archive/
+
 # IDE files
 .vscode/
 .idea/
