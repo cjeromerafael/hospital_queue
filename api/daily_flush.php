@@ -8,6 +8,8 @@
  */
 require_once("config.php");
 
+requireAuth();
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 $data_dir = __DIR__ . '/data';
@@ -15,10 +17,7 @@ $flush_date_file = $data_dir . '/last_flush_date.txt';
 $events_dir = __DIR__ . '/queue/events';
 
 function runFlush($conn, $flush_date_file, $events_dir) {
-    $conn->query("DELETE FROM queueing");
-    $conn->query("DELETE FROM patient");
-
-    // v2 queue_state (number-only) is optional; clear it if present.
+    // v2 queue_state (number-only) is the active queue model; clear it when flushing.
     $qs = $conn->query("SHOW TABLES LIKE 'queue_state'");
     if ($qs && $qs->num_rows > 0) {
         $conn->query("DELETE FROM queue_state");
@@ -48,23 +47,18 @@ $today_display = date('F j, Y');
 
 if ($method === 'POST') {
     $manual = isset($_POST['manual']) ? $_POST['manual'] : (isset($_GET['manual']) ? $_GET['manual'] : null);
-    $user_id_raw = isset($_POST['user_id']) ? $_POST['user_id'] : (isset($_GET['user_id']) ? $_GET['user_id'] : null);
-    $user_id = (int)$user_id_raw;
-    if (($manual !== '1' && $manual !== 1) || !$user_id_raw) {
-        echo json_encode(["status" => "error", "message" => "manual=1 and user_id required"]);
+    if ($manual !== '1' && $manual !== 1) {
+        echo json_encode(["status" => "error", "message" => "manual=1 required"]);
         exit;
     }
-    $stmt = $conn->prepare("SELECT role FROM user WHERE user_id = ? LIMIT 1");
-    $stmt->bind_param("s", $user_id_raw);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $row = $res ? $res->fetch_assoc() : null;
+
     $allowedRoles = ['admin', 'sysadmin'];
-    if (!$row || !in_array(strtolower(trim($row['role'] ?? '')), $allowedRoles)) {
+    if (!in_array(strtolower(trim(getAuthRole() ?? '')), $allowedRoles, true)) {
         http_response_code(403);
         echo json_encode(["status" => "error", "message" => "Admin only"]);
         exit;
     }
+
     runFlush($conn, $flush_date_file, $events_dir);
     echo json_encode([
         "current_date" => $today,

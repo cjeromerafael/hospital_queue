@@ -5,12 +5,51 @@
 let departmentsData = [];
 let adminDeptId = 0;
 
-document.addEventListener("DOMContentLoaded", function () {
+async function redirectToLogin() {
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("department_id");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    window.location.href = "../index.html";
+}
+
+async function fetchAuthStatus() {
+    try {
+        const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
+        if (res.status === 401) {
+            redirectToLogin();
+            return null;
+        }
+        const data = await res.json();
+        if (data.status !== "success") {
+            redirectToLogin();
+            return null;
+        }
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("username", data.username || "");
+        localStorage.setItem("department_id", data.department_id || "");
+        localStorage.setItem("role", data.department_role || "");
+        return data;
+    } catch (err) {
+        console.error("Auth check failed:", err);
+        redirectToLogin();
+        return null;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async function () {
+    const auth = await fetchAuthStatus();
+    if (!auth) return;
+    if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
+        window.location.href = "../staff/dashboard_v2.html";
+        return;
+    }
+
     checkDailyFlush();
     loadDepartments();
     loadUsers();
 
-    const username = localStorage.getItem("username") || "Admin";
+    const username = auth.username || "Admin";
     const el = document.getElementById("userInfoDisplay");
     if (el) el.textContent = `${username} (Administrator)`;
 });
@@ -30,9 +69,16 @@ function escapeHtml(s) {
 }
 
 function checkDailyFlush() {
-    fetch("../../api/daily_flush.php")
-        .then(r => r.json())
+    fetch("../../api/daily_flush.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) {
+                redirectToLogin();
+                return null;
+            }
+            return r.json();
+        })
         .then(d => {
+            if (!d) return;
             const el = document.getElementById("currentDateDisplay");
             if (el) el.textContent = d.current_date_display || "";
         })
@@ -41,12 +87,10 @@ function checkDailyFlush() {
 
 function manualFlush() {
     if (!confirm("Are you SURE you want to flush all patient and queue data? This cannot be undone!")) return;
-    const userId = localStorage.getItem("user_id") || "";
     const f = new FormData();
     f.append("manual", "1");
-    f.append("user_id", userId);
 
-    fetch("../../api/daily_flush.php", { method: "POST", body: f })
+    fetch("../../api/daily_flush.php", { method: "POST", body: f, credentials: "same-origin" })
         .then(r => r.json())
         .then(d => {
             const msgEl = document.getElementById("flushMsg");
@@ -64,11 +108,14 @@ function manualFlush() {
 }
 
 function logout() {
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("department_id");
-    localStorage.removeItem("role");
-    localStorage.removeItem("username");
-    window.location.href = "../index.html";
+    fetch("../../api/auth/logout.php", { method: "POST", credentials: "same-origin" })
+        .finally(() => {
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("department_id");
+            localStorage.removeItem("role");
+            localStorage.removeItem("username");
+            window.location.href = "../index.html";
+        });
 }
 
 /* ─── DEPARTMENTS ─────────────────────────────────────────────── */
@@ -77,8 +124,11 @@ function loadDepartments() {
     const el = document.getElementById("deptTable");
     if (!el) return;
 
-    fetch("../../api/admin/departments.php")
-        .then(r => r.json())
+    fetch("../../api/admin/departments.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) { redirectToLogin(); return null; }
+            return r.json();
+        })
         .then(data => {
             if (!Array.isArray(data)) return;
             departmentsData = data;
@@ -99,7 +149,7 @@ function loadDepartments() {
             }
 
             let html = `<thead><tr>
-                <th>ID</th><th>Name</th><th>Code</th>
+                <th>ID</th><th>Name</th>
                 <th class="text-center">Color</th>
                 <th class="text-center">Type</th>
                 <th class="text-center">Actions</th>
@@ -118,7 +168,6 @@ function loadDepartments() {
                     class="hover:bg-gray-50/50 transition-colors">
                     <td>${d.department_id}</td>
                     <td class="dept-name-cell font-medium">${escapeHtml(d.department_name)}</td>
-                    <td class="dept-code-cell"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${escapeHtml(d.department_code || "")}</span></td>
                     <td class="dept-color-cell text-center">
                         <div style="width:32px;height:32px;background-color:${deptColor};border-radius:0.5rem;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin:0 auto;"></div>
                     </td>
@@ -142,7 +191,7 @@ function loadDepartments() {
             el.querySelectorAll(".edit-dept-btn").forEach(btn => btn.addEventListener("click", startEditDepartment));
             el.querySelectorAll(".delete-dept-btn").forEach(btn => btn.addEventListener("click", deleteDepartmentRow));
         })
-        .catch(() => { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
+        .catch(() => { el.innerHTML = "<tr><td colspan='5' class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
 }
 
 function startEditDepartment(ev) {
@@ -150,7 +199,6 @@ function startEditDepartment(ev) {
     const row = btn.closest("tr");
     const id = row.dataset.departmentId;
     const nameCell = row.querySelector(".dept-name-cell");
-    const codeCell = row.querySelector(".dept-code-cell");
     const financeCell = row.querySelector(".dept-finance-cell");
     const colorCell = row.querySelector(".dept-color-cell");
     const actionsCell = row.querySelector("td:last-child");
@@ -163,12 +211,6 @@ function startEditDepartment(ev) {
     input.type = "text"; input.value = nameCell.textContent;
     input.className = "input-ios inline-edit-input !px-3 !py-2 !text-sm"; input.placeholder = "Name";
     nameCell.textContent = ""; nameCell.appendChild(input);
-
-    const codeInput = document.createElement("input");
-    codeInput.type = "text"; codeInput.value = codeCell ? codeCell.querySelector("span").textContent : "";
-    codeInput.className = "input-ios !px-3 !py-2 !text-sm uppercase"; codeInput.placeholder = "Code";
-    codeInput.maxLength = 3; codeInput.style.width = "5em";
-    if (codeCell) { codeCell.textContent = ""; codeCell.appendChild(codeInput); }
 
     const financeCheck = document.createElement("input");
     financeCheck.type = "checkbox"; financeCheck.checked = row.dataset.isFinance == "1"; financeCheck.className = "w-4 h-4";
@@ -188,12 +230,11 @@ function startEditDepartment(ev) {
         fetch("../../api/admin/departments.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_code=${encodeURIComponent((codeInput?.value.trim().toUpperCase().substring(0,3)) || "")}&is_finance=${financeCheck.checked ? 1 : 0}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#062e6f"))}`
+            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&is_finance=${financeCheck.checked ? 1 : 0}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#062e6f"))}`
         }).then(() => loadDepartments());
     }
 
     input.addEventListener("keydown", e => e.key === "Enter" && save());
-    if (codeInput) codeInput.addEventListener("keydown", e => e.key === "Enter" && save());
 
     if (actionsCell) {
         actionsCell.innerHTML = "";
@@ -222,7 +263,6 @@ function deleteDepartmentRow(ev) {
 
 function addDepartment() {
     const nameEl = document.getElementById("deptName");
-    const codeEl = document.getElementById("deptCode");
     const colorEl = document.getElementById("deptColor");
     const isFinanceEl = document.getElementById("deptIsFinance");
     const name = nameEl?.value.trim() || "";
@@ -232,12 +272,12 @@ function addDepartment() {
     f.append("department_name", name);
     f.append("is_finance", isFinanceEl?.checked ? 1 : 0);
     f.append("department_color", normalizeHex(colorEl?.value || "#062e6f"));
-    if (codeEl?.value.trim()) f.append("department_code", codeEl.value.trim().toUpperCase().substring(0, 3));
 
     fetch("../../api/admin/departments.php", { method: "POST", body: f })
         .then(() => {
-            nameEl.value = ""; if (codeEl) codeEl.value = "";
-            if (colorEl) colorEl.value = "#062e6f"; if (isFinanceEl) isFinanceEl.checked = false;
+            nameEl.value = "";
+            if (colorEl) colorEl.value = "#062e6f";
+            if (isFinanceEl) isFinanceEl.checked = false;
             loadDepartments();
         });
 }
@@ -261,8 +301,11 @@ function loadUsers() {
     const el = document.getElementById("userTable");
     if (!el) return;
 
-    fetch("../../api/admin/users.php")
-        .then(r => r.json())
+    fetch("../../api/admin/users.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) { redirectToLogin(); return null; }
+            return r.json();
+        })
         .then(data => {
             if (!Array.isArray(data)) { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>No users found.</td></tr>"; return; }
 

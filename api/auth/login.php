@@ -59,6 +59,12 @@ LIMIT 1
         exit;
     }
 
+    session_regenerate_id(true);
+    $_SESSION['user_id'] = $user_id;
+    $_SESSION['username'] = $db_username;
+    $_SESSION['department_id'] = $department_id;
+    $_SESSION['role'] = $role;
+
     ob_end_clean();
     echo json_encode([
         "status" => "success",
