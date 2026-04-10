@@ -5,12 +5,51 @@
 let departmentsData = [];
 let adminDeptId = 0;
 
-document.addEventListener("DOMContentLoaded", function () {
+async function redirectToLogin() {
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("department_id");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    window.location.href = "../index.html";
+}
+
+async function fetchAuthStatus() {
+    try {
+        const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
+        if (res.status === 401) {
+            redirectToLogin();
+            return null;
+        }
+        const data = await res.json();
+        if (data.status !== "success") {
+            redirectToLogin();
+            return null;
+        }
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("username", data.username || "");
+        localStorage.setItem("department_id", data.department_id || "");
+        localStorage.setItem("role", data.department_role || "");
+        return data;
+    } catch (err) {
+        console.error("Auth check failed:", err);
+        redirectToLogin();
+        return null;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async function () {
+    const auth = await fetchAuthStatus();
+    if (!auth) return;
+    if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
+        window.location.href = "../staff/dashboard_v2.html";
+        return;
+    }
+
     checkDailyFlush();
     loadDepartments();
     loadUsers();
 
-    const username = localStorage.getItem("username") || "Admin";
+    const username = auth.username || "Admin";
     const el = document.getElementById("userInfoDisplay");
     if (el) el.textContent = `${username} (Administrator)`;
 });
@@ -30,9 +69,16 @@ function escapeHtml(s) {
 }
 
 function checkDailyFlush() {
-    fetch("../../api/daily_flush.php")
-        .then(r => r.json())
+    fetch("../../api/daily_flush.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) {
+                redirectToLogin();
+                return null;
+            }
+            return r.json();
+        })
         .then(d => {
+            if (!d) return;
             const el = document.getElementById("currentDateDisplay");
             if (el) el.textContent = d.current_date_display || "";
         })
@@ -41,12 +87,10 @@ function checkDailyFlush() {
 
 function manualFlush() {
     if (!confirm("Are you SURE you want to flush all patient and queue data? This cannot be undone!")) return;
-    const userId = localStorage.getItem("user_id") || "";
     const f = new FormData();
     f.append("manual", "1");
-    f.append("user_id", userId);
 
-    fetch("../../api/daily_flush.php", { method: "POST", body: f })
+    fetch("../../api/daily_flush.php", { method: "POST", body: f, credentials: "same-origin" })
         .then(r => r.json())
         .then(d => {
             const msgEl = document.getElementById("flushMsg");
@@ -64,11 +108,14 @@ function manualFlush() {
 }
 
 function logout() {
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("department_id");
-    localStorage.removeItem("role");
-    localStorage.removeItem("username");
-    window.location.href = "../index.html";
+    fetch("../../api/auth/logout.php", { method: "POST", credentials: "same-origin" })
+        .finally(() => {
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("department_id");
+            localStorage.removeItem("role");
+            localStorage.removeItem("username");
+            window.location.href = "../index.html";
+        });
 }
 
 /* ─── DEPARTMENTS ─────────────────────────────────────────────── */
@@ -77,8 +124,11 @@ function loadDepartments() {
     const el = document.getElementById("deptTable");
     if (!el) return;
 
-    fetch("../../api/admin/departments.php")
-        .then(r => r.json())
+    fetch("../../api/admin/departments.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) { redirectToLogin(); return null; }
+            return r.json();
+        })
         .then(data => {
             if (!Array.isArray(data)) return;
             departmentsData = data;
@@ -251,8 +301,11 @@ function loadUsers() {
     const el = document.getElementById("userTable");
     if (!el) return;
 
-    fetch("../../api/admin/users.php")
-        .then(r => r.json())
+    fetch("../../api/admin/users.php", { credentials: "same-origin" })
+        .then(r => {
+            if (r.status === 401) { redirectToLogin(); return null; }
+            return r.json();
+        })
         .then(data => {
             if (!Array.isArray(data)) { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>No users found.</td></tr>"; return; }
 

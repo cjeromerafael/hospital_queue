@@ -5,6 +5,9 @@
  */
 require_once("../config.php");
 
+requireAuth();
+requireRole(['sysadmin']);
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 /* READ */

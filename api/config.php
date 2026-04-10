@@ -5,10 +5,68 @@
  */
 header("Content-Type: application/json");
 
+// Secure session handling for API auth
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_strict_mode', 1);
+session_name('hospital_queue_session');
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+function isLoggedIn() {
+    return !empty($_SESSION['user_id']);
+}
+
+function requireAuth() {
+    if (!isLoggedIn()) {
+        http_response_code(401);
+        echo json_encode(["status" => "error", "message" => "Authentication required"]);
+        exit;
+    }
+}
+
+function requireRole(array $allowedRoles) {
+    requireAuth();
+    $currentRole = strtolower(trim($_SESSION['role'] ?? ''));
+    $allowed = array_map('strtolower', $allowedRoles);
+    if (!in_array($currentRole, $allowed, true)) {
+        http_response_code(403);
+        echo json_encode(["status" => "error", "message" => "Forbidden"]);
+        exit;
+    }
+}
+
+function requireDepartmentAccess(int $departmentId) {
+    requireAuth();
+    $role = strtolower(trim($_SESSION['role'] ?? ''));
+    if ($role === 'admin' || $role === 'sysadmin') {
+        return;
+    }
+
+    $ownDepartmentId = (int)($_SESSION['department_id'] ?? 0);
+    if ($ownDepartmentId !== $departmentId) {
+        http_response_code(403);
+        echo json_encode(["status" => "error", "message" => "Forbidden"]);
+        exit;
+    }
+}
+
+function getAuthUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+function getAuthRole() {
+    return $_SESSION['role'] ?? null;
+}
+
+function getAuthDepartmentId() {
+    return $_SESSION['department_id'] ?? null;
+}
+
 // --- Encryption for Reversible Passwords (Admin Visibility) ---
 // Note: This allows admins to see passwords while they're encrypted in the DB.
 // Passwords are still hashed separately for authentication.
-define('ENCRYPTION_KEY', 'hospital-queue-secret-key-32-chars-!!'); // Change this for production!
+define('ENCRYPTION_KEY', getenv('HOSPITAL_QUEUE_ENCRYPTION_KEY') ?: 'hospital-queue-secret-key-32-chars-!!'); // Change this for production!
 
 function encrypt_password($password) {
     if (!$password) return null;

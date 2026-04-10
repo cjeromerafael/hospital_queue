@@ -8,15 +8,52 @@
  *   role="sysadmin" is redirected to the admin dashboard at login (handled in auth.js).
  */
 
-document.addEventListener("DOMContentLoaded", function() {
-    const deptIdRaw = localStorage.getItem("department_id");
-    const role = localStorage.getItem("role") || "";
+async function redirectToLogin() {
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("department_id");
+    localStorage.removeItem("role");
+    localStorage.removeItem("username");
+    window.location.href = "../index.html";
+}
+
+async function fetchAuthStatus() {
+    try {
+        const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
+        if (res.status === 401) {
+            redirectToLogin();
+            return null;
+        }
+        const data = await res.json();
+        if (data.status !== "success") {
+            redirectToLogin();
+            return null;
+        }
+        localStorage.setItem("user_id", data.user_id);
+        localStorage.setItem("username", data.username || "");
+        localStorage.setItem("department_id", data.department_id || "");
+        localStorage.setItem("role", data.department_role || "");
+        return data;
+    } catch (err) {
+        console.error("Auth check failed:", err);
+        redirectToLogin();
+        return null;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async function() {
+    const auth = await fetchAuthStatus();
+    if (!auth) return;
+    const deptIdRaw = String(auth.department_id || localStorage.getItem("department_id") || "0");
+    const role = auth.department_role || localStorage.getItem("role") || "";
     const deptId = parseInt(deptIdRaw || "0", 10);
-    const username = localStorage.getItem("username") || "";
+    const username = auth.username || localStorage.getItem("username") || "";
+
+    if (role.toLowerCase() === "sysadmin") {
+        window.location.href = "../admin/dashboard.html";
+        return;
+    }
 
     const userInfoDisplay = document.getElementById("userInfoDisplay");
-    const currentDateDisplay = document.getElementById("currentDateDisplay");
-
     if (!deptId || !role) {
         if (userInfoDisplay) userInfoDisplay.textContent = "Please log in to access this page.";
         return;
@@ -50,7 +87,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 async function checkDailyFlush() {
     try {
-        await fetch("../../api/daily_flush.php");
+        const res = await fetch("../../api/daily_flush.php", { credentials: "same-origin" });
+        if (res.status === 401) { return redirectToLogin(); }
+        await res.json();
     } catch (e) {
         // Non-fatal: the v2 endpoints will still work.
         console.warn("Daily flush check failed:", e);
@@ -60,7 +99,8 @@ async function checkDailyFlush() {
 async function getDepartmentName(departmentId) {
     if (!departmentId) return "";
     try {
-        const res = await fetch("../../api/admin/departments.php");
+        const res = await fetch("../../api/admin/departments.php", { credentials: "same-origin" });
+        if (res.status === 401) { redirectToLogin(); return ""; }
         const departments = await res.json();
         if (!Array.isArray(departments)) return "";
         const dept = departments.find(d => Number(d.department_id) === Number(departmentId));
@@ -193,8 +233,9 @@ async function refreshNumbers() {
     const grid = document.getElementById("deptGrid");
     if (!grid) return;
 
-    const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now()).catch(() => null);
+    const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" }).catch(() => null);
     if (!r) return;
+    if (r.status === 401) { return redirectToLogin(); }
     const data = await r.json().catch(() => null);
     if (!Array.isArray(data)) return;
 

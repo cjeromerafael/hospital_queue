@@ -17,6 +17,7 @@ function login(){
 
     fetch("../api/auth/login.php", {
         method: "POST",
+        credentials: "same-origin",
         body: form
     })
     .then(async res => {
