@@ -16,6 +16,9 @@ async function redirectToLogin() {
     window.location.href = "../index.html";
 }
 
+const bellAudio = new Audio("../assets/bell.ogg");
+bellAudio.preload = "auto";
+
 async function fetchAuthStatus() {
     try {
         const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
@@ -207,6 +210,10 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                 const numEl = document.getElementById(`queue_num_${departmentId}`);
                 if (numEl && typeof d.current_number !== "undefined") {
                     numEl.textContent = String(d.current_number);
+                }
+                if (action === "next" || action === "skip") {
+                    bellAudio.currentTime = 0;
+                    bellAudio.play().catch(() => {});
                 }
             } else {
                 console.warn("Action failed:", d);
