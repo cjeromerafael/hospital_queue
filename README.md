@@ -35,6 +35,53 @@ To set up this project on a new machine and avoid environment-related issues:
 - **Testing:** Test user creation/editing on a fresh database import to catch constraint issues early
 - **Backup:** Regularly export the full database schema with constraints for accurate backups
 
+### Autonomous Daily Queue Reset (Task Scheduler)
+
+The queue resets itself every day via `api/daily_flush_cron.php`, which must be scheduled through Windows Task Scheduler on the server machine.
+
+**Find your paths first**
+
+The PHP executable and project root differ depending on your stack:
+
+| Stack | PHP path | Project root |
+|---|---|---|
+| Laragon | `C:\laragon\bin\php\php-8.x.x\php.exe` | `C:\laragon\www\hospital_queue` |
+| XAMPP | `C:\xampp\php\php.exe` | `C:\xampp\htdocs\hospital_queue` |
+
+For Laragon, the PHP folder name includes the version (e.g. `php-8.2.x`). Open `C:\laragon\bin\php\` in Explorer to confirm the exact folder name. HeidiSQL is only a DB management GUI and does not affect these paths.
+
+**One-time Task Scheduler setup:**
+
+1. Open **Task Scheduler** (search for it in the Start menu)
+2. Click **Create Basic Task**
+3. Fill in the fields:
+   - Name: `Hospital Queue Daily Reset`
+   - Trigger: **Daily** at `00:00` (midnight) or just before the hospital opens
+   - Action: **Start a program**
+     - Program: *(your PHP path from the table above)*
+     - Arguments: *(your project root from the table above)*`\api\daily_flush_cron.php`
+4. Finish and confirm the task is enabled
+
+**Laragon example:**
+```
+Program:   C:\laragon\bin\php\php-8.2.x\php.exe
+Arguments: C:\laragon\www\hospital_queue\api\daily_flush_cron.php
+```
+
+**XAMPP example:**
+```
+Program:   C:\xampp\php\php.exe
+Arguments: C:\xampp\htdocs\hospital_queue\api\daily_flush_cron.php
+```
+
+**To verify it works**, run the command manually in a Command Prompt:
+```
+"C:\laragon\bin\php\php-8.2.x\php.exe" C:\laragon\www\hospital_queue\api\daily_flush_cron.php
+```
+You should see: `[daily_flush] Queue reset complete for YYYY-MM-DD`
+
+> The script also updates `api/data/last_flush_date.txt`, so the client-side flush check on staff login will correctly see that today's flush already ran and skip it.
+
 ### Troubleshooting
 - If user creation fails with JSON parsing errors, check database foreign key constraints
 - Ensure `department_id` assignments match your database schema (admin=22, sysadmin=null, staff=valid dept)

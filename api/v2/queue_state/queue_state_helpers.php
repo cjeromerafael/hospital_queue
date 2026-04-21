@@ -12,12 +12,18 @@
  *   - Serve next_number immediately (and increment next_number).
  * - Reset:
  *   - current_number = 0, next_number = 1, skipped_numbers = []
+ *
+ * Concurrency model:
+ * - All writes use SELECT ... FOR UPDATE inside a transaction (InnoDB row lock).
+ * - Row insertion uses INSERT IGNORE to safely handle simultaneous first-use after a flush.
+ * - ensureQueueStateTable() should be called once at boot, not per-request.
  */
 
 require_once(__DIR__ . "/../../config.php");
 
 function ensureQueueStateTable($conn) {
     // Idempotently create the queue_state table for v2.
+    // Call this once at application boot, not on every request.
     $conn->query("
         CREATE TABLE IF NOT EXISTS queue_state (
             department_id INT(11) NOT NULL,
@@ -49,28 +55,19 @@ function encodeSkippedNumbers($arr) {
     return json_encode(array_values($arr));
 }
 
+/**
+ * Ensures a queue_state row exists for the department.
+ * Uses INSERT IGNORE so concurrent first-use requests after a flush
+ * don't race into a duplicate-key error.
+ */
 function ensureDepartmentQueueStateRow($conn, $department_id) {
-    $stmt = $conn->prepare("SELECT current_number, next_number, skipped_numbers_json FROM queue_state WHERE department_id=? LIMIT 1");
-    $stmt->bind_param("i", $department_id);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    if ($res && $row = $res->fetch_assoc()) {
-        return $row;
-    }
-
+    // INSERT IGNORE silently skips if the row already exists (duplicate primary key).
     $ins = $conn->prepare("
-        INSERT INTO queue_state(department_id, current_number, next_number, skipped_numbers_json)
+        INSERT IGNORE INTO queue_state(department_id, current_number, next_number, skipped_numbers_json)
         VALUES(?, 0, 1, '[]')
     ");
     $ins->bind_param("i", $department_id);
     $ins->execute();
-
-    return [
-        "current_number" => 0,
-        "next_number" => 1,
-        "skipped_numbers_json" => "[]"
-    ];
 }
 
 function loadAllDepartmentsWithCurrentNumbers($conn) {
@@ -113,17 +110,15 @@ function advanceNext($conn, $department_id) {
     $sel->execute();
     $row = $sel->get_result()->fetch_assoc();
 
-    $current = (int)($row["current_number"] ?? 0);
-    $next = (int)($row["next_number"] ?? 1);
+    $next    = (int)($row["next_number"] ?? 1);
     $skipped = parseSkippedNumbers($row["skipped_numbers_json"] ?? "[]");
 
     if (count($skipped) > 0) {
         $newCurrent = (int)array_shift($skipped);
-        // When serving from skipped queue, next_number stays as-is.
-        $newNext = $next;
+        $newNext    = $next; // next_number stays when serving from skipped queue
     } else {
         $newCurrent = $next;
-        $newNext = $next + 1;
+        $newNext    = $next + 1;
     }
 
     $upd = $conn->prepare("
@@ -134,14 +129,13 @@ function advanceNext($conn, $department_id) {
         WHERE department_id=?
     ");
     $skippedJson = encodeSkippedNumbers($skipped);
-    // Types: i (current), i (next), s (skipped JSON), i (department_id)
     $upd->bind_param("iisi", $newCurrent, $newNext, $skippedJson, $department_id);
     $upd->execute();
 
     return [
         "current_number" => $newCurrent,
-        "next_number" => $newNext,
-        "skipped_count" => count($skipped)
+        "next_number"    => $newNext,
+        "skipped_count"  => count($skipped)
     ];
 }
 
@@ -155,16 +149,16 @@ function advanceSkip($conn, $department_id) {
     $row = $sel->get_result()->fetch_assoc();
 
     $current = (int)($row["current_number"] ?? 0);
-    $next = (int)($row["next_number"] ?? 1);
+    $next    = (int)($row["next_number"] ?? 1);
     $skipped = parseSkippedNumbers($row["skipped_numbers_json"] ?? "[]");
 
-    // Skip schedules the CURRENT number to reappear on the next Next().
+    // Schedule the current number to reappear on the next Next() call.
     if ($current > 0) {
         $skipped[] = $current;
     }
 
-    $newCurrent = $next;      // Move forward immediately to the next sequential number.
-    $newNext = $next + 1;
+    $newCurrent = $next;
+    $newNext    = $next + 1;
 
     $upd = $conn->prepare("
         UPDATE queue_state
@@ -174,16 +168,12 @@ function advanceSkip($conn, $department_id) {
         WHERE department_id=?
     ");
     $skippedJson = encodeSkippedNumbers($skipped);
-    // Types: i (current), i (next), s (skipped JSON), i (department_id)
     $upd->bind_param("iisi", $newCurrent, $newNext, $skippedJson, $department_id);
     $upd->execute();
 
     return [
         "current_number" => $newCurrent,
-        "next_number" => $newNext,
-        "skipped_count" => count($skipped)
+        "next_number"    => $newNext,
+        "skipped_count"  => count($skipped)
     ];
 }
-
-?>
-
