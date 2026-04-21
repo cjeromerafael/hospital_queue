@@ -91,43 +91,85 @@ async function refreshAndRender() {
     const grid = document.getElementById("displayGrid");
     if (!grid) return;
 
-    const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now()).catch(() => null);
-    if (!r) return;
-    const data = await r.json().catch(() => null);
-    if (!Array.isArray(data)) return;
+    try {
+        const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now());
+        if (!r.ok) {
+            throw new Error(`HTTP ${r.status}`);
+        }
+        const data = await r.json();
+        if (!Array.isArray(data)) {
+            throw new Error("Invalid data format");
+        }
 
-    // Only show departments with an active queue number
-    const filteredData = data.filter(d => Number(d.current_number || 0) > 0);
+        // Clear any error message
+        const errorEl = document.getElementById("offlineError");
+        if (errorEl) {
+            errorEl.style.display = "none";
+        }
 
-    const incomingIds = new Set(filteredData.map(d => String(d.department_id)));
-    const setsMatch = incomingIds.size === renderedDeptIds.size &&
-                      Array.from(incomingIds).every(id => renderedDeptIds.has(id));
+        // Only show departments with an active queue number
+        const filteredData = data.filter(d => Number(d.current_number || 0) > 0);
 
-    if (!setsMatch) {
-        // Department set changed — rebuild all cards
-        grid.innerHTML = "";
-        renderedDeptIds = incomingIds;
+        const incomingIds = new Set(filteredData.map(d => String(d.department_id)));
+        const setsMatch = incomingIds.size === renderedDeptIds.size &&
+                          Array.from(incomingIds).every(id => renderedDeptIds.has(id));
 
-        filteredData.forEach(d => {
-            const card = document.createElement("div");
-            card.className = "ios-card display-card";
-            card.dataset.departmentId = String(d.department_id);
+        if (!setsMatch) {
+            // Department set changed — rebuild all cards
+            grid.innerHTML = "";
+            renderedDeptIds = incomingIds;
 
-            const deptColor = (d.department_color || "#3b82f6").toLowerCase();
-            card.style.setProperty("--dept-color", deptColor);
+            filteredData.forEach(d => {
+                const card = document.createElement("div");
+                card.className = "ios-card display-card";
+                card.dataset.departmentId = String(d.department_id);
 
-            card.innerHTML = `
-                ${buildNameHTML(d.department_name || "")}
-                <div class="display-number" id="display_num_${d.department_id}">${Number(d.current_number || 0)}</div>
-            `;
-            grid.appendChild(card);
-        });
-    } else {
-        // Same departments — just update the numbers, leave the DOM (and animations) untouched
-        filteredData.forEach(d => {
-            const el = document.getElementById(`display_num_${d.department_id}`);
-            if (!el) return;
-            el.textContent = Number(d.current_number || 0);
-        });
+                const deptColor = (d.department_color || "#3b82f6").toLowerCase();
+                card.style.setProperty("--dept-color", deptColor);
+
+                card.innerHTML = `
+                    ${buildNameHTML(d.department_name || "")}
+                    <div class="display-number" id="display_num_${d.department_id}">${Number(d.current_number || 0)}</div>
+                `;
+                grid.appendChild(card);
+            });
+        } else {
+            // Same departments — just update the numbers, leave the DOM (and animations) untouched
+            filteredData.forEach(d => {
+                const el = document.getElementById(`display_num_${d.department_id}`);
+                if (!el) return;
+                el.textContent = Number(d.current_number || 0);
+            });
+        }
+    } catch (error) {
+        console.error("Failed to fetch queue data:", error);
+        
+        // Show offline error message if grid is empty
+        if (grid.children.length === 0) {
+            let errorEl = document.getElementById("offlineError");
+            if (!errorEl) {
+                errorEl = document.createElement("div");
+                errorEl.id = "offlineError";
+                errorEl.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    text-align: center;
+                    background: rgba(0, 0, 0, 0.8);
+                    color: #fff;
+                    padding: 30px;
+                    border-radius: 10px;
+                    font-size: 18px;
+                    font-weight: 500;
+                    z-index: 100;
+                `;
+                grid.parentElement.style.position = "relative";
+                grid.parentElement.appendChild(errorEl);
+            }
+            errorEl.textContent = "📡 No internet connection\nPlease check your network";
+            errorEl.style.display = "block";
+        }
+        // If grid has data, don't update it (keep showing cached data)
     }
 }

@@ -1,5 +1,16 @@
 {
+  "name": "hospital-queue",
+  "version": "1.0.0",
+  "description": "Hospital Queue Management System",
+  "scripts": {
+    "build:tailwind": "tailwindcss -i ./public/assets/css/input.css -o ./public/assets/css/tailwind.css",
+    "watch:tailwind": "tailwindcss -i ./public/assets/css/input.css -o ./public/assets/css/tailwind.css --watch"
+  },
   "dependencies": {
     "@google/genai": "^1.46.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.32"
   }
 }

@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom utility classes */
+@layer components {
+  .ios-card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+  }
+
+  .btn-ios {
+    @apply inline-flex items-center justify-center gap-1 border-none rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 cursor-pointer min-h-9;
+  }
+
+  .btn-ios-primary {
+    @apply bg-blue-500 text-white shadow-md hover:bg-blue-600;
+  }
+
+  .btn-ios-secondary {
+    @apply bg-gray-100 text-gray-900 hover:bg-gray-200;
+  }
+
+  .btn-ios-danger {
+    @apply bg-red-500 text-white hover:bg-red-600;
+  }
+
+  .input-ios {
+    @apply w-full bg-gray-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring focus:ring-green-500/20;
+  }
+
+  .label-ios {
+    @apply block mb-0.5 text-xs font-bold uppercase tracking-wider text-gray-600;
+  }
+
+  .ios-blur {
+    @apply backdrop-blur-xl;
+  }
+
+  .ios-shadow {
+    @apply shadow-lg;
+  }
+}

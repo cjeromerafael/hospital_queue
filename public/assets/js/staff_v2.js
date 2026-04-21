@@ -127,130 +127,187 @@ async function loadDepartmentsAndRender(userDeptId, role) {
     // admin = master staff account, sees and controls all departments
     const isPrivileged = role === "admin";
 
-    const departments = await fetch("../../api/admin/departments.php").then(r => r.json()).catch(() => []);
-    const filtered = (Array.isArray(departments) ? departments : []).filter(d => {
-        if (!d) return false;
-        if ((d.department_name || "").trim().toLowerCase() === "admin") return false;
-        if (!isPrivileged && Number(d.department_id) !== Number(userDeptId)) return false;
-        return true;
-    });
+    try {
+        const res = await fetch("../../api/admin/departments.php");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const departments = await res.json();
+        
+        const filtered = (Array.isArray(departments) ? departments : []).filter(d => {
+            if (!d) return false;
+            if ((d.department_name || "").trim().toLowerCase() === "admin") return false;
+            if (!isPrivileged && Number(d.department_id) !== Number(userDeptId)) return false;
+            return true;
+        });
 
-    // Pre-render cards. Numbers will be filled by polling.
-    grid.innerHTML = "";
-    filtered.forEach(d => {
-        const canControl = isPrivileged || (Number(d.department_id) === Number(userDeptId));
-
-        const card = document.createElement("div");
-        card.className = "ios-card dept-card";
-        card.dataset.departmentId = String(d.department_id);
-
-        const badgeText = Number(d.is_finance) === 1 ? "FINANCE" : "MEDICAL";
-        const badgeClass = Number(d.is_finance) === 1 ? "bg-red-50 text-red-700 border-red-100" : "bg-blue-50 text-blue-700 border-blue-100";
-        const deptColor = (d.department_color || "#062e6f").toLowerCase();
-
-        card.style.setProperty('--dept-color', deptColor);
-        card.innerHTML = `
-            <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0 flex-1">
-                    <div class="text-base font-extrabold text-white dept-name-text-shadow line-clamp-2" title="${escapeHtml(d.department_name)}">
-                        ${escapeHtml(d.department_name)}
-                    </div>
-                </div>
-                <span class="inline-flex items-center px-2 py-1 rounded-full border ${badgeClass} text-[11px] font-black tracking-widest flex-shrink-0">
-                    ${badgeText}
-                </span>
-            </div>
-
-            <div class="queue-number" id="queue_num_${d.department_id}">0</div>
-
-            <div class="flex flex-wrap gap-2 mt-auto">
-                <button
-                    class="btn-ios btn-ios-primary action-next"
-                    data-action="next"
-                    data-department-id="${d.department_id}"
-                    ${canControl ? "" : "disabled"}
-                >Next</button>
-                <button
-                    class="btn-ios btn-ios-danger action-skip"
-                    data-action="skip"
-                    data-department-id="${d.department_id}"
-                    ${canControl ? "" : "disabled"}
-                >Skip</button>
-                <button
-                    class="btn-ios btn-ios-secondary action-reset"
-                    data-action="reset"
-                    data-department-id="${d.department_id}"
-                    ${canControl ? "" : "disabled"}
-                >Reset</button>
-            </div>
-        `;
-
-        grid.appendChild(card);
-    });
-
-    grid.addEventListener("click", async (e) => {
-        const btn = e.target.closest("button[data-action][data-department-id]");
-        if (!btn || btn.disabled) return;
-
-        const action = btn.dataset.action;
-        const departmentId = parseInt(btn.dataset.departmentId, 10);
-        if (!departmentId || Number.isNaN(departmentId)) return;
-
-        btn.disabled = true;
-        const btnOriginalText = btn.textContent;
-        btn.textContent = "Please wait...";
-
-        try {
-            const endpoint = `../../api/v2/queue_state/${action}.php`;
-            const f = new FormData();
-            f.append("department_id", departmentId);
-            const r = await fetch(endpoint, { method: "POST", body: f });
-            const d = await r.json();
-            if (d && d.status === "success") {
-                const numEl = document.getElementById(`queue_num_${departmentId}`);
-                if (numEl && typeof d.current_number !== "undefined") {
-                    numEl.textContent = String(d.current_number);
-                }
-                if (action === "next" || action === "skip") {
-                    bellAudio.currentTime = 0;
-                    bellAudio.play().catch(() => {});
-                }
-            } else {
-                console.warn("Action failed:", d);
-                alert((d && d.message) ? d.message : "Action failed.");
-            }
-        } catch (err) {
-            console.error("Action error:", err);
-            alert("Action failed.");
-        } finally {
-            btn.textContent = btnOriginalText;
-            const card = btn.closest(".ios-card.dept-card");
-            const cardDeptId = card ? parseInt(card.dataset.departmentId, 10) : 0;
-            const canControlNow = isPrivileged || (Number(cardDeptId) === Number(userDeptId));
-            btn.disabled = !canControlNow;
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #999;">
+                No departments available.
+            </div>`;
+            return;
         }
-    }, { passive: true });
 
-    // Initial poll + interval refresh.
-    await refreshNumbers();
-    setInterval(refreshNumbers, 1500);
+        // Pre-render cards. Numbers will be filled by polling.
+        grid.innerHTML = "";
+        filtered.forEach(d => {
+            const canControl = isPrivileged || (Number(d.department_id) === Number(userDeptId));
+
+            const card = document.createElement("div");
+            card.className = "ios-card dept-card";
+            card.dataset.departmentId = String(d.department_id);
+
+            const badgeText = Number(d.is_finance) === 1 ? "FINANCE" : "MEDICAL";
+            const badgeClass = Number(d.is_finance) === 1 ? "bg-red-50 text-red-700 border-red-100" : "bg-blue-50 text-blue-700 border-blue-100";
+            const deptColor = (d.department_color || "#062e6f").toLowerCase();
+
+            card.style.setProperty('--dept-color', deptColor);
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-base font-extrabold text-white dept-name-text-shadow line-clamp-2" title="${escapeHtml(d.department_name)}">
+                            ${escapeHtml(d.department_name)}
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-2 py-1 rounded-full border ${badgeClass} text-[11px] font-black tracking-widest flex-shrink-0">
+                        ${badgeText}
+                    </span>
+                </div>
+
+                <div class="queue-number" id="queue_num_${d.department_id}">0</div>
+
+                <div class="flex flex-wrap gap-2 mt-auto">
+                    <button
+                        class="btn-ios btn-ios-primary action-next"
+                        data-action="next"
+                        data-department-id="${d.department_id}"
+                        ${canControl ? "" : "disabled"}
+                    >Next</button>
+                    <button
+                        class="btn-ios btn-ios-danger action-skip"
+                        data-action="skip"
+                        data-department-id="${d.department_id}"
+                        ${canControl ? "" : "disabled"}
+                    >Skip</button>
+                    <button
+                        class="btn-ios btn-ios-secondary action-reset"
+                        data-action="reset"
+                        data-department-id="${d.department_id}"
+                        ${canControl ? "" : "disabled"}
+                    >Reset</button>
+                </div>
+            `;
+
+            grid.appendChild(card);
+        });
+
+        // Setup event listeners
+        grid.addEventListener("click", async (e) => {
+            const btn = e.target.closest("button[data-action][data-department-id]");
+            if (!btn || btn.disabled) return;
+
+            const action = btn.dataset.action;
+            const departmentId = parseInt(btn.dataset.departmentId, 10);
+            if (!departmentId || Number.isNaN(departmentId)) return;
+
+            btn.disabled = true;
+            const btnOriginalText = btn.textContent;
+            btn.textContent = "Please wait...";
+
+            try {
+                const endpoint = `../../api/v2/queue_state/${action}.php`;
+                const f = new FormData();
+                f.append("department_id", departmentId);
+                const r = await fetch(endpoint, { method: "POST", body: f });
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d = await r.json();
+                if (d && d.status === "success") {
+                    const numEl = document.getElementById(`queue_num_${departmentId}`);
+                    if (numEl && typeof d.current_number !== "undefined") {
+                        numEl.textContent = String(d.current_number);
+                    }
+                    if (action === "next" || action === "skip") {
+                        bellAudio.currentTime = 0;
+                        bellAudio.play().catch(() => {});
+                    }
+                } else {
+                    console.warn("Action failed:", d);
+                    alert((d && d.message) ? d.message : "Action failed. Check your connection.");
+                }
+            } catch (err) {
+                console.error("Action error:", err);
+                alert("Action failed. Check your internet connection.");
+            } finally {
+                btn.textContent = btnOriginalText;
+                const card = btn.closest(".ios-card.dept-card");
+                const cardDeptId = card ? parseInt(card.dataset.departmentId, 10) : 0;
+                const canControlNow = isPrivileged || (Number(cardDeptId) === Number(userDeptId));
+                btn.disabled = !canControlNow;
+            }
+        }, { passive: true });
+
+        // Initial poll + interval refresh.
+        await refreshNumbers();
+        setInterval(refreshNumbers, 1500);
+    } catch (err) {
+        console.error("Failed to load departments:", err);
+        grid.innerHTML = `<div style="grid-column: 1/-1; padding: 40px; text-align: center; color: #c62828; font-size: 16px;">
+            📡 Cannot connect to server<br>
+            <span style="font-size: 14px; color: #999;">Please check your internet connection</span>
+        </div>`;
+    }
 }
 
 async function refreshNumbers() {
     const grid = document.getElementById("deptGrid");
     if (!grid) return;
 
-    const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" }).catch(() => null);
-    if (!r) return;
-    if (r.status === 401) { return redirectToLogin(); }
-    const data = await r.json().catch(() => null);
-    if (!Array.isArray(data)) return;
+    try {
+        const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
+        
+        // Remove offline indicator on successful connection
+        const offlineEl = document.getElementById("offlineIndicator");
+        if (offlineEl && r.ok) {
+            offlineEl.remove();
+        }
+        
+        if (!r.ok) {
+            if (r.status === 401) {
+                return redirectToLogin();
+            }
+            throw new Error(`HTTP ${r.status}`);
+        }
+        
+        const data = await r.json();
+        if (!Array.isArray(data)) return;
 
-    data.forEach(d => {
-        const el = document.getElementById(`queue_num_${d.department_id}`);
-        if (!el) return;
-        el.textContent = (typeof d.current_number !== "undefined" && d.current_number !== null)
-            ? String(d.current_number)
-            : "0";
-    });
+        data.forEach(d => {
+            const el = document.getElementById(`queue_num_${d.department_id}`);
+            if (!el) return;
+            el.textContent = (typeof d.current_number !== "undefined" && d.current_number !== null)
+                ? String(d.current_number)
+                : "0";
+        });
+    } catch (err) {
+        console.error("Failed to refresh queue numbers:", err);
+        
+        // Show offline indicator if not already present
+        if (!document.getElementById("offlineIndicator")) {
+            const indicator = document.createElement("div");
+            indicator.id = "offlineIndicator";
+            indicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #c62828;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+            indicator.textContent = "📡 No connection - queue numbers not updating";
+            document.body.appendChild(indicator);
+        }
+    }
 }
