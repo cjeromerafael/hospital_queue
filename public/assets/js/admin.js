@@ -82,7 +82,11 @@ function checkDailyFlush() {
             const el = document.getElementById("currentDateDisplay");
             if (el) el.textContent = d.current_date_display || "";
         })
-        .catch(err => console.error("Daily flush check failed:", err));
+        .catch(err => {
+            console.error("Daily flush check failed:", err);
+            const el = document.getElementById("currentDateDisplay");
+            if (el) el.textContent = "⚠ Offline";
+        });
 }
 
 function manualFlush() {
@@ -231,7 +235,17 @@ function startEditDepartment(ev) {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&is_finance=${financeCheck.checked ? 1 : 0}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#062e6f"))}`
-        }).then(() => loadDepartments());
+        })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(() => loadDepartments())
+        .catch(err => {
+            console.error("Save failed:", err);
+            alert("Failed to save changes. Check your internet connection and try again.");
+            loadDepartments();
+        });
     }
 
     input.addEventListener("keydown", e => e.key === "Enter" && save());
@@ -258,7 +272,17 @@ function deleteDepartmentRow(ev) {
         method: "DELETE",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `department_id=${encodeURIComponent(id)}`
-    }).then(() => loadDepartments());
+    })
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
+    .then(() => loadDepartments())
+    .catch(err => {
+        console.error("Delete failed:", err);
+        alert("Failed to delete department. Check your internet connection and try again.");
+        loadDepartments();
+    });
 }
 
 function addDepartment() {
@@ -274,11 +298,19 @@ function addDepartment() {
     f.append("department_color", normalizeHex(colorEl?.value || "#062e6f"));
 
     fetch("../../api/admin/departments.php", { method: "POST", body: f })
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
         .then(() => {
             nameEl.value = "";
             if (colorEl) colorEl.value = "#062e6f";
             if (isFinanceEl) isFinanceEl.checked = false;
             loadDepartments();
+        })
+        .catch(err => {
+            console.error("Add department failed:", err);
+            alert("Failed to add department. Check your internet connection and try again.");
         });
 }
 
@@ -522,4 +554,4 @@ function addUser() {
             }
         })
         .catch(err => { console.error("Create user failed:", err); alert("Request failed."); });
-}
+} 
