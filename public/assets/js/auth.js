@@ -45,7 +45,7 @@ function login(){
             if(data.department_role === "sysadmin"){
                 window.location = "admin/dashboard.html";
             } else {
-                window.location = "staff/dashboard_v2.html";
+                window.location = "staff/dashboard.html";
             }
 
         } else {

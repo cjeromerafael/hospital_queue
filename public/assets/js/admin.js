@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const auth = await fetchAuthStatus();
     if (!auth) return;
     if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
-        window.location.href = "../staff/dashboard_v2.html";
+        window.location.href = "../staff/dashboard.html";
         return;
     }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Helpers for v2 queue state (number-only, per department).
+ * Helpers for queue state (number-only, per department).
  *
  * Semantics implemented:
  * - State: current_number, next_number (next sequential), skipped_numbers queue (FIFO).
@@ -19,10 +19,10 @@
  * - ensureQueueStateTable() should be called once at boot, not per-request.
  */
 
-require_once(__DIR__ . "/../../config.php");
+require_once(__DIR__ . "/../config.php");
 
 function ensureQueueStateTable($conn) {
-    // Idempotently create the queue_state table for v2.
+    // Idempotently create the queue_state table.
     // Call this once at application boot, not on every request.
     $conn->query("
         CREATE TABLE IF NOT EXISTS queue_state (

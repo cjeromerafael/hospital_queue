@@ -1,5 +1,5 @@
 /**
- * Staff dashboard v2:
+ * Staff dashboard:
  * - One card per department (4-column responsive grid).
  * - Polls queue_state view for current numbers.
  * - Buttons: Next / Skip / Reset.
@@ -94,7 +94,7 @@ async function checkDailyFlush() {
         if (res.status === 401) { return redirectToLogin(); }
         await res.json();
     } catch (e) {
-        // Non-fatal: the v2 endpoints will still work.
+        // Non-fatal: queue endpoints will still work.
         console.warn("Daily flush check failed:", e);
     }
 }
@@ -213,7 +213,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
             btn.textContent = "Please wait...";
 
             try {
-                const endpoint = `../../api/v2/queue_state/${action}.php`;
+                const endpoint = `../../api/queue_state/${action}.php`;
                 const f = new FormData();
                 f.append("department_id", departmentId);
                 const r = await fetch(endpoint, { method: "POST", body: f });
@@ -261,7 +261,7 @@ async function refreshNumbers() {
     if (!grid) return;
 
     try {
-        const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
+        const r = await fetch("../../api/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
         
         // Remove offline indicator on successful connection
         const offlineEl = document.getElementById("offlineIndicator");

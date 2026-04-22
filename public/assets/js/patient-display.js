@@ -1,5 +1,5 @@
 /**
- * Queue display v2:
+ * Queue display:
  * - Full-screen grid of department cards.
  * - Shows only current queue numbers (no waiting lists).
  * - Polls queue_state view every ~1.5s.
@@ -92,7 +92,7 @@ async function refreshAndRender() {
     if (!grid) return;
 
     try {
-        const r = await fetch("../../api/v2/queue_state/view.php?_=" + Date.now());
+        const r = await fetch("../../api/queue_state/view.php?_=" + Date.now());
         if (!r.ok) {
             throw new Error(`HTTP ${r.status}`);
         }
