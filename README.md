@@ -17,8 +17,7 @@ To set up this project on a new machine and avoid environment-related issues:
 2. **Database Setup**
    - Start XAMPP MySQL
    - Create database: `hospital_queue`
-   - Import the schema: Run `backup_db/hospital_queue_full.sql` in phpMyAdmin or MySQL command line (includes all constraints)
-   - Alternative: Use `backup_db/hospital_queue.sql` for basic structure (may miss some constraints)
+   - Import the schema: Run `backup_db/hospital_queue.sql` in HeidiSQL or MySQL command line
 
 3. **Configuration**
    - Update `api/config.php` with your database credentials if different from localhost/root/no password

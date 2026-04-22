@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 27, 2026 at 06:19 AM
+-- Generation Time: Apr 22, 2026 at 03:02 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,7 +30,6 @@ SET time_zone = "+00:00";
 CREATE TABLE `department` (
   `department_id` int(11) NOT NULL,
   `department_name` varchar(100) NOT NULL,
-  `department_code` varchar(3) DEFAULT NULL,
   `is_finance` tinyint(1) DEFAULT 0,
   `department_color` varchar(7) DEFAULT '#3b82f6'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -39,43 +38,17 @@ CREATE TABLE `department` (
 -- Dumping data for table `department`
 --
 
-INSERT INTO `department` (`department_id`, `department_name`, `department_code`, `is_finance`, `department_color`) VALUES
-(1, 'PhilHealth OECB (Outpatient Emergency Care Benefits)', 'OEC', 1, '#a50909'),
-(16, 'Patient Reception / Registration', 'PRR', 0, '#062e6f'),
-(18, 'Pharmacy', 'PHA', 0, '#062e6f'),
-(20, 'PhilHealth YAKAP (Yaman ng Kalusugan Program / Patient Assistance and Social Services)', 'YKP', 1, '#a50909'),
-(22, 'Admin', 'ADM', 0, '#062e6f'),
-(24, 'Billing - Admission', 'BAD', 1, '#a50909'),
-(25, 'Billing - OPD', 'BOP', 1, '#a50909'),
-(26, 'Cashier', 'CAS', 1, '#a50909'),
-(27, 'Medical Social Services Department', 'MSS', 1, '#a50909'),
-(30, 'Inpatient - Billing', 'INB', 1, '#a50909');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `patient`
---
-
-CREATE TABLE `patient` (
-  `patient_id` int(11) NOT NULL,
-  `patient_number` varchar(50) NOT NULL,
-  `department_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `queueing`
---
-
-CREATE TABLE `queueing` (
-  `queue_id` int(11) NOT NULL,
-  `queue_number` int(11) NOT NULL,
-  `patient_id` int(11) NOT NULL,
-  `department_id` int(11) NOT NULL,
-  `status` varchar(30) DEFAULT 'waiting'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `department` (`department_id`, `department_name`, `is_finance`, `department_color`) VALUES
+(1, 'OECB (Outpatient Emergency Care Benefits)', 1, '#a50909'),
+(16, 'Patient Reception / Registration', 0, '#062e6f'),
+(18, 'Pharmacy', 0, '#062e6f'),
+(20, 'PhilHealth YAKAP', 1, '#a50909'),
+(22, 'Admin', 0, '#062e6f'),
+(24, 'Billing - Admission', 1, '#a50909'),
+(25, 'Billing - OPD', 1, '#a50909'),
+(26, 'Cashier', 1, '#a50909'),
+(27, 'Medical Social Services Department', 1, '#a50909'),
+(30, 'Inpatient - Billing', 1, '#a50909');
 
 -- --------------------------------------------------------
 
@@ -96,10 +69,9 @@ CREATE TABLE `queue_state` (
 --
 
 INSERT INTO `queue_state` (`department_id`, `current_number`, `next_number`, `skipped_numbers_json`, `updated_at`) VALUES
-(16, 0, 1, '[]', '2026-03-27 04:40:28'),
-(18, 0, 1, '[]', '2026-03-27 04:39:21'),
-(27, 0, 1, '[]', '2026-03-27 03:08:31'),
-(30, 0, 1, '[]', '2026-03-27 04:40:27');
+(1, 1, 2, '[]', '2026-04-21 23:32:54'),
+(16, 1, 2, '[]', '2026-04-21 23:32:55'),
+(18, 1, 2, '[]', '2026-04-21 23:32:58');
 
 -- --------------------------------------------------------
 
@@ -144,16 +116,18 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`user_id`, `username`, `password`, `raw_password`, `department_id`, `role`) VALUES
-(1, 'admin1', '$2y$10$bEeF.zkh4FxvUOCq8pmIMen8yG7GIpMDJY9UKaxeIUd5mgwCepMRe', '92ob6dLUsNJxjnxVAdoHdBnjDLeSJxppW6sGMXmroko=', 22, 'sysadmin'),
-(2, 'test', '$2y$10$5M/shF4jmxN6e4UiDRJNEeq5uf01XXX6gUp2emzCZJnUdaB/B1Ldu', 'e8y6oco28WVqLieMCqdkBYa42na7REPOGbJIdo0Np9I=', 16, 'staff'),
+(1, 'admin', '$2y$10$Gp9fmVuFDykoWbRrK/SZxuZrWU3MyqiTjoaOnCsw4g0WOMoxS/WTK', 'uEoeid/dHDtB1B/lPN0aKmk61g5lanWjeASr/nmatTc=', 22, 'sysadmin'),
+(2, 'test', '$2y$10$cajvXzU8S49IaxJUzAmRtuFWpnXlCAmmQUoSr29L.ULf1splZ9tfK', 'mt0EXQPFOTgeVjN78J6c9GR+U8sUerePDXCpxxDnmq8=', 16, 'staff'),
 (4, 'cashier', '$2y$10$VSjQgN/s8w7tLK2TglCRUuPWXmfweemDSOslzYnNgGOiOy62JG53q', 'P7Ww7SwjYFfSh7dBdtEYnyj4iUQqCGMW8jqLL5fALwI=', 26, 'staff'),
 (5, 'billopd', '$2y$10$LLoF.BzpOvF3dYEXZsLcgeg7Bi./uRVgX9tBI.ydbEXdd5xqlz.ea', 'JitzAwB6hj9VRUdMEOS75AABnJlUNrbONKRBa6U99EI=', 25, 'staff'),
 (6, 'billadm', '$2y$10$SsPLQISeXCrOsvUkjPxBQucociJWebtQTcg6IVYba3iTGOzelzbia', 'kd9ff2AaxnKBROOpvVY5CU5qPEWEtX6jpRNHeOSughU=', 24, 'staff'),
-(7, 'mssd', '$2y$10$hsln/uUz7JAx7YNj7NJML.UF2urOSjqP9e/S306JKWVlZ4qud0rfC', 'BCh3yzpQIN9E6vSe5aV2czavkrZKooLXj2JIWubWTgs=', 27, 'staff'),
+(7, 'mssd', '$2y$10$yoWdwG/XPPLC6nA4Zsh9N.vHgcbf4.JjU6lQAhlXpYzDaUKN3f4uu', 'KCAW2c6ROY583PIvcFQdwSUQr5Eq9uks/kOM/zM0Jok=', 27, 'staff'),
 (23, 'inpatient', '$2y$10$szFh5aNN9Hv5SWZgXHWcKOMpmuZbVuBt0rmVLBQIIKH1Fv/WkNCzC', 'Q/xzs7qxMCgNklgGdiLJNfAQBeDU0WKfZo2ZYCj6bwM=', 30, 'staff'),
 (24, 'oecb', '$2y$10$eFaj.DcVWl7G7jEnycdMxeTq7abcszxiFlsJPDr95YCptC5SvlqmK', 'ewPACLcj4mlyzoA/fOS2ZvJ4jOAPOybu9NFxC/GZGbA=', 1, 'staff'),
-(25, 'master', '$2y$10$PRkElOHQcG8gfURwiawACuXf30MzL88Xb5jckQs7huumwnTo/ZOQS', 'ZzI0Y6UF8LBoXO6OHAVsGohKsM0rWzphxAHi3O25Qr4=', 22, 'admin'),
-(27, 'pharmacy', '$2y$10$3E9kkkHrIAtB9ubiruaxI.kPsq6YyhoVMZoVtN8LAWtlFCFJRMxC6', 'dqvebZItckh92P0JQOaYOov+lSaZwbDvi5zwLOscvzo=', 18, 'staff');
+(25, 'master', '$2y$10$uiitzVAIYKyPJwHz3sgeOO4pUqO0cF3PoBYqcdyDGrvxgpifQGaU2', 'pF8Bdj+TW8Pug6UqG063GG/aONfDkUN/WEC9GWnVVu4=', 22, 'admin'),
+(27, 'pharmacy', '$2y$10$3E9kkkHrIAtB9ubiruaxI.kPsq6YyhoVMZoVtN8LAWtlFCFJRMxC6', 'dqvebZItckh92P0JQOaYOov+lSaZwbDvi5zwLOscvzo=', 18, 'staff'),
+(62, 'yakap', '$2y$10$TjOmeOZZx42cBHbD7paIDujooLLU7egu/61DGMwGRlmRMwk1XAV5K', 'vQuqaarYc9JwUfzPie7WehFQgDqbBpRrFD+5JH+Ejwc=', 20, 'staff'),
+(63, 'patient2', '$2y$10$QrFDe0XXHrm8C0j73fH9hujC507YydXba/u6BVMzWCXoY59jA9g8G', 't3cwfpVE+dUvB/7MlA7qYOz855b/Pcynuu5AXtdPiDc=', 16, 'staff');
 
 --
 -- Indexes for dumped tables
@@ -164,21 +138,6 @@ INSERT INTO `user` (`user_id`, `username`, `password`, `raw_password`, `departme
 --
 ALTER TABLE `department`
   ADD PRIMARY KEY (`department_id`);
-
---
--- Indexes for table `patient`
---
-ALTER TABLE `patient`
-  ADD PRIMARY KEY (`patient_id`),
-  ADD KEY `department_id` (`department_id`);
-
---
--- Indexes for table `queueing`
---
-ALTER TABLE `queueing`
-  ADD PRIMARY KEY (`queue_id`),
-  ADD KEY `patient_id` (`patient_id`),
-  ADD KEY `department_id` (`department_id`);
 
 --
 -- Indexes for table `queue_state`
@@ -213,18 +172,6 @@ ALTER TABLE `department`
   MODIFY `department_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
--- AUTO_INCREMENT for table `patient`
---
-ALTER TABLE `patient`
-  MODIFY `patient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=163;
-
---
--- AUTO_INCREMENT for table `queueing`
---
-ALTER TABLE `queueing`
-  MODIFY `queue_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=184;
-
---
 -- AUTO_INCREMENT for table `role`
 --
 ALTER TABLE `role`
@@ -234,24 +181,11 @@ ALTER TABLE `role`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- Constraints for dumped tables
 --
-
---
--- Constraints for table `patient`
---
-ALTER TABLE `patient`
-  ADD CONSTRAINT `patient_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `department` (`department_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Constraints for table `queueing`
---
-ALTER TABLE `queueing`
-  ADD CONSTRAINT `queueing_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`patient_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `queueing_ibfk_2` FOREIGN KEY (`department_id`) REFERENCES `department` (`department_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `role`
