@@ -119,6 +119,22 @@ async function refreshAndRender() {
             grid.innerHTML = "";
             renderedDeptIds = incomingIds;
 
+            if (filteredData.length === 0) {
+                grid.innerHTML = `<div id="noQueuesMsg" style="
+                    grid-column: 1 / -1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    color: rgba(0,0,0,0.18);
+                    font-size: clamp(1rem, 2vw, 1.4rem);
+                    font-weight: 600;
+                    letter-spacing: 0.02em;
+                    user-select: none;
+                ">No active queues at this time</div>`;
+                return;
+            }
+
             filteredData.forEach(d => {
                 const card = document.createElement("div");
                 card.className = "ios-card display-card";
