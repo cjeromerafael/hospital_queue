@@ -138,22 +138,20 @@
 
     <script src="../assets/js/admin.js"></script>
 
-    <!-- Edit User Panel — floats over the users section, no backdrop -->
-    <div id="editUserModal" class="fixed z-50 hidden" style="top:50%;right:2rem;transform:translateY(-50%);">
-        <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 p-5 space-y-3">
-            <div class="flex items-center justify-between mb-1">
-                <h3 class="text-base font-bold text-gray-900">Edit User</h3>
-                <button type="button" onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600 text-lg leading-none">&times;</button>
-            </div>
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" onclick="if(event.target===this)closeEditUserModal()">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
+            <h3 class="text-base font-bold text-gray-900">Edit User</h3>
             <div>
                 <label class="label-ios">Username</label>
                 <input id="editUsername" type="text" class="input-ios">
             </div>
             <div>
-                <label class="label-ios">New Password <span class="normal-case font-normal text-gray-400 text-[10px]">(blank = keep)</span></label>
+                <label class="label-ios">New Password <span class="normal-case font-normal text-gray-400 text-[10px]">(blank = keep current)</span></label>
                 <div class="relative">
                     <input id="editPassword" type="password" placeholder="New password" class="input-ios pr-10">
-                    <button type="button" onclick="togglePasswordVisibility('editPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-base">&#128065;</button>
+                    <button type="button" onclick="togglePasswordVisibility('editPassword')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">&#128065;</button>
                 </div>
             </div>
             <div>
@@ -164,7 +162,7 @@
                 <label class="label-ios">Department</label>
                 <select id="editDept" class="input-ios appearance-none"></select>
             </div>
-            <div class="flex gap-2 pt-1">
+            <div class="flex gap-3 pt-1">
                 <button id="editUserSaveBtn" type="button" class="btn-ios btn-ios-primary flex-1">Save</button>
                 <button type="button" onclick="closeEditUserModal()" class="btn-ios btn-ios-secondary flex-1">Cancel</button>
             </div>
