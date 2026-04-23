@@ -374,12 +374,12 @@ function loadUsers() {
 }
 
 function closeEditUserModal() {
-    document.getElementById("editUserModal").style.display = "none";
+    document.getElementById("editUserModal").classList.add("hidden");
 }
 
 function startEditUser(ev) {
-    const btn = ev.currentTarget;
-    const row = btn.closest("tr");
+    const btn = ev.target.closest("button");
+    const row = btn ? btn.closest("tr") : null;
     if (!row) return;
 
     const userId       = row.dataset.userId;
@@ -387,6 +387,7 @@ function startEditUser(ev) {
     const role         = row.dataset.role;
     const currentUsername = row.querySelector(".user-username-cell")?.textContent.trim() || "";
 
+    // Populate modal fields
     document.getElementById("editUsername").value = currentUsername;
     document.getElementById("editPassword").value = "";
 
@@ -420,9 +421,11 @@ function startEditUser(ev) {
         deptOpts += `<option value="${d.department_id}"${sel}>${escapeHtml(d.department_name)}</option>`;
     });
     deptSelect.innerHTML = deptOpts;
+
     roleSelect.onchange = updateDeptState;
     updateDeptState();
 
+    // Wire save button
     const saveBtn = document.getElementById("editUserSaveBtn");
     saveBtn.onclick = function() {
         const newUsername = document.getElementById("editUsername").value.trim();
@@ -447,12 +450,8 @@ function startEditUser(ev) {
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
 
-    const modal = document.getElementById("editUserModal");
-    const rect  = btn.getBoundingClientRect();
-    modal.style.top          = (rect.bottom + window.scrollY + 8) + "px";
-    modal.style.left         = Math.max(8, rect.right + window.scrollX - 352) + "px";
-    modal.style.display      = "flex";
-    modal.style.flexDirection = "column";
+    document.getElementById("editUserModal").classList.remove("hidden");
+    document.getElementById("editUsername").focus();
 }
 
 function deleteUserRow(ev) {
