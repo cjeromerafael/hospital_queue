@@ -373,6 +373,10 @@ function loadUsers() {
         });
 }
 
+function closeEditUserModal() {
+    document.getElementById("editUserModal").classList.add("hidden");
+}
+
 function startEditUser(ev) {
     const btn = ev.target.closest("button");
     const row = btn ? btn.closest("tr") : null;
@@ -381,56 +385,34 @@ function startEditUser(ev) {
     const userId       = row.dataset.userId;
     const departmentId = row.dataset.departmentId;
     const role         = row.dataset.role;
+    const currentUsername = row.querySelector(".user-username-cell")?.textContent.trim() || "";
 
-    const usernameCell = row.querySelector(".user-username-cell");
-    const deptCell     = row.querySelector(".user-dept-cell");
-    const roleCell     = row.querySelector(".user-role-cell");
-    const actionsCell  = row.querySelector("td:last-child");
+    // Populate modal fields
+    document.getElementById("editUsername").value = currentUsername;
+    document.getElementById("editPassword").value = "";
 
-    if (usernameCell.querySelector("input")) { loadUsers(); return; }
-
-    const currentUsername = usernameCell.textContent.trim();
-
-    const usernameInput = document.createElement("input");
-    usernameInput.type = "text"; usernameInput.value = currentUsername;
-    usernameInput.className = "input-ios !px-3 !py-2 !text-sm";
-    usernameCell.textContent = ""; usernameCell.appendChild(usernameInput);
-
-    // Password change — insert inline after username cell (not a visible column)
-    const pwWrap = document.createElement("div");
-    pwWrap.className = "relative flex items-center mt-1";
-    const passwordInput = document.createElement("input");
-    passwordInput.type = "password"; passwordInput.placeholder = "New password (leave blank to keep)";
-    passwordInput.className = "input-ios !px-3 !py-2 !text-sm";
-    passwordInput.style.flex = "1";
-    const eyeBtn = document.createElement("span");
-    eyeBtn.innerHTML = "&#128065;"; eyeBtn.className = "absolute right-2 cursor-pointer select-none text-sm";
-    eyeBtn.onclick = () => { passwordInput.type = passwordInput.type === "password" ? "text" : "password"; };
-    pwWrap.appendChild(passwordInput); pwWrap.appendChild(eyeBtn);
-    usernameCell.appendChild(pwWrap);
-
-    const roleSelect = document.createElement("select");
-    roleSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
+    const roleSelect = document.getElementById("editRole");
     roleSelect.innerHTML = '<option value="staff">Staff</option><option value="admin">Admin</option><option value="sysadmin">SysAdmin</option>';
-    roleCell.textContent = ""; roleCell.appendChild(roleSelect);
     roleSelect.value = role;
 
-    // Update department selection when role changes
-    roleSelect.addEventListener('change', () => {
-        if (roleSelect.value === 'admin') {
+    const deptSelect = document.getElementById("editDept");
+    const deptContainer = document.getElementById("editDeptContainer");
+
+    function updateDeptState() {
+        const r = roleSelect.value;
+        if (r === "admin") {
             deptSelect.value = adminDeptId;
             deptSelect.disabled = true;
-        } else if (roleSelect.value === 'sysadmin') {
-            deptSelect.value = "";
+            deptContainer.style.opacity = "0.5";
+        } else if (r === "sysadmin") {
+            deptSelect.value = "0";
             deptSelect.disabled = true;
+            deptContainer.style.opacity = "0.5";
         } else {
             deptSelect.disabled = false;
+            deptContainer.style.opacity = "1";
         }
-    });
-
-    const deptSelect = document.createElement("select");
-    deptSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
-    deptCell.textContent = ""; deptCell.appendChild(deptSelect);
+    }
 
     let deptOpts = '<option value="0">None</option>';
     departmentsData.forEach(d => {
@@ -440,25 +422,18 @@ function startEditUser(ev) {
     });
     deptSelect.innerHTML = deptOpts;
 
-    // Handle admin/sysadmin department assignment
-    if (role === 'admin') {
-        deptSelect.value = adminDeptId;
-        deptSelect.disabled = true;
-    } else if (role === 'sysadmin') {
-        deptSelect.value = "";
-        deptSelect.disabled = true;
-    } else {
-        deptSelect.disabled = false;
-    }
+    roleSelect.onchange = updateDeptState;
+    updateDeptState();
 
-    function save() {
-        const newUsername = usernameInput.value.trim();
+    // Wire save button
+    const saveBtn = document.getElementById("editUserSaveBtn");
+    saveBtn.onclick = function() {
+        const newUsername = document.getElementById("editUsername").value.trim();
         if (!newUsername) { alert("Username cannot be empty."); return; }
-
         if (roleSelect.value === "staff" && deptSelect.value == 0) { alert("Staff must be assigned to a department."); return; }
 
         let body = `user_id=${encodeURIComponent(userId)}&username=${encodeURIComponent(newUsername)}&department_id=${encodeURIComponent(deptSelect.value)}&role=${encodeURIComponent(roleSelect.value)}`;
-        const newPassword = passwordInput.value.trim();
+        const newPassword = document.getElementById("editPassword").value.trim();
         if (newPassword) body += `&password=${encodeURIComponent(newPassword)}`;
 
         fetch("../../api/admin/users.php", {
@@ -469,32 +444,14 @@ function startEditUser(ev) {
         .then(r => r.json())
         .then(d => {
             if (d.status === "error") { alert(d.message || "Update failed."); return; }
+            closeEditUserModal();
             loadUsers();
         })
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
-    }
+    };
 
-    [usernameInput, passwordInput, deptSelect, roleSelect].forEach(el => {
-        el.addEventListener("keydown", e => e.key === "Enter" && save());
-    });
-
-    if (actionsCell) {
-        actionsCell.innerHTML = "";
-        actionsCell.className = "flex justify-center gap-2";
-
-        const saveBtn = document.createElement("button"); saveBtn.type = "button";
-        saveBtn.className = "btn-ios btn-ios-primary !px-4 !py-2"; saveBtn.textContent = "Save";
-        saveBtn.addEventListener("click", save);
-
-        const cancelBtn = document.createElement("button"); cancelBtn.type = "button";
-        cancelBtn.className = "btn-ios btn-ios-secondary !px-4 !py-2"; cancelBtn.textContent = "Cancel";
-        cancelBtn.addEventListener("click", () => loadUsers());
-
-        actionsCell.appendChild(saveBtn);
-        actionsCell.appendChild(cancelBtn);
-    }
-
-    usernameInput.focus();
+    document.getElementById("editUserModal").classList.remove("hidden");
+    document.getElementById("editUsername").focus();
 }
 
 function deleteUserRow(ev) {
