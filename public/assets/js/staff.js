@@ -206,7 +206,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                         ${canControl ? "" : "disabled"}
                     >Call Next</button>
                     <button
-                        class="btn-ios btn-ios-danger action-skip"
+                        class="btn-ios btn-ios-danger orange action-skip"
                         data-action="skip"
                         data-department-id="${d.department_id}"
                         ${canControl ? "" : "disabled"}
