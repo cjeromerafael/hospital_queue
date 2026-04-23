@@ -4,93 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hospital Queue Login</title>
-    <!-- Local Tailwind CSS - works offline -->
     <link rel="stylesheet" href="./assets/css/tailwind.css">
-    <!-- CDN fallback for latest Tailwind features (optional) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .ios-blur { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .ios-shadow { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05); }
-
-        /* Login card — scales with viewport height so it fits both 768px and 1080px screens */
-        .login-card {
-            width: 100%;
-            max-width: 28rem;
-            padding: clamp(1.25rem, 3.5vh, 2.5rem);
-            gap: clamp(0.875rem, 2.5vh, 2rem);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .login-icon {
-            width: clamp(2.75rem, 7.5vh, 5rem);
-            height: clamp(2.75rem, 7.5vh, 5rem);
-        }
-        .login-icon svg {
-            width: 55%;
-            height: 55%;
-        }
-
-        .login-title {
-            font-size: clamp(1.2rem, 3vh, 1.875rem);
-            font-weight: 700;
-            color: #111827;
-            padding-top: clamp(0.125rem, 0.8vh, 1rem);
-            line-height: 1.2;
-        }
-
-        .login-input {
-            width: 100%;
-            background: rgba(243, 244, 246, 0.5);
-            border: none;
-            border-radius: 1rem;
-            padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
-            font-size: clamp(0.875rem, 1.7vh, 1.125rem);
-            outline: none;
-            transition: box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-        .login-input:focus {
-            box-shadow: 0 0 0 2px #3b82f6;
-        }
-
-        .login-btn {
-            width: 100%;
-            background: #3b82f6;
-            color: white;
-            font-weight: 700;
-            padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
-            border-radius: 1rem;
-            font-size: clamp(0.875rem, 1.7vh, 1.125rem);
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
-        }
-        .login-btn:hover { background: #2563eb; }
-        .login-btn:active { transform: scale(0.98); }
-
-        .icon-section {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: clamp(0.25rem, 0.8vh, 0.5rem);
-        }
-        .fields-section {
-            display: flex;
-            flex-direction: column;
-            gap: clamp(0.5rem, 1.5vh, 1rem);
-        }
-        .field-group { display: flex; flex-direction: column; gap: 0.25rem; }
-        .actions-section { display: flex; flex-direction: column; gap: 0.5rem; }
-    </style>
+    <link rel="stylesheet" href="./assets/css/style.css">
 </head>
 
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-6 relative overflow-hidden">
-    <!-- Background Image with Overlay -->
     <div class="fixed inset-0 z-0">
         <img src="assets/CCH_background.png" alt="Background" class="w-full h-full object-cover">
         <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]"></div>

@@ -1,48 +1,334 @@
-/* iOS UI Base Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* ============================================================
+   Hospital Queue System — Shared Stylesheet
+   All page-specific styles consolidated here.
+   Tailwind utility classes handle layout; this file handles
+   custom components and anything Tailwind can't express.
+   ============================================================ */
 
-:root {
-    --ios-blue: #007AFF;
-    --ios-gray: #8E8E93;
-    --ios-bg: #F2F2F7;
-}
+/* --- Base -------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--ios-bg);
+    background: #F2F2F7;
     color: #1C1C1E;
     -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
 }
 
-/* Custom Utilities */
-.ios-blur {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+/* --- Shared card / blur ------------------------------------ */
+.ios-blur  { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.ios-shadow { box-shadow: 0 8px 32px 0 rgba(0,0,0,0.05); }
+
+.ios-card {
+    background: rgba(255,255,255,0.94);
+    border: 1px solid rgba(233,239,255,1);
+    border-radius: 0.9rem;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
 }
 
-.ios-shadow {
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-}
+/* --- Admin dashboard overrides ---------------------------- */
+.page-shell { width: min(1300px, 100%); margin: 0 auto; padding: 1rem 1.2rem; }
 
-/* Table overrides for Tailwind to ensure iOS look */
-table {
+.ios-card.admin { background: rgba(255,255,255,0.95); border-color: rgba(243,244,246,0.8); border-radius: 1.4rem; box-shadow: 0 8px 24px rgba(0,0,0,0.06); padding: 1rem; }
+.flash-card { background: #fff5f5; border: 1px solid #fee2e2; padding: 0.9rem; border-radius: 1rem; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+th { background: #f8fafc; color: #6b7280; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: .6rem .8rem; text-align: left; }
+td { padding: .6rem .8rem; color: #111827; border-top: 1px solid #e5e7eb; }
+tr:last-child td:first-child { border-bottom-left-radius: .8rem; }
+tr:last-child td:last-child  { border-bottom-right-radius: .8rem; }
+.table-scroll { overflow-x: auto; width: 100%; }
+
+.pill { border-radius: 999px; padding: 0.3rem 0.55rem; font-size: .72rem; font-weight: 700; background: #f1f5f9; color: #1f2937; }
+
+/* --- Shared button base ----------------------------------- */
+.btn-ios {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border: none;
+    border-radius: 999px;
+    padding: .45rem .75rem;
+    font-weight: 700;
+    font-size: .8rem;
+    cursor: pointer;
+    transition: .15s ease;
+    white-space: nowrap;
+    user-select: none;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    min-height: 2.35rem;
+}
+.btn-pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; border-radius: 999px; padding: .45rem .85rem; font-weight: 600; font-size: .85rem; transition: .2s ease; }
+
+.btn-ios-primary, .btn-pill-primary { background: #3b82f6; color: #fff; box-shadow: 0 8px 18px rgba(59,130,246,0.3); }
+.btn-ios-primary:hover, .btn-pill-primary:hover { background: #2563eb; }
+
+/* Staff dashboard uses green gradient for primary */
+.btn-ios-primary.green { background: linear-gradient(160deg, #3dd668 0%, #28a745 100%); box-shadow: 0 4px 12px rgba(52,199,89,0.35), 0 1px 0 rgba(255,255,255,0.25) inset; }
+.btn-ios-primary.green:hover { background: linear-gradient(160deg, #44e070 0%, #2cb84e 100%); transform: translateY(-1px); }
+
+.btn-ios-secondary, .btn-pill-secondary { background: #f3f4f6; color: #111827; }
+.btn-ios-secondary:hover, .btn-pill-secondary:hover { background: #e5e7eb; }
+
+/* Staff dashboard secondary (on colored card bg) */
+.btn-ios-secondary.on-card { background: rgba(255,255,255,0.88); box-shadow: 0 2px 6px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.9) inset; }
+.btn-ios-secondary.on-card:hover { background: rgba(255,255,255,1); transform: translateY(-1px); }
+
+.btn-ios-danger, .btn-pill-danger { background: #ef4444; color: #fff; }
+.btn-ios-danger:hover, .btn-pill-danger:hover { background: #dc2626; }
+
+/* Staff dashboard danger uses orange gradient */
+.btn-ios-danger.orange { background: linear-gradient(160deg, #ffb340 0%, #e08000 100%); box-shadow: 0 4px 12px rgba(255,159,10,0.35), 0 1px 0 rgba(255,255,255,0.25) inset; }
+.btn-ios-danger.orange:hover { background: linear-gradient(160deg, #ffc060 0%, #f08800 100%); transform: translateY(-1px); }
+
+.btn-ios:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
+/* --- Form inputs ------------------------------------------ */
+.input-ios {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    background: #f9fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: .9rem;
+    padding: .7rem .9rem;
+    font-size: .95rem;
+}
+.input-ios:focus { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.16); outline: none; }
+.label-ios { display: block; margin-bottom: .2rem; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: #6b7280; font-weight: 700; }
+
+.edit-dept-btn, .delete-dept-btn,
+.edit-user-btn, .delete-user-btn {
+    border-radius: 999px;
+    padding: .45rem .8rem;
+    font-size: .78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .2rem;
 }
 
-th {
-    padding: 12px 16px;
-    text-align: left;
+/* --- Staff dashboard department cards --------------------- */
+.dept-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    height: auto;
+    min-height: 180px;
+    border-radius: 1.4rem;
+    background-color: var(--dept-color, #3b82f6);
+    background-image:
+        radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
+        linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.35) inset,
+        0 -1px 0 rgba(0,0,0,0.18) inset,
+        0 16px 32px rgba(0,0,0,0.18),
+        0 4px 8px rgba(0,0,0,0.10);
+    border: 1px solid rgba(255,255,255,0.22);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.dept-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
+    border-radius: 1.4rem 1.4rem 60% 60% / 1.4rem 1.4rem 40% 40%;
+    pointer-events: none;
 }
 
-td {
-    padding: 12px 16px;
+.queue-number {
+    font-weight: 900;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    color: white;
+    text-align: center;
+    width: 100%;
+    text-shadow:
+        0 1px 0 rgba(255,255,255,0.25),
+        0 2px 4px rgba(0,0,0,0.30),
+        0 6px 16px rgba(0,0,0,0.20);
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Smooth transitions for all iOS elements */
-.transition-all {
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
+.dept-name-text-shadow { text-shadow: 0 1px 3px rgba(0,0,0,0.35); }
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
+}
+
+/* --- Queue display page ----------------------------------- */
+.dept-name-container {
+    position: relative;
+    overflow: hidden;
+    height: 2.2rem;
+    flex-shrink: 0;
+}
+.dept-name-track {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    will-change: transform;
+}
+.dept-name-track.scrolling {
+    animation: marquee var(--marquee-duration, 18s) linear infinite;
+}
+@keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.dept-name-text {
+    display: inline-block;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    font-weight: 900;
+    color: white;
+    white-space: nowrap;
+    padding-right: 3rem;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+
+#displayGrid {
+    height: 100%;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    min-height: 0;
+    align-content: stretch;
+}
+
+.display-card {
+    padding: 1.3rem 1.6rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    border-radius: 0.6rem;
+    background-color: var(--dept-color, #3b82f6);
+    background-image:
+        radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
+        linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.35) inset,
+        0 -1px 0 rgba(0,0,0,0.18) inset,
+        0 2px 4px rgba(0,0,0,0.10),
+        0 8px 16px rgba(0,0,0,0.12);
+    border: 1px solid rgba(255,255,255,0.22);
+    position: relative;
+    overflow: hidden;
+}
+.display-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 55%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
+    border-radius: 0.6rem 0.6rem 60% 60% / 0.6rem 0.6rem 40% 40%;
+    pointer-events: none;
+}
+.display-number {
+    font-weight: 900;
+    font-size: clamp(2.5rem, 7vw, 7.5rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: white;
+    text-align: center;
+    width: 100%;
+    padding: 0.1rem 0;
+    text-shadow:
+        0 1px 0 rgba(255,255,255,0.25),
+        0 2px 6px rgba(0,0,0,0.30),
+        0 8px 20px rgba(0,0,0,0.20);
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+}
+
+/* --- Login page ------------------------------------------- */
+.login-card {
+    width: 100%;
+    max-width: 28rem;
+    padding: clamp(1.25rem, 3.5vh, 2.5rem);
+    gap: clamp(0.875rem, 2.5vh, 2rem);
+    display: flex;
+    flex-direction: column;
+}
+.login-icon {
+    width: clamp(2.75rem, 7.5vh, 5rem);
+    height: clamp(2.75rem, 7.5vh, 5rem);
+}
+.login-icon svg { width: 55%; height: 55%; }
+.login-title {
+    font-size: clamp(1.2rem, 3vh, 1.875rem);
+    font-weight: 700;
+    color: #111827;
+    padding-top: clamp(0.125rem, 0.8vh, 1rem);
+    line-height: 1.2;
+}
+.login-input {
+    width: 100%;
+    background: rgba(243,244,246,0.5);
+    border: none;
+    border-radius: 1rem;
+    padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
+    font-size: clamp(0.875rem, 1.7vh, 1.125rem);
+    outline: none;
+    transition: box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.login-input:focus { box-shadow: 0 0 0 2px #3b82f6; }
+.login-btn {
+    width: 100%;
+    background: #3b82f6;
+    color: white;
+    font-weight: 700;
+    padding: clamp(0.55rem, 1.4vh, 1rem) 1.5rem;
+    border-radius: 1rem;
+    font-size: clamp(0.875rem, 1.7vh, 1.125rem);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+}
+.login-btn:hover  { background: #2563eb; }
+.login-btn:active { transform: scale(0.98); }
+.icon-section  { text-align: center; display: flex; flex-direction: column; align-items: center; gap: clamp(0.25rem, 0.8vh, 0.5rem); }
+.fields-section { display: flex; flex-direction: column; gap: clamp(0.5rem, 1.5vh, 1rem); }
+.field-group   { display: flex; flex-direction: column; gap: 0.25rem; }
+.actions-section { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* --- Image rendering (display page logos) ----------------- */
+.crisp-img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* --- Color picker input fix ------------------------------- */
+input[type="color"].input-ios {
+    padding: 0.25rem;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
 }

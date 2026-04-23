@@ -4,115 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Queue Display</title>
-    <!-- Local Tailwind CSS - works offline -->
     <link rel="stylesheet" href="../assets/css/tailwind.css">
-    <!-- CDN fallback for latest Tailwind features (optional) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-
-        .ios-card {
-            background: rgba(255,255,255,0.92);
-            border: 1px solid rgba(233,239,255,1);
-            border-radius: 0.9rem;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-        }
-
-        .dept-name-container {
-            position: relative;
-            overflow: hidden;
-            height: 2.2rem;
-            flex-shrink: 0;
-        }
-
-        .dept-name-track {
-            display: inline-flex;
-            align-items: center;
-            white-space: nowrap;
-            will-change: transform;
-        }
-
-        .dept-name-track.scrolling {
-            animation: marquee var(--marquee-duration, 18s) linear infinite;
-        }
-
-        @keyframes marquee {
-            0%   { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-
-        .dept-name-text {
-            display: inline-block;
-            font-size: clamp(1rem, 2.5vw, 1.5rem);
-            font-weight: 900;
-            color: white;
-            white-space: nowrap;
-            padding-right: 3rem;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.35);
-        }
-
-        #displayGrid {
-            height: 100%;
-            grid-template-rows: repeat(2, minmax(0, 1fr));
-            grid-auto-rows: minmax(0, 1fr);
-            min-height: 0;
-            align-content: stretch;
-        }
-
-        .display-card {
-            padding: 1.3rem 1.6rem;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            border-radius: 0.6rem;
-            background-color: var(--dept-color, #3b82f6);
-            background-image:
-                radial-gradient(ellipse at 18% 18%, rgba(255,255,255,0.28) 0%, transparent 60%),
-                linear-gradient(145deg, rgba(255,255,255,0.14) 0%, rgba(0,0,0,0.18) 100%);
-            box-shadow:
-                0 1px 0 rgba(255,255,255,0.35) inset,
-                0 -1px 0 rgba(0,0,0,0.18) inset,
-                0 2px 4px rgba(0,0,0,0.10),
-                0 8px 16px rgba(0,0,0,0.12);
-            border: 1px solid rgba(255,255,255,0.22);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .display-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 55%;
-            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, transparent 100%);
-            border-radius: 0.6rem 0.6rem 60% 60% / 0.6rem 0.6rem 40% 40%;
-            pointer-events: none;
-        }
-
-        .display-number {
-            font-weight: 900;
-            font-size: clamp(2.5rem, 7vw, 7.5rem);
-            line-height: 1;
-            letter-spacing: -0.04em;
-            color: white;
-            text-align: center;
-            width: 100%;
-            padding: 0.1rem 0;
-            text-shadow:
-                0 1px 0 rgba(255,255,255,0.25),
-                0 2px 6px rgba(0,0,0,0.30),
-                0 8px 20px rgba(0,0,0,0.20);
-            position: relative;
-            z-index: 1;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 
 <body class="bg-[#F2F2F7] h-screen overflow-hidden p-4 md:p-8 flex flex-col">
@@ -121,8 +14,7 @@
         <div class="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
             <img src="../assets/images/Ph_seal_cabuyao_city.png"
                  alt="Lungsod ng Cabuyao seal"
-                 class="w-16 h-16 sm:w-20 sm:h-20"
-                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+                 class="w-16 h-16 sm:w-20 sm:h-20 crisp-img">
 
             <div class="text-center">
                 <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
@@ -131,8 +23,7 @@
 
             <img src="../assets/images/CCH_logo.png"
                  alt="CCH logo"
-                 class="w-16 h-16 sm:w-20 sm:h-20"
-                 style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0;">
+                 class="w-16 h-16 sm:w-20 sm:h-20 crisp-img">
         </div>
 
         <div class="ios-card inline-block px-5 py-2 mt-3">

@@ -330,11 +330,11 @@ function loadUsers() {
             return r.json();
         })
         .then(data => {
-            if (!Array.isArray(data)) { el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>No users found.</td></tr>"; return; }
+            if (!Array.isArray(data)) { el.innerHTML = "<tr><td colspan='5' class='p-8 text-center text-gray-400'>No users found.</td></tr>"; return; }
 
             let html = `<thead><tr>
                 <th>ID</th><th>Username</th><th>Department</th>
-                <th>Role</th><th>Password</th>
+                <th>Role</th>
                 <th class="text-center">Actions</th>
             </tr></thead><tbody>`;
 
@@ -348,9 +348,6 @@ function loadUsers() {
                     <td class="user-username-cell font-bold text-gray-900">${escapeHtml(u.username)}</td>
                     <td class="user-dept-cell"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">${escapeHtml(u.department_name || "None")}</span></td>
                     <td class="user-role-cell uppercase text-[11px] font-black tracking-widest text-gray-400">${escapeHtml(u.role)}</td>
-                    <td class="user-password-cell font-mono text-xs text-gray-400">
-                        ${u.raw_password_decryptable ? `<span class="password-text" data-password="${escapeHtml(u.raw_password)}">••••••••</span> <button type="button" class="toggle-password-btn btn-ios-secondary !px-2 !py-1 text-xs" onclick="togglePassword(this)" aria-label="Reveal password"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>` : `<span class="text-gray-500">Legacy encrypted</span>`}
-                    </td>
                     <td class="flex justify-center gap-2">
                         <button type="button" class="edit-user-btn btn-ios-secondary !px-4 !py-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
@@ -376,20 +373,6 @@ function loadUsers() {
         });
 }
 
-function togglePassword(button) {
-    const span = button.previousElementSibling;
-    if (!span || !span.dataset.password) return;
-
-    const isHidden = span.textContent === "••••••••";
-    if (isHidden) {
-        span.textContent = span.dataset.password;
-        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.958 9.958 0 012.606-4.045M6.6 6.6A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-1.1 2.238M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/></svg>`;
-    } else {
-        span.textContent = "••••••••";
-        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
-    }
-}
-
 function startEditUser(ev) {
     const btn = ev.target.closest("button");
     const row = btn ? btn.closest("tr") : null;
@@ -402,7 +385,6 @@ function startEditUser(ev) {
     const usernameCell = row.querySelector(".user-username-cell");
     const deptCell     = row.querySelector(".user-dept-cell");
     const roleCell     = row.querySelector(".user-role-cell");
-    const passwordCell = row.querySelector(".user-password-cell");
     const actionsCell  = row.querySelector("td:last-child");
 
     if (usernameCell.querySelector("input")) { loadUsers(); return; }
@@ -414,8 +396,9 @@ function startEditUser(ev) {
     usernameInput.className = "input-ios !px-3 !py-2 !text-sm";
     usernameCell.textContent = ""; usernameCell.appendChild(usernameInput);
 
+    // Password change — insert inline after username cell (not a visible column)
     const pwWrap = document.createElement("div");
-    pwWrap.className = "relative flex items-center";
+    pwWrap.className = "relative flex items-center mt-1";
     const passwordInput = document.createElement("input");
     passwordInput.type = "password"; passwordInput.placeholder = "New password (leave blank to keep)";
     passwordInput.className = "input-ios !px-3 !py-2 !text-sm";
@@ -424,7 +407,7 @@ function startEditUser(ev) {
     eyeBtn.innerHTML = "&#128065;"; eyeBtn.className = "absolute right-2 cursor-pointer select-none text-sm";
     eyeBtn.onclick = () => { passwordInput.type = passwordInput.type === "password" ? "text" : "password"; };
     pwWrap.appendChild(passwordInput); pwWrap.appendChild(eyeBtn);
-    passwordCell.textContent = ""; passwordCell.appendChild(pwWrap);
+    usernameCell.appendChild(pwWrap);
 
     const roleSelect = document.createElement("select");
     roleSelect.className = "input-ios !px-3 !py-2 !text-sm appearance-none";
