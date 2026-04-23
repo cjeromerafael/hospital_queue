@@ -374,7 +374,8 @@ function loadUsers() {
 }
 
 function closeEditUserModal() {
-    document.getElementById("editUserModal").classList.add("hidden");
+    const m = document.getElementById("editUserModal");
+    m.style.display = "none";
 }
 
 function startEditUser(ev) {
@@ -450,7 +451,9 @@ function startEditUser(ev) {
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
 
-    document.getElementById("editUserModal").classList.remove("hidden");
+    const modal = document.getElementById("editUserModal");
+    modal.style.display = "flex";
+    modal.onclick = (e) => { if (e.target === modal) closeEditUserModal(); };
     document.getElementById("editUsername").focus();
 }
 
