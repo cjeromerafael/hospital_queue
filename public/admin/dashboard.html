@@ -139,9 +139,8 @@
     <script src="../assets/js/admin.js"></script>
 
     <!-- Edit User Modal -->
-    <div id="editUserModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" onclick="if(event.target===this)closeEditUserModal()">
-        <div class="absolute inset-0 bg-gray-900/60"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4">
+    <div id="editUserModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background:rgba(17,24,39,0.6);" onclick="if(event.target===this)closeEditUserModal()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4" onclick="event.stopPropagation()">
             <h3 class="text-base font-bold text-gray-900">Edit User</h3>
             <div>
                 <label class="label-ios">Username</label>
