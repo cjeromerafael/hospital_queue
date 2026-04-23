@@ -47,6 +47,7 @@ async function init() {
 }
 
 let renderedDeptIds = new Set();
+let emptyStateShown = false;
 
 /**
  * Builds the inner HTML for a department name cell.
@@ -111,22 +112,25 @@ async function refreshAndRender() {
         const filteredData = data.filter(d => Number(d.current_number || 0) > 0);
 
         const incomingIds = new Set(filteredData.map(d => String(d.department_id)));
-        const setsMatch = incomingIds.size === renderedDeptIds.size &&
+        const setsMatch = !emptyStateShown &&
+                          incomingIds.size === renderedDeptIds.size &&
+                          incomingIds.size > 0 &&
                           Array.from(incomingIds).every(id => renderedDeptIds.has(id));
 
         if (!setsMatch) {
-            // Department set changed — rebuild all cards
             grid.innerHTML = "";
             renderedDeptIds = incomingIds;
+            emptyStateShown = false;
 
             if (filteredData.length === 0) {
-                grid.innerHTML = `<div id="noQueuesMsg" style="
+                emptyStateShown = true;
+                grid.innerHTML = `<div style="
                     grid-column: 1 / -1;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     min-height: 300px;
-                    color: rgba(0,0,0,0.60);
+                    color: #9ca3af;
                     font-size: clamp(1rem, 2vw, 1.4rem);
                     font-weight: 600;
                     letter-spacing: 0.02em;
