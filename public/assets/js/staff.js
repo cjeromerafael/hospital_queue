@@ -210,6 +210,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                         data-action="skip"
                         data-department-id="${d.department_id}"
                         ${canControl ? "" : "disabled"}
+                        disabled
                     >Skip Current</button>
                     <button
                         class="btn-ios btn-ios-secondary action-reset"
@@ -301,6 +302,13 @@ async function refreshNumbers() {
                 ? d.current_number
                 : 0;
             el.textContent = String(currentNum);
+
+            // Disable skip when nothing is currently being served
+            const card = el.closest(".dept-card");
+            if (card) {
+                const skipBtn = card.querySelector(".action-skip");
+                if (skipBtn) skipBtn.disabled = currentNum <= 0;
+            }
         });
     } catch (err) {
         console.error("Failed to refresh queue numbers:", err);
