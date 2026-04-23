@@ -77,6 +77,6 @@ LIMIT 1
     ob_end_clean();
     echo json_encode([
         "status"  => "error",
-        "message" => "Login failed. Please try again."
+        "message" => $e->getMessage()
     ]);
 }

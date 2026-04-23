@@ -9,6 +9,7 @@ header("Content-Type: application/json");
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 session_name('hospital_queue_session');
+session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
