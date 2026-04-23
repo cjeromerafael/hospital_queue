@@ -375,7 +375,7 @@ function loadUsers() {
 
 function closeEditUserModal() {
     document.getElementById("editUserModal").style.display = "none";
-    document.getElementById("editUserBackdrop").style.display = "none";
+    document.body.style.overflow = "";
 }
 
 function startEditUser(ev) {
@@ -452,13 +452,11 @@ function startEditUser(ev) {
     };
 
     document.getElementById("editUserModal").style.display = "block";
+    document.body.style.overflow = "hidden";
     document.getElementById("editUsername").focus();
 
-    // Reposition based on screen size
     const modal = document.getElementById("editUserModal");
-    const backdrop = document.getElementById("editUserBackdrop");
     if (window.innerWidth < 1024) {
-        // Mobile/tablet: centered modal with backdrop
         modal.style.top = "50%";
         modal.style.left = "50%";
         modal.style.right = "auto";
@@ -467,15 +465,14 @@ function startEditUser(ev) {
         modal.style.maxWidth = "22rem";
         modal.style.maxHeight = "90vh";
         modal.style.overflowY = "auto";
-        backdrop.style.display = "block";
     } else {
-        // Desktop: anchored to right side, no backdrop
         modal.style.top = "50%";
         modal.style.left = "auto";
         modal.style.right = "2rem";
         modal.style.transform = "translateY(-50%)";
         modal.style.width = "18rem";
-        backdrop.style.display = "none";
+        modal.style.maxHeight = "";
+        modal.style.overflowY = "";
     }
 }
 
