@@ -38,6 +38,8 @@ async function fetchAuthStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", async function () {
+    // Hide edit panel on load
+    document.getElementById("editUserModal").style.display = "none";
     const auth = await fetchAuthStatus();
     if (!auth) return;
     if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
@@ -457,10 +459,10 @@ function startEditUser(ev) {
     let left = btnRect.right  + window.scrollX - 352;
     if (left < 8) left = 8;
     if (left + 352 > window.innerWidth - 8) left = window.innerWidth - 360;
-    modal.style.cssText = modal.style.cssText.replace(/display\s*:\s*[^;]+;?/g, '');
-    modal.style.display = "flex";
     modal.style.top  = top  + "px";
     modal.style.left = left + "px";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
     document.getElementById("editUsername").focus();
 }
 
