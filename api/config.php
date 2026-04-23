@@ -59,10 +59,6 @@ function getAuthRole() {
     return $_SESSION['role'] ?? null;
 }
 
-function getAuthDepartmentId() {
-    return $_SESSION['department_id'] ?? null;
-}
-
 $conn = new mysqli("localhost", "root", "", "hospital_queue");
 
 if ($conn->connect_error) {
