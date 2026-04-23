@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Prevent Apache's DirectoryIndex from bypassing the rewrite rules
+DirectoryIndex disabled
+
 # Route root to the queue display page
 RewriteRule ^$ public/patient/display.html [L]
 
