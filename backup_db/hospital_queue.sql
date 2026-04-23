@@ -106,7 +106,6 @@ CREATE TABLE `user` (
   `user_id` int(11) NOT NULL,
   `username` varchar(50) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
-  `raw_password` varchar(255) DEFAULT NULL,
   `department_id` int(11) DEFAULT NULL,
   `role` varchar(20) DEFAULT 'staff'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -115,19 +114,19 @@ CREATE TABLE `user` (
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`user_id`, `username`, `password`, `raw_password`, `department_id`, `role`) VALUES
-(1, 'admin', '$2y$10$Gp9fmVuFDykoWbRrK/SZxuZrWU3MyqiTjoaOnCsw4g0WOMoxS/WTK', 'uEoeid/dHDtB1B/lPN0aKmk61g5lanWjeASr/nmatTc=', 22, 'sysadmin'),
-(2, 'test', '$2y$10$cajvXzU8S49IaxJUzAmRtuFWpnXlCAmmQUoSr29L.ULf1splZ9tfK', 'mt0EXQPFOTgeVjN78J6c9GR+U8sUerePDXCpxxDnmq8=', 16, 'staff'),
-(4, 'cashier', '$2y$10$VSjQgN/s8w7tLK2TglCRUuPWXmfweemDSOslzYnNgGOiOy62JG53q', 'P7Ww7SwjYFfSh7dBdtEYnyj4iUQqCGMW8jqLL5fALwI=', 26, 'staff'),
-(5, 'billopd', '$2y$10$LLoF.BzpOvF3dYEXZsLcgeg7Bi./uRVgX9tBI.ydbEXdd5xqlz.ea', 'JitzAwB6hj9VRUdMEOS75AABnJlUNrbONKRBa6U99EI=', 25, 'staff'),
-(6, 'billadm', '$2y$10$SsPLQISeXCrOsvUkjPxBQucociJWebtQTcg6IVYba3iTGOzelzbia', 'kd9ff2AaxnKBROOpvVY5CU5qPEWEtX6jpRNHeOSughU=', 24, 'staff'),
-(7, 'mssd', '$2y$10$yoWdwG/XPPLC6nA4Zsh9N.vHgcbf4.JjU6lQAhlXpYzDaUKN3f4uu', 'KCAW2c6ROY583PIvcFQdwSUQr5Eq9uks/kOM/zM0Jok=', 27, 'staff'),
-(23, 'inpatient', '$2y$10$szFh5aNN9Hv5SWZgXHWcKOMpmuZbVuBt0rmVLBQIIKH1Fv/WkNCzC', 'Q/xzs7qxMCgNklgGdiLJNfAQBeDU0WKfZo2ZYCj6bwM=', 30, 'staff'),
-(24, 'oecb', '$2y$10$eFaj.DcVWl7G7jEnycdMxeTq7abcszxiFlsJPDr95YCptC5SvlqmK', 'ewPACLcj4mlyzoA/fOS2ZvJ4jOAPOybu9NFxC/GZGbA=', 1, 'staff'),
-(25, 'master', '$2y$10$uiitzVAIYKyPJwHz3sgeOO4pUqO0cF3PoBYqcdyDGrvxgpifQGaU2', 'pF8Bdj+TW8Pug6UqG063GG/aONfDkUN/WEC9GWnVVu4=', 22, 'admin'),
-(27, 'pharmacy', '$2y$10$3E9kkkHrIAtB9ubiruaxI.kPsq6YyhoVMZoVtN8LAWtlFCFJRMxC6', 'dqvebZItckh92P0JQOaYOov+lSaZwbDvi5zwLOscvzo=', 18, 'staff'),
-(62, 'yakap', '$2y$10$TjOmeOZZx42cBHbD7paIDujooLLU7egu/61DGMwGRlmRMwk1XAV5K', 'vQuqaarYc9JwUfzPie7WehFQgDqbBpRrFD+5JH+Ejwc=', 20, 'staff'),
-(63, 'patient2', '$2y$10$QrFDe0XXHrm8C0j73fH9hujC507YydXba/u6BVMzWCXoY59jA9g8G', 't3cwfpVE+dUvB/7MlA7qYOz855b/Pcynuu5AXtdPiDc=', 16, 'staff');
+INSERT INTO `user` (`user_id`, `username`, `password`, `department_id`, `role`) VALUES
+(1, 'admin', '$2y$10$Gp9fmVuFDykoWbRrK/SZxuZrWU3MyqiTjoaOnCsw4g0WOMoxS/WTK', 22, 'sysadmin'),
+(2, 'test', '$2y$10$cajvXzU8S49IaxJUzAmRtuFWpnXlCAmmQUoSr29L.ULf1splZ9tfK', 16, 'staff'),
+(4, 'cashier', '$2y$10$VSjQgN/s8w7tLK2TglCRUuPWXmfweemDSOslzYnNgGOiOy62JG53q', 26, 'staff'),
+(5, 'billopd', '$2y$10$LLoF.BzpOvF3dYEXZsLcgeg7Bi./uRVgX9tBI.ydbEXdd5xqlz.ea', 25, 'staff'),
+(6, 'billadm', '$2y$10$SsPLQISeXCrOsvUkjPxBQucociJWebtQTcg6IVYba3iTGOzelzbia', 24, 'staff'),
+(7, 'mssd', '$2y$10$yoWdwG/XPPLC6nA4Zsh9N.vHgcbf4.JjU6lQAhlXpYzDaUKN3f4uu', 27, 'staff'),
+(23, 'inpatient', '$2y$10$szFh5aNN9Hv5SWZgXHWcKOMpmuZbVuBt0rmVLBQIIKH1Fv/WkNCzC', 30, 'staff'),
+(24, 'oecb', '$2y$10$eFaj.DcVWl7G7jEnycdMxeTq7abcszxiFlsJPDr95YCptC5SvlqmK', 1, 'staff'),
+(25, 'master', '$2y$10$uiitzVAIYKyPJwHz3sgeOO4pUqO0cF3PoBYqcdyDGrvxgpifQGaU2', 22, 'admin'),
+(27, 'pharmacy', '$2y$10$3E9kkkHrIAtB9ubiruaxI.kPsq6YyhoVMZoVtN8LAWtlFCFJRMxC6', 18, 'staff'),
+(62, 'yakap', '$2y$10$TjOmeOZZx42cBHbD7paIDujooLLU7egu/61DGMwGRlmRMwk1XAV5K', 20, 'staff'),
+(63, 'patient2', '$2y$10$QrFDe0XXHrm8C0j73fH9hujC507YydXba/u6BVMzWCXoY59jA9g8G', 16, 'staff');
 
 --
 -- Indexes for dumped tables

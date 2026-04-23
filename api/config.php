@@ -63,33 +63,6 @@ function getAuthDepartmentId() {
     return $_SESSION['department_id'] ?? null;
 }
 
-// --- Encryption for Reversible Passwords (Admin Visibility) ---
-// Note: This allows admins to see passwords while they're encrypted in the DB.
-// Passwords are still hashed separately for authentication.
-define('ENCRYPTION_KEY', 'hospital-queue-secure-key-32-chars!!!');
-
-function encrypt_password($password) {
-    if (!$password) return null;
-    $iv_len = openssl_cipher_iv_length('aes-256-cbc');
-    $iv = openssl_random_pseudo_bytes($iv_len);
-    // Use OPENSSL_RAW_DATA to get binary output
-    $encrypted = openssl_encrypt($password, 'aes-256-cbc', ENCRYPTION_KEY, OPENSSL_RAW_DATA, $iv);
-    return base64_encode($iv . $encrypted);
-}
-
-function decrypt_password($data) {
-    if (!$data) return null;
-    $data = base64_decode($data);
-    $iv_len = openssl_cipher_iv_length('aes-256-cbc');
-    if (strlen($data) <= $iv_len) return null;
-    $iv = substr($data, 0, $iv_len);
-    $encrypted = substr($data, $iv_len);
-    // Use OPENSSL_RAW_DATA to decrypt binary input
-    $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', ENCRYPTION_KEY, OPENSSL_RAW_DATA, $iv);
-    return $decrypted === false ? null : $decrypted;
-}
-// -------------------------------------------------------------
-
 $conn = new mysqli("localhost", "root", "", "hospital_queue");
 
 if ($conn->connect_error) {

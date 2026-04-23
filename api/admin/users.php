@@ -13,25 +13,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 /* READ */
 if ($method === "GET") {
     $res = $conn->query("
-        SELECT u.user_id, u.username, u.department_id, u.role, u.raw_password, d.department_name
+        SELECT u.user_id, u.username, u.department_id, u.role, d.department_name
         FROM user u
         LEFT JOIN department d ON d.department_id = u.department_id
         ORDER BY u.user_id ASC
     ");
     $users = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-
-    foreach ($users as &$u) {
-        $dec = decrypt_password($u['raw_password']);
-        if ($dec !== null) {
-            $u['raw_password'] = $dec;
-            $u['raw_password_decryptable'] = true;
-        } else {
-            $u['raw_password'] = '';
-            $u['raw_password_decryptable'] = false;
-        }
-    }
-    unset($u);
-
     echo json_encode($users);
     exit;
 }
@@ -60,11 +47,8 @@ if ($method === "POST") {
     }
     $check->close();
 
-    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $encPassword    = encrypt_password($password);
-
-    $stmt = $conn->prepare("INSERT INTO user (username, password, raw_password, department_id, role) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssis", $username, $hashedPassword, $encPassword, $dept, $role);
+    $stmt = $conn->prepare("INSERT INTO user (username, password, department_id, role) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssis", $username, password_hash($password, PASSWORD_DEFAULT), $dept, $role);
 
     if ($stmt->execute()) {
         echo json_encode(["status" => "success", "user_id" => $conn->insert_id]);
@@ -102,9 +86,6 @@ if ($method === "PUT") {
     if ($password !== '') {
         $fields[] = "password=?";
         $params[] = password_hash($password, PASSWORD_DEFAULT);
-        $types   .= "s";
-        $fields[] = "raw_password=?";
-        $params[] = encrypt_password($password);
         $types   .= "s";
     }
 
