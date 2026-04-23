@@ -465,6 +465,8 @@ function startEditUser(ev) {
         modal.style.transform = "translate(-50%, -50%)";
         modal.style.width = "calc(100vw - 2rem)";
         modal.style.maxWidth = "22rem";
+        modal.style.maxHeight = "90vh";
+        modal.style.overflowY = "auto";
         backdrop.style.display = "block";
     } else {
         // Desktop: anchored to right side, no backdrop
