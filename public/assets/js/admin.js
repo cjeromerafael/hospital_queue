@@ -39,7 +39,8 @@ async function fetchAuthStatus() {
 
 document.addEventListener("DOMContentLoaded", async function () {
     // Hide edit panel on load
-    document.getElementById("editUserModal").style.display = "none";
+    const editModal = document.getElementById("editUserModal");
+    if (editModal) editModal.style.display = "none";
     const auth = await fetchAuthStatus();
     if (!auth) return;
     if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
@@ -380,11 +381,24 @@ function closeEditUserModal() {
 }
 
 function startEditUser(ev) {
-    const btn = ev.currentTarget; // always the button the listener is on
+    const btn = ev.currentTarget;
     const row = btn.closest("tr");
-    if (!row) return;
+    if (!row) { alert("DEBUG: no row found"); return; }
+
+    // Show immediately after guard checks pass
+    const rect = btn.getBoundingClientRect();
+    modal.style.top  = (rect.bottom + window.scrollY + 8) + "px";
+    modal.style.left = Math.max(8, rect.right + window.scrollX - 352) + "px";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
 
     const userId       = row.dataset.userId;
+    const departmentId = row.dataset.departmentId;
+    const role         = row.dataset.role;
+    const currentUsername = row.querySelector(".user-username-cell")?.textContent.trim() || "";
+
+    document.getElementById("editUsername").value = currentUsername;
+    document.getElementById("editPassword").value = "";
     const departmentId = row.dataset.departmentId;
     const role         = row.dataset.role;
     const currentUsername = row.querySelector(".user-username-cell")?.textContent.trim() || "";
@@ -448,13 +462,6 @@ function startEditUser(ev) {
         })
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
-
-    const modal = document.getElementById("editUserModal");
-    const rect = btn.getBoundingClientRect();
-    modal.style.top  = (rect.bottom + window.scrollY + 8) + "px";
-    modal.style.left = Math.max(8, rect.right + window.scrollX - 352) + "px";
-    modal.style.display = "flex";
-    modal.style.flexDirection = "column";
 }
 
 function deleteUserRow(ev) {
