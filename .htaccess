@@ -6,7 +6,9 @@ RewriteRule ^$ public/patient/display.html [L]
 # Route /login to the login page
 RewriteRule ^login/?$ public/index.html [L]
 
-# Pass everything else through as-is (API calls, assets, etc.)
+# Pass everything else through — but only if not already under public/
+# This prevents infinite redirect loops when DocumentRoot is the project root
+RewriteCond %{REQUEST_URI} !^/public/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ public/$1 [L]
