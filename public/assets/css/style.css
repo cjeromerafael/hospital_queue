@@ -5,6 +5,15 @@
    custom components and anything Tailwind can't express.
    ============================================================ */
 
+/* --- Inter font (local, offline-safe) --------------------- */
+@font-face { font-family:'Inter'; font-weight:300; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-Light.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:400; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-Regular.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:500; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-Medium.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:600; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-SemiBold.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:700; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-Bold.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:800; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-ExtraBold.ttf') format('truetype'); }
+@font-face { font-family:'Inter'; font-weight:900; font-style:normal; font-display:swap; src:url('../fonts/Inter_18pt-Black.ttf') format('truetype'); }
+
 /* --- Base -------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; overflow-x: hidden; }
