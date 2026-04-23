@@ -380,7 +380,7 @@ function closeEditUserModal() {
 }
 
 function startEditUser(ev) {
-    const btn = ev.target.closest("button");
+    const btn = ev.target.closest("button.edit-user-btn");
     const row = btn ? btn.closest("tr") : null;
     if (!row) return;
 
@@ -389,7 +389,6 @@ function startEditUser(ev) {
     const role         = row.dataset.role;
     const currentUsername = row.querySelector(".user-username-cell")?.textContent.trim() || "";
 
-    // Populate modal fields
     document.getElementById("editUsername").value = currentUsername;
     document.getElementById("editPassword").value = "";
 
@@ -423,11 +422,9 @@ function startEditUser(ev) {
         deptOpts += `<option value="${d.department_id}"${sel}>${escapeHtml(d.department_name)}</option>`;
     });
     deptSelect.innerHTML = deptOpts;
-
     roleSelect.onchange = updateDeptState;
     updateDeptState();
 
-    // Wire save button
     const saveBtn = document.getElementById("editUserSaveBtn");
     saveBtn.onclick = function() {
         const newUsername = document.getElementById("editUsername").value.trim();
@@ -452,18 +449,12 @@ function startEditUser(ev) {
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
 
-    // Show dropdown anchored below the Edit button
     const modal = document.getElementById("editUserModal");
-    const btnRect = btn.getBoundingClientRect();
-    let top  = btnRect.bottom + window.scrollY + 8;
-    let left = btnRect.right  + window.scrollX - 352;
-    if (left < 8) left = 8;
-    if (left + 352 > window.innerWidth - 8) left = window.innerWidth - 360;
-    modal.style.top  = top  + "px";
-    modal.style.left = left + "px";
+    const rect = btn.getBoundingClientRect();
+    modal.style.top  = (rect.bottom + window.scrollY + 8) + "px";
+    modal.style.left = Math.max(8, rect.right + window.scrollX - 352) + "px";
     modal.style.display = "flex";
     modal.style.flexDirection = "column";
-    document.getElementById("editUsername").focus();
 }
 
 function deleteUserRow(ev) {
