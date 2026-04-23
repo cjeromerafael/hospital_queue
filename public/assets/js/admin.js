@@ -374,7 +374,7 @@ function loadUsers() {
 }
 
 function closeEditUserModal() {
-    document.getElementById("editUserModal").classList.add("hidden");
+    document.getElementById("editUserModal").style.display = "none";
 }
 
 function startEditUser(ev) {
@@ -450,7 +450,7 @@ function startEditUser(ev) {
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
 
-    document.getElementById("editUserModal").classList.remove("hidden");
+    document.getElementById("editUserModal").style.display = "block";
     document.getElementById("editUsername").focus();
 }
 
