@@ -328,6 +328,7 @@ tr:last-child td:last-child  { border-bottom-right-radius: .8rem; }
 
 /* --- Color picker input fix ------------------------------- */
 input[type="color"].input-ios {
+    width: 6rem;
     padding: 0.25rem;
     border: 1px solid #e2e8f0;
     cursor: pointer;
