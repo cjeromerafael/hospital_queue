@@ -374,8 +374,7 @@ function loadUsers() {
 }
 
 function closeEditUserModal() {
-    const m = document.getElementById("editUserModal");
-    m.style.display = "none";
+    document.getElementById("editUserModal").style.display = "none";
 }
 
 function startEditUser(ev) {
@@ -451,20 +450,17 @@ function startEditUser(ev) {
         .catch(err => { console.error("Update failed:", err); alert("Request failed."); });
     };
 
-    // Position dropdown near the Edit button
+    // Show dropdown anchored below the Edit button
     const modal = document.getElementById("editUserModal");
     const btnRect = btn.getBoundingClientRect();
-    modal.style.display = "flex";
-    modal.style.flexDirection = "column";
-    // Position below the button, aligned to its right edge
-    let top = btnRect.bottom + window.scrollY + 8;
-    let left = btnRect.right + window.scrollX - 352; // 352 = card width
-    // Keep within viewport
+    let top  = btnRect.bottom + window.scrollY + 8;
+    let left = btnRect.right  + window.scrollX - 352;
     if (left < 8) left = 8;
     if (left + 352 > window.innerWidth - 8) left = window.innerWidth - 360;
-    modal.style.top = top + "px";
+    modal.style.cssText = modal.style.cssText.replace(/display\s*:\s*[^;]+;?/g, '');
+    modal.style.display = "flex";
+    modal.style.top  = top  + "px";
     modal.style.left = left + "px";
-    modal.onclick = null;
     document.getElementById("editUsername").focus();
 }
 
