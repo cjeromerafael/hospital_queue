@@ -6,10 +6,8 @@ config.local.php
 *.log
 logs/
 
-# Database backups (keep only the main ones)
-backup_db/*.sql
-!backup_db/hospital_queue.sql
-!backup_db/hospital_queue_full.sql
+# Database backups
+backup_db/
 
 # Archived legacy files
 archive/
