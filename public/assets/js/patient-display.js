@@ -126,7 +126,7 @@ async function refreshAndRender() {
                     align-items: center;
                     justify-content: center;
                     min-height: 300px;
-                    color: rgba(0,0,0,0.35);
+                    color: rgba(0,0,0,0.60);
                     font-size: clamp(1rem, 2vw, 1.4rem);
                     font-weight: 600;
                     letter-spacing: 0.02em;
