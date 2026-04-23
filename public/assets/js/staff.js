@@ -72,14 +72,10 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     // For sysadmins in admin override mode, allow access to all departments
     if (role.toLowerCase() === "sysadmin" && isAdminOverride) {
-        // Show the back to admin button
         const backBtn = document.getElementById("backToAdminBtn");
         if (backBtn) backBtn.style.display = "flex";
-
-        // Sysadmin can manage all departments
-        checkDailyFlush().then(() => {
-            loadDepartmentsAndRender(0, "admin"); // Pass 0 as deptId and "admin" as role to show all departments
-        });
+        checkDailyFlush(); // fire and forget
+        loadDepartmentsAndRender(0, "admin");
         if (userInfoDisplay) {
             userInfoDisplay.textContent = `${username} (Admin Override - All Departments)`;
         }
@@ -100,9 +96,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         })();
     }
 
-    checkDailyFlush().then(() => {
-        loadDepartmentsAndRender(deptId, role);
-    });
+    checkDailyFlush(); // fire and forget — don't block rendering on flush check
+    loadDepartmentsAndRender(deptId, role);
 
     // Live clock — updates every second
     function updateDashboardClock() {
@@ -291,22 +286,13 @@ async function refreshNumbers() {
 
     try {
         const r = await fetch("../../api/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
-        
+
         if (r.status === 401) {
             return redirectToLogin();
         }
-        
-        const data = await r.json();
-        
-        if (!Array.isArray(data)) return;
 
-        // Check if we have DOM elements for all departments
-        const missingElements = data.some(d => !document.getElementById(`queue_num_${d.department_id}`));
-        if (missingElements) {
-            // New departments were added, reload the entire UI
-            await loadDepartmentsAndRender(userDeptId, role);
-            return;
-        }
+        const data = await r.json();
+        if (!Array.isArray(data)) return;
 
         data.forEach(d => {
             const el = document.getElementById(`queue_num_${d.department_id}`);
@@ -315,16 +301,6 @@ async function refreshNumbers() {
                 ? d.current_number
                 : 0;
             el.textContent = String(currentNum);
-
-            // Update button states based on current number
-            const card = el.closest('.dept-card');
-            if (card) {
-                const skipBtn = card.querySelector('.action-skip');
-                if (skipBtn) {
-                    // Disable skip button if no current patient (current_number <= 0)
-                    skipBtn.disabled = currentNum <= 0;
-                }
-            }
         });
     } catch (err) {
         console.error("Failed to refresh queue numbers:", err);
