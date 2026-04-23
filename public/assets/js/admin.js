@@ -375,7 +375,6 @@ function loadUsers() {
 
 function closeEditUserModal() {
     document.getElementById("editUserModal").style.display = "none";
-    document.body.style.overflow = "";
 }
 
 function startEditUser(ev) {
@@ -452,7 +451,6 @@ function startEditUser(ev) {
     };
 
     document.getElementById("editUserModal").style.display = "block";
-    document.body.style.overflow = "hidden";
     document.getElementById("editUsername").focus();
 
     const modal = document.getElementById("editUserModal");
