@@ -11,9 +11,14 @@
  */
 require_once("config.php");
 
-requireAuth();
-
 $method          = $_SERVER['REQUEST_METHOD'];
+
+// Manual flush (POST) requires authentication — auto daily check (GET) does not,
+// since the queue display page calls it without a session.
+if ($method === 'POST') {
+    requireAuth();
+}
+
 $flush_date_file = __DIR__ . '/data/last_flush_date.txt';
 
 /**
