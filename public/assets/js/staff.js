@@ -20,8 +20,6 @@ function backToAdminDashboard() {
     window.location.href = "/admin/dashboard.html";
 }
 
-const bellAudio = new Audio("../assets/bell.ogg");
-bellAudio.preload = "auto";
 
 async function fetchAuthStatus() {
     try {
@@ -138,6 +136,13 @@ async function getDepartmentName(departmentId) {
     }
 }
 
+function popNumber(el) {
+    el.classList.remove("num-pop");
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add("num-pop");
+    el.addEventListener("animationend", () => el.classList.remove("num-pop"), { once: true });
+}
+
 function escapeHtml(s) {
     const d = document.createElement("div");
     d.textContent = s == null ? "" : String(s);
@@ -248,10 +253,10 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                     const numEl = document.getElementById(`queue_num_${departmentId}`);
                     if (numEl && typeof d.current_number !== "undefined") {
                         numEl.textContent = String(d.current_number);
+                        popNumber(numEl);
                     }
                     if (action === "next" || action === "skip") {
-                        bellAudio.currentTime = 0;
-                        bellAudio.play().catch(() => {});
+                        // Bell now plays on the patient display page via polling
                     }
                 } else {
                     console.warn("Action failed:", d);
@@ -301,7 +306,10 @@ async function refreshNumbers() {
             const currentNum = (typeof d.current_number !== "undefined" && d.current_number !== null)
                 ? d.current_number
                 : 0;
-            el.textContent = String(currentNum);
+            if (el.textContent !== String(currentNum)) {
+                el.textContent = String(currentNum);
+                popNumber(el);
+            }
 
             // Disable skip when nothing is currently being served
             const card = el.closest(".dept-card");

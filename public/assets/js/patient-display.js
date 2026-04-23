@@ -27,6 +27,13 @@ function escapeHtml(s) {
     return d.innerHTML;
 }
 
+function popNumber(el) {
+    el.classList.remove("num-pop");
+    void el.offsetWidth;
+    el.classList.add("num-pop");
+    el.addEventListener("animationend", () => el.classList.remove("num-pop"), { once: true });
+}
+
 function formatDateTime(d) {
     const date = d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
     const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -42,12 +49,67 @@ function updateClock() {
 async function init() {
     updateClock();
     setInterval(updateClock, 1000);
+
+    window.addEventListener("pointerdown", unlockBellAudio, { once: true, passive: true });
+    window.addEventListener("keydown", unlockBellAudio, { once: true, passive: true });
+
     await refreshAndRender();
     setInterval(refreshAndRender, 1500);
 }
 
 let renderedDeptIds = new Set();
 let emptyStateShown = false;
+let previousNumbers = {};
+
+const bellAudio = new Audio("../../assets/bell.ogg");
+bellAudio.preload = "auto";
+let bellUnlocked = false;
+let soundPromptEl = null;
+
+function createSoundPrompt() {
+    if (soundPromptEl) return;
+    soundPromptEl = document.createElement("div");
+    soundPromptEl.id = "soundPrompt";
+    soundPromptEl.style.cssText = `
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.75);
+        color: #f8fafc;
+        font-size: 1rem;
+        text-align: center;
+        padding: 1.5rem;
+        z-index: 9999;
+        cursor: pointer;
+        user-select: none;
+    `;
+    soundPromptEl.innerHTML = `Tap anywhere to enable bell sound`;
+    soundPromptEl.addEventListener("pointerdown", unlockBellAudio, { once: true, passive: true });
+    document.body.appendChild(soundPromptEl);
+}
+
+function hideSoundPrompt() {
+    if (!soundPromptEl) return;
+    soundPromptEl.style.display = "none";
+}
+
+function unlockBellAudio() {
+    if (bellUnlocked) return;
+    bellAudio.currentTime = 0;
+    const playPromise = bellAudio.play();
+    if (playPromise && typeof playPromise.then === "function") {
+        playPromise
+            .then(() => {
+                bellUnlocked = true;
+                hideSoundPrompt();
+            })
+            .catch(() => {
+                createSoundPrompt();
+            });
+    }
+}
 
 /**
  * Builds the inner HTML for a department name cell.
@@ -139,7 +201,13 @@ async function refreshAndRender() {
                 return;
             }
 
+            let bellNeeded = false;
             filteredData.forEach(d => {
+                const newNum = Number(d.current_number || 0);
+                const prevNum = previousNumbers[d.department_id];
+                if (prevNum !== undefined && newNum !== prevNum) bellNeeded = true;
+                previousNumbers[d.department_id] = newNum;
+
                 const card = document.createElement("div");
                 card.className = "ios-card display-card";
                 card.dataset.departmentId = String(d.department_id);
@@ -149,17 +217,27 @@ async function refreshAndRender() {
 
                 card.innerHTML = `
                     ${buildNameHTML(d.department_name || "")}
-                    <div class="display-number" id="display_num_${d.department_id}">${Number(d.current_number || 0)}</div>
+                    <div class="display-number" id="display_num_${d.department_id}">${newNum}</div>
                 `;
                 grid.appendChild(card);
             });
+            if (bellNeeded) { bellAudio.currentTime = 0; bellAudio.play().catch(() => {}); }
         } else {
             // Same departments — just update the numbers, leave the DOM (and animations) untouched
+            let bellNeeded = false;
             filteredData.forEach(d => {
                 const el = document.getElementById(`display_num_${d.department_id}`);
                 if (!el) return;
-                el.textContent = Number(d.current_number || 0);
+                const newNum = Number(d.current_number || 0);
+                const prevNum = previousNumbers[d.department_id];
+                if (prevNum !== undefined && newNum !== prevNum) bellNeeded = true;
+                previousNumbers[d.department_id] = newNum;
+                if (el.textContent !== String(newNum)) {
+                    el.textContent = newNum;
+                    popNumber(el);
+                }
             });
+            if (bellNeeded) { bellAudio.currentTime = 0; bellAudio.play().catch(() => {}); }
         }
     } catch (error) {
         console.error("Failed to fetch queue data:", error);
