@@ -380,8 +380,8 @@ function closeEditUserModal() {
 }
 
 function startEditUser(ev) {
-    const btn = ev.target.closest("button.edit-user-btn");
-    const row = btn ? btn.closest("tr") : null;
+    const btn = ev.currentTarget; // always the button the listener is on
+    const row = btn.closest("tr");
     if (!row) return;
 
     const userId       = row.dataset.userId;
