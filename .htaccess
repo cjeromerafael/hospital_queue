@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# Route root to the queue display page
+RewriteRule ^$ public/patient/display.html [L]
+
+# Route /login to the login page
+RewriteRule ^login/?$ public/index.html [L]
+
+# Pass everything else through as-is (API calls, assets, etc.)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/$1 [L]

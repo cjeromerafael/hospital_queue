@@ -10,7 +10,7 @@ async function redirectToLogin() {
     localStorage.removeItem("department_id");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
-    window.location.href = "../index.html";
+    window.location.href = "/login";
 }
 
 async function fetchAuthStatus() {
@@ -118,7 +118,7 @@ function logout() {
             localStorage.removeItem("department_id");
             localStorage.removeItem("role");
             localStorage.removeItem("username");
-            window.location.href = "../index.html";
+            window.location.href = "/login";
         });
 }
 

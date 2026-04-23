@@ -13,11 +13,11 @@ async function redirectToLogin() {
     localStorage.removeItem("department_id");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
-    window.location.href = "../index.html";
+    window.location.href = "/login";
 }
 
 function backToAdminDashboard() {
-    window.location.href = "../admin/dashboard.html";
+    window.location.href = "/admin/dashboard.html";
 }
 
 const bellAudio = new Audio("../assets/bell.ogg");
