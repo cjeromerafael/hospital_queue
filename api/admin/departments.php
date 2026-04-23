@@ -4,7 +4,6 @@
  * Used by: admin dashboard.
  */
 require_once("../config.php");
-require_once("../helpers/department_queue.php");
 
 requireAuth();
 
@@ -13,8 +12,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method !== "GET") {
     requireRole(['sysadmin']);
 }
-
-ensureDepartmentColorColumn($conn);
 
 /* READ */
 if ($method === "GET") {

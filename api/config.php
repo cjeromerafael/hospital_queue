@@ -51,10 +51,6 @@ function requireDepartmentAccess(int $departmentId) {
     }
 }
 
-function getAuthUserId() {
-    return $_SESSION['user_id'] ?? null;
-}
-
 function getAuthRole() {
     return $_SESSION['role'] ?? null;
 }

@@ -74,18 +74,9 @@ LIMIT 1
         "department_role" => $role
     ]);
 } catch (Throwable $e) {
-    $buffer = ob_get_clean();
-    // Return JSON so the frontend doesn't fail JSON.parse on HTML error pages.
-    // Include a short fragment of any buffered output for debugging.
-    $fragment = '';
-    if (is_string($buffer) && $buffer !== '') {
-        // Use substr() to avoid requiring the optional mbstring extension.
-        $fragment = substr(trim($buffer), 0, 300);
-    }
-
+    ob_end_clean();
     echo json_encode([
-        "status" => "error",
-        "message" => "Server error during login: " . $e->getMessage(),
-        "debug" => $fragment
+        "status"  => "error",
+        "message" => "Login failed. Please try again."
     ]);
 }
