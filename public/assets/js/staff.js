@@ -16,6 +16,10 @@ async function redirectToLogin() {
     window.location.href = "../index.html";
 }
 
+function backToAdminDashboard() {
+    window.location.href = "../admin/dashboard.html";
+}
+
 const bellAudio = new Audio("../assets/bell.ogg");
 bellAudio.preload = "auto";
 
@@ -51,14 +55,39 @@ document.addEventListener("DOMContentLoaded", async function() {
     const deptId = parseInt(deptIdRaw || "0", 10);
     const username = auth.username || localStorage.getItem("username") || "";
 
-    if (role.toLowerCase() === "sysadmin") {
+    // Allow sysadmins to access staff dashboard with admin_override parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdminOverride = urlParams.get('admin_override') === '1';
+
+    if (role.toLowerCase() === "sysadmin" && !isAdminOverride) {
         window.location.href = "../admin/dashboard.html";
         return;
     }
 
     const userInfoDisplay = document.getElementById("userInfoDisplay");
-    if (!deptId || !role) {
+    if (!role) {
         if (userInfoDisplay) userInfoDisplay.textContent = "Please log in to access this page.";
+        return;
+    }
+
+    // For sysadmins in admin override mode, allow access to all departments
+    if (role.toLowerCase() === "sysadmin" && isAdminOverride) {
+        // Show the back to admin button
+        const backBtn = document.getElementById("backToAdminBtn");
+        if (backBtn) backBtn.style.display = "flex";
+
+        // Sysadmin can manage all departments
+        checkDailyFlush().then(() => {
+            loadDepartmentsAndRender(0, "admin"); // Pass 0 as deptId and "admin" as role to show all departments
+        });
+        if (userInfoDisplay) {
+            userInfoDisplay.textContent = `${username} (Admin Override - All Departments)`;
+        }
+        return;
+    }
+
+    if (!deptId) {
+        if (userInfoDisplay) userInfoDisplay.textContent = "No department assigned. Please contact administrator.";
         return;
     }
 
@@ -180,13 +209,13 @@ async function loadDepartmentsAndRender(userDeptId, role) {
                         data-action="next"
                         data-department-id="${d.department_id}"
                         ${canControl ? "" : "disabled"}
-                    >Next</button>
+                    >Call Next</button>
                     <button
                         class="btn-ios btn-ios-danger action-skip"
                         data-action="skip"
                         data-department-id="${d.department_id}"
                         ${canControl ? "" : "disabled"}
-                    >Skip</button>
+                    >Skip Current</button>
                     <button
                         class="btn-ios btn-ios-secondary action-reset"
                         data-action="reset"
@@ -263,51 +292,41 @@ async function refreshNumbers() {
     try {
         const r = await fetch("../../api/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
         
-        // Remove offline indicator on successful connection
-        const offlineEl = document.getElementById("offlineIndicator");
-        if (offlineEl && r.ok) {
-            offlineEl.remove();
-        }
-        
-        if (!r.ok) {
-            if (r.status === 401) {
-                return redirectToLogin();
-            }
-            throw new Error(`HTTP ${r.status}`);
+        if (r.status === 401) {
+            return redirectToLogin();
         }
         
         const data = await r.json();
+        
         if (!Array.isArray(data)) return;
+
+        // Check if we have DOM elements for all departments
+        const missingElements = data.some(d => !document.getElementById(`queue_num_${d.department_id}`));
+        if (missingElements) {
+            // New departments were added, reload the entire UI
+            await loadDepartmentsAndRender(userDeptId, role);
+            return;
+        }
 
         data.forEach(d => {
             const el = document.getElementById(`queue_num_${d.department_id}`);
             if (!el) return;
-            el.textContent = (typeof d.current_number !== "undefined" && d.current_number !== null)
-                ? String(d.current_number)
-                : "0";
+            const currentNum = (typeof d.current_number !== "undefined" && d.current_number !== null)
+                ? d.current_number
+                : 0;
+            el.textContent = String(currentNum);
+
+            // Update button states based on current number
+            const card = el.closest('.dept-card');
+            if (card) {
+                const skipBtn = card.querySelector('.action-skip');
+                if (skipBtn) {
+                    // Disable skip button if no current patient (current_number <= 0)
+                    skipBtn.disabled = currentNum <= 0;
+                }
+            }
         });
     } catch (err) {
         console.error("Failed to refresh queue numbers:", err);
-        
-        // Show offline indicator if not already present
-        if (!document.getElementById("offlineIndicator")) {
-            const indicator = document.createElement("div");
-            indicator.id = "offlineIndicator";
-            indicator.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #c62828;
-                color: white;
-                padding: 12px 16px;
-                border-radius: 6px;
-                font-size: 14px;
-                font-weight: 500;
-                z-index: 1000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            `;
-            indicator.textContent = "📡 No connection - queue numbers not updating";
-            document.body.appendChild(indicator);
-        }
     }
 }

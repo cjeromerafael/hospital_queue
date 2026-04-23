@@ -24,6 +24,10 @@ if ($method === "GET") {
         $dec = decrypt_password($u['raw_password']);
         if ($dec !== null) {
             $u['raw_password'] = $dec;
+            $u['raw_password_decryptable'] = true;
+        } else {
+            $u['raw_password'] = '';
+            $u['raw_password_decryptable'] = false;
         }
     }
     unset($u);

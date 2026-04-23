@@ -66,7 +66,7 @@ function getAuthDepartmentId() {
 // --- Encryption for Reversible Passwords (Admin Visibility) ---
 // Note: This allows admins to see passwords while they're encrypted in the DB.
 // Passwords are still hashed separately for authentication.
-define('ENCRYPTION_KEY', getenv('HOSPITAL_QUEUE_ENCRYPTION_KEY') ?: 'hospital-queue-secret-key-32-chars-!!'); // Change this for production!
+define('ENCRYPTION_KEY', 'hospital-queue-secure-key-32-chars!!!');
 
 function encrypt_password($password) {
     if (!$password) return null;

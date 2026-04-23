@@ -122,6 +122,11 @@ function logout() {
         });
 }
 
+function switchToStaffDashboard() {
+    // Redirect to staff dashboard with admin override parameter
+    window.location.href = "../staff/dashboard.html?admin_override=1";
+}
+
 /* ─── DEPARTMENTS ─────────────────────────────────────────────── */
 
 function loadDepartments() {
@@ -155,19 +160,14 @@ function loadDepartments() {
             let html = `<thead><tr>
                 <th>ID</th><th>Name</th>
                 <th class="text-center">Color</th>
-                <th class="text-center">Type</th>
                 <th class="text-center">Actions</th>
             </tr></thead><tbody>`;
 
             data.forEach(d => {
-                const typePill = d.is_finance == 1
-                    ? "<span class='bg-red-50 text-red-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-red-100'>Finance</span>"
-                    : "<span class='bg-blue-50 text-blue-600 px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-blue-100'>Medical</span>";
                 const deptColor = normalizeHex(d.department_color);
 
                 html += `<tr
                     data-department-id="${d.department_id}"
-                    data-is-finance="${d.is_finance}"
                     data-dept-color="${deptColor}"
                     class="hover:bg-gray-50/50 transition-colors">
                     <td>${d.department_id}</td>
@@ -175,7 +175,6 @@ function loadDepartments() {
                     <td class="dept-color-cell text-center">
                         <div style="width:32px;height:32px;background-color:${deptColor};border-radius:0.5rem;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin:0 auto;"></div>
                     </td>
-                    <td class="dept-finance-cell text-center">${typePill}</td>
                     <td class="flex justify-center gap-2">
                         <button type="button" class="edit-dept-btn btn-ios-secondary !px-4 !py-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
@@ -195,7 +194,7 @@ function loadDepartments() {
             el.querySelectorAll(".edit-dept-btn").forEach(btn => btn.addEventListener("click", startEditDepartment));
             el.querySelectorAll(".delete-dept-btn").forEach(btn => btn.addEventListener("click", deleteDepartmentRow));
         })
-        .catch(() => { el.innerHTML = "<tr><td colspan='5' class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
+        .catch(() => { el.innerHTML = "<tr><td colspan='4' class='p-8 text-center text-gray-400'>Could not load departments.</td></tr>"; });
 }
 
 function startEditDepartment(ev) {
@@ -203,7 +202,6 @@ function startEditDepartment(ev) {
     const row = btn.closest("tr");
     const id = row.dataset.departmentId;
     const nameCell = row.querySelector(".dept-name-cell");
-    const financeCell = row.querySelector(".dept-finance-cell");
     const colorCell = row.querySelector(".dept-color-cell");
     const actionsCell = row.querySelector("td:last-child");
 
@@ -215,10 +213,6 @@ function startEditDepartment(ev) {
     input.type = "text"; input.value = nameCell.textContent;
     input.className = "input-ios inline-edit-input !px-3 !py-2 !text-sm"; input.placeholder = "Name";
     nameCell.textContent = ""; nameCell.appendChild(input);
-
-    const financeCheck = document.createElement("input");
-    financeCheck.type = "checkbox"; financeCheck.checked = row.dataset.isFinance == "1"; financeCheck.className = "w-4 h-4";
-    if (financeCell) { financeCell.textContent = ""; financeCell.appendChild(financeCheck); }
 
     let colorInput = null;
     if (colorCell) {
@@ -234,7 +228,7 @@ function startEditDepartment(ev) {
         fetch("../../api/admin/departments.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&is_finance=${financeCheck.checked ? 1 : 0}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#062e6f"))}`
+            body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#8B0000"))}`
         })
         .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -288,14 +282,12 @@ function deleteDepartmentRow(ev) {
 function addDepartment() {
     const nameEl = document.getElementById("deptName");
     const colorEl = document.getElementById("deptColor");
-    const isFinanceEl = document.getElementById("deptIsFinance");
     const name = nameEl?.value.trim() || "";
     if (!name) { alert("Department name is required."); return; }
 
     const f = new FormData();
     f.append("department_name", name);
-    f.append("is_finance", isFinanceEl?.checked ? 1 : 0);
-    f.append("department_color", normalizeHex(colorEl?.value || "#062e6f"));
+    f.append("department_color", normalizeHex(colorEl?.value || "#8B0000"));
 
     fetch("../../api/admin/departments.php", { method: "POST", body: f })
         .then(r => {
@@ -304,8 +296,7 @@ function addDepartment() {
         })
         .then(() => {
             nameEl.value = "";
-            if (colorEl) colorEl.value = "#062e6f";
-            if (isFinanceEl) isFinanceEl.checked = false;
+            if (colorEl) colorEl.value = "#8B0000";
             loadDepartments();
         })
         .catch(err => {
@@ -357,7 +348,9 @@ function loadUsers() {
                     <td class="user-username-cell font-bold text-gray-900">${escapeHtml(u.username)}</td>
                     <td class="user-dept-cell"><span class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">${escapeHtml(u.department_name || "None")}</span></td>
                     <td class="user-role-cell uppercase text-[11px] font-black tracking-widest text-gray-400">${escapeHtml(u.role)}</td>
-                    <td class="user-password-cell font-mono text-xs text-gray-400">${escapeHtml(u.raw_password || "********")}</td>
+                    <td class="user-password-cell font-mono text-xs text-gray-400">
+                        ${u.raw_password_decryptable ? `<span class="password-text" data-password="${escapeHtml(u.raw_password)}">••••••••</span> <button type="button" class="toggle-password-btn btn-ios-secondary !px-2 !py-1 text-xs" onclick="togglePassword(this)" aria-label="Reveal password"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></button>` : `<span class="text-gray-500">Legacy encrypted</span>`}
+                    </td>
                     <td class="flex justify-center gap-2">
                         <button type="button" class="edit-user-btn btn-ios-secondary !px-4 !py-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
@@ -381,6 +374,20 @@ function loadUsers() {
             console.error("Error loading users:", err);
             el.innerHTML = "<tr><td colspan='6' class='p-8 text-center text-gray-400'>Could not load users.</td></tr>";
         });
+}
+
+function togglePassword(button) {
+    const span = button.previousElementSibling;
+    if (!span || !span.dataset.password) return;
+
+    const isHidden = span.textContent === "••••••••";
+    if (isHidden) {
+        span.textContent = span.dataset.password;
+        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.958 9.958 0 012.606-4.045M6.6 6.6A9.956 9.956 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.956 9.956 0 01-1.1 2.238M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/></svg>`;
+    } else {
+        span.textContent = "••••••••";
+        button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+    }
 }
 
 function startEditUser(ev) {

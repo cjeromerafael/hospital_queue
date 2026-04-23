@@ -141,6 +141,30 @@
                     <div id="currentDateDisplay" class="text-lg font-black text-gray-900 leading-tight">Loading...</div>
                 </div>
 
+                <!-- Back to Admin button (only shown in admin override mode) -->
+                <button id="backToAdminBtn" onclick="backToAdminDashboard()" style="display: none;"
+                    class="btn-ios group relative overflow-hidden
+                        !px-4 !py-2.5
+                        bg-blue-500/90 backdrop-blur-sm
+                        text-white
+                        shadow-sm
+                        transition-all duration-200 ease-out
+                        hover:bg-blue-500 hover:shadow-md hover:-translate-y-[1px]
+                        active:scale-95">
+
+                    <!-- subtle glow -->
+                    <span class="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300
+                                bg-gradient-to-r from-transparent via-white/20 to-transparent"></span>
+
+                    <svg class="w-5 h-5 text-white/90 group-hover:text-white transition relative z-10"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+
+                    <span class="relative z-10">Back to Admin</span>
+                </button>
+
                 <!-- Queue Display button -->
                 <a href="../patient/display.html" target="_blank" rel="noopener noreferrer"
                 class="btn-ios btn-ios-secondary group relative overflow-hidden
