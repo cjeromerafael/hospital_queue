@@ -1,0 +1,9 @@
+DirectoryIndex disabled
+
+RewriteEngine On
+
+# Root → queue display page
+RewriteRule ^$ patient/display.html [L]
+
+# /login → login page
+RewriteRule ^login/?$ index.html [L]

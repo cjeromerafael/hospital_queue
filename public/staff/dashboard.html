@@ -69,7 +69,8 @@
                     localStorage.removeItem("department_id");
                     localStorage.removeItem("role");
                     localStorage.removeItem("username");
-                    window.location.href = "/login";
+                    const base = window.location.pathname.replace(/\/staff\/[^/]+$/, "");
+                    window.location.href = base + "/index.html";
                 });
         }
     </script>

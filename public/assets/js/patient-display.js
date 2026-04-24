@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 async function checkDailyFlush() {
     try {
-        await fetch("../../api/daily_flush.php");
+        await fetch("/api/daily_flush.php");
     } catch (e) {
         console.warn("daily_flush check failed:", e);
     }
@@ -107,18 +107,20 @@ function hideSoundPrompt() {
 
 function unlockBellAudio() {
     if (bellUnlocked) return;
+    const prevVolume = bellAudio.volume;
+    bellAudio.volume = 0;
     bellAudio.currentTime = 0;
-    const playPromise = bellAudio.play();
-    if (playPromise && typeof playPromise.then === "function") {
-        playPromise
-            .then(() => {
-                bellUnlocked = true;
-                hideSoundPrompt();
-            })
-            .catch(() => {
-                createSoundPrompt();
-            });
-    }
+    bellAudio.play()
+        .then(() => {
+            bellAudio.pause();
+            bellAudio.currentTime = 0;
+            bellAudio.volume = prevVolume;
+            bellUnlocked = true;
+            hideSoundPrompt();
+        })
+        .catch(() => {
+            bellAudio.volume = prevVolume;
+        });
 }
 
 /**
@@ -165,7 +167,7 @@ async function refreshAndRender() {
     if (!grid) return;
 
     try {
-        const r = await fetch("../../api/queue_state/view.php?_=" + Date.now());
+        const r = await fetch("/api/queue_state/view.php?_=" + Date.now());
         if (!r.ok) {
             throw new Error(`HTTP ${r.status}`);
         }
@@ -215,7 +217,7 @@ async function refreshAndRender() {
             filteredData.forEach(d => {
                 const newNum = Number(d.current_number || 0);
                 const prevNum = previousNumbers[d.department_id];
-                if (prevNum !== undefined && newNum !== prevNum) bellNeeded = true;
+                if (newNum !== prevNum) bellNeeded = true;
                 previousNumbers[d.department_id] = newNum;
 
                 const card = document.createElement("div");
@@ -240,7 +242,7 @@ async function refreshAndRender() {
                 if (!el) return;
                 const newNum = Number(d.current_number || 0);
                 const prevNum = previousNumbers[d.department_id];
-                if (prevNum !== undefined && newNum !== prevNum) bellNeeded = true;
+                if (newNum !== prevNum) bellNeeded = true;
                 previousNumbers[d.department_id] = newNum;
                 if (el.textContent !== String(newNum)) {
                     el.textContent = newNum;

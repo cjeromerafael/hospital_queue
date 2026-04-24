@@ -15,7 +15,7 @@ function login(){
     form.append("username", username);
     form.append("password", password);
 
-    fetch("../api/auth/login.php", {
+    fetch("/api/auth/login.php", {
         method: "POST",
         credentials: "same-origin",
         body: form
@@ -42,10 +42,11 @@ function login(){
             localStorage.setItem("department_id", data.department_id);
             localStorage.setItem("role", data.department_role);
 
+            const base = window.location.pathname.replace(/\/(index\.html|login)\/?$/, "");
             if(data.department_role === "sysadmin"){
-                window.location = "/admin/dashboard.html";
+                window.location = base + "/admin/dashboard.html";
             } else {
-                window.location = "/staff/dashboard.html";
+                window.location = base + "/staff/dashboard.html";
             }
 
         } else {

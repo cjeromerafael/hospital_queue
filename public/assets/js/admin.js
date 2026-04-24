@@ -10,12 +10,13 @@ async function redirectToLogin() {
     localStorage.removeItem("department_id");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
-    window.location.href = "/login";
+    const base = window.location.pathname.replace(/\/(staff|admin)\/[^/]+$/, "");
+    window.location.href = base + "/index.html";
 }
 
 async function fetchAuthStatus() {
     try {
-        const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
+        const res = await fetch("/api/auth/status.php", { credentials: "same-origin" });
         if (res.status === 401) {
             redirectToLogin();
             return null;
@@ -41,7 +42,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const auth = await fetchAuthStatus();
     if (!auth) return;
     if (auth.department_role && auth.department_role.toLowerCase() !== "sysadmin") {
-        window.location.href = "../staff/dashboard.html";
+        const base = window.location.pathname.replace(/\/admin\/[^/]+$/, "");
+        window.location.href = base + "/staff/dashboard.html";
         return;
     }
 
@@ -69,7 +71,7 @@ function escapeHtml(s) {
 }
 
 function checkDailyFlush() {
-    fetch("../../api/daily_flush.php", { credentials: "same-origin" })
+    fetch("/api/daily_flush.php", { credentials: "same-origin" })
         .then(r => {
             if (r.status === 401) {
                 redirectToLogin();
@@ -94,7 +96,7 @@ function manualFlush() {
     const f = new FormData();
     f.append("manual", "1");
 
-    fetch("../../api/daily_flush.php", { method: "POST", body: f, credentials: "same-origin" })
+    fetch("/api/daily_flush.php", { method: "POST", body: f, credentials: "same-origin" })
         .then(r => r.json())
         .then(d => {
             const msgEl = document.getElementById("flushMsg");
@@ -112,19 +114,20 @@ function manualFlush() {
 }
 
 function logout() {
-    fetch("../../api/auth/logout.php", { method: "POST", credentials: "same-origin" })
+    fetch("/api/auth/logout.php", { method: "POST", credentials: "same-origin" })
         .finally(() => {
             localStorage.removeItem("user_id");
             localStorage.removeItem("department_id");
             localStorage.removeItem("role");
             localStorage.removeItem("username");
-            window.location.href = "/login";
+            const base = window.location.pathname.replace(/\/admin\/[^/]+$/, "");
+            window.location.href = base + "/index.html";
         });
 }
 
 function switchToStaffDashboard() {
-    // Redirect to staff dashboard with admin override parameter
-    window.location.href = "../staff/dashboard.html?admin_override=1";
+    const base = window.location.pathname.replace(/\/admin\/[^/]+$/, "");
+    window.location.href = base + "/staff/dashboard.html?admin_override=1";
 }
 
 /* ─── DEPARTMENTS ─────────────────────────────────────────────── */
@@ -133,7 +136,7 @@ function loadDepartments() {
     const el = document.getElementById("deptTable");
     if (!el) return;
 
-    fetch("../../api/admin/departments.php", { credentials: "same-origin" })
+    fetch("/api/admin/departments.php", { credentials: "same-origin" })
         .then(r => {
             if (r.status === 401) { redirectToLogin(); return null; }
             return r.json();
@@ -225,7 +228,7 @@ function startEditDepartment(ev) {
     function save() {
         const newName = input.value.trim();
         if (!newName) return;
-        fetch("../../api/admin/departments.php", {
+        fetch("/api/admin/departments.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `department_id=${encodeURIComponent(id)}&department_name=${encodeURIComponent(newName)}&department_color=${encodeURIComponent(normalizeHex(colorInput?.value || "#8B0000"))}`
@@ -262,7 +265,7 @@ function deleteDepartmentRow(ev) {
     const row = ev.target.closest("tr");
     const id = row.dataset.departmentId;
     if (!confirm("Delete this department?")) return;
-    fetch("../../api/admin/departments.php", {
+    fetch("/api/admin/departments.php", {
         method: "DELETE",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `department_id=${encodeURIComponent(id)}`
@@ -289,7 +292,7 @@ function addDepartment() {
     f.append("department_name", name);
     f.append("department_color", normalizeHex(colorEl?.value || "#8B0000"));
 
-    fetch("../../api/admin/departments.php", { method: "POST", body: f })
+    fetch("/api/admin/departments.php", { method: "POST", body: f })
         .then(r => {
             if (!r.ok) throw new Error(`HTTP ${r.status}`);
             return r.json();
@@ -324,7 +327,7 @@ function loadUsers() {
     const el = document.getElementById("userTable");
     if (!el) return;
 
-    fetch("../../api/admin/users.php", { credentials: "same-origin" })
+    fetch("/api/admin/users.php", { credentials: "same-origin" })
         .then(r => {
             if (r.status === 401) { redirectToLogin(); return null; }
             return r.json();
@@ -436,7 +439,7 @@ function startEditUser(ev) {
         const newPassword = document.getElementById("editPassword").value.trim();
         if (newPassword) body += `&password=${encodeURIComponent(newPassword)}`;
 
-        fetch("../../api/admin/users.php", {
+        fetch("/api/admin/users.php", {
             method: "PUT",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: body
@@ -478,7 +481,7 @@ function deleteUserRow(ev) {
     const row = ev.target.closest("tr");
     const id = row?.dataset.userId;
     if (!id || !confirm("Delete this user?")) return;
-    fetch("../../api/admin/users.php", {
+    fetch("/api/admin/users.php", {
         method: "DELETE",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `user_id=${encodeURIComponent(id)}`
@@ -509,7 +512,7 @@ function addUser() {
     f.append("department_id", deptId);
     f.append("role", role);
 
-    fetch("../../api/admin/users.php", { method: "POST", body: f })
+    fetch("/api/admin/users.php", { method: "POST", body: f })
         .then(r => r.json())
         .then(d => {
             if (d.status === "success") {

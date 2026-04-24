@@ -13,17 +13,19 @@ async function redirectToLogin() {
     localStorage.removeItem("department_id");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
-    window.location.href = "/login";
+    const base = window.location.pathname.replace(/\/(staff|admin)\/[^/]+$/, "");
+    window.location.href = base + "/index.html";
 }
 
 function backToAdminDashboard() {
-    window.location.href = "/admin/dashboard.html";
+    const base = window.location.pathname.replace(/\/staff\/[^/]+$/, "");
+    window.location.href = base + "/admin/dashboard.html";
 }
 
 
 async function fetchAuthStatus() {
     try {
-        const res = await fetch("../../api/auth/status.php", { credentials: "same-origin" });
+        const res = await fetch("/api/auth/status.php", { credentials: "same-origin" });
         if (res.status === 401) {
             redirectToLogin();
             return null;
@@ -58,7 +60,8 @@ document.addEventListener("DOMContentLoaded", async function() {
     const isAdminOverride = urlParams.get('admin_override') === '1';
 
     if (role.toLowerCase() === "sysadmin" && !isAdminOverride) {
-        window.location.href = "../admin/dashboard.html";
+        const base = window.location.pathname.replace(/\/staff\/[^/]+$/, "");
+        window.location.href = base + "/admin/dashboard.html";
         return;
     }
 
@@ -112,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
 async function checkDailyFlush() {
     try {
-        const res = await fetch("../../api/daily_flush.php", { credentials: "same-origin" });
+        const res = await fetch("/api/daily_flush.php", { credentials: "same-origin" });
         if (res.status === 401) { return redirectToLogin(); }
         await res.json();
     } catch (e) {
@@ -124,7 +127,7 @@ async function checkDailyFlush() {
 async function getDepartmentName(departmentId) {
     if (!departmentId) return "";
     try {
-        const res = await fetch("../../api/admin/departments.php", { credentials: "same-origin" });
+        const res = await fetch("/api/admin/departments.php", { credentials: "same-origin" });
         if (res.status === 401) { redirectToLogin(); return ""; }
         const departments = await res.json();
         if (!Array.isArray(departments)) return "";
@@ -157,7 +160,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
     const isPrivileged = role === "admin";
 
     try {
-        const res = await fetch("../../api/admin/departments.php");
+        const res = await fetch("/api/admin/departments.php");
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const departments = await res.json();
         
@@ -243,7 +246,7 @@ async function loadDepartmentsAndRender(userDeptId, role) {
             btn.textContent = "Please wait...";
 
             try {
-                const endpoint = `../../api/queue_state/${action}.php`;
+                const endpoint = `/api/queue_state/${action}.php`;
                 const f = new FormData();
                 f.append("department_id", departmentId);
                 const r = await fetch(endpoint, { method: "POST", body: f });
@@ -291,7 +294,7 @@ async function refreshNumbers() {
     if (!grid) return;
 
     try {
-        const r = await fetch("../../api/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
+        const r = await fetch("/api/queue_state/view.php?_=" + Date.now(), { credentials: "same-origin" });
 
         if (r.status === 401) {
             return redirectToLogin();
