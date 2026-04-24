@@ -8,6 +8,16 @@
  */
 
 document.addEventListener("DOMContentLoaded", function() {
+    const overlay = document.getElementById("audioUnlockOverlay");
+    if (overlay) {
+        document.addEventListener("click", () => {
+            bellAudio.play().then(() => { bellAudio.pause(); bellAudio.currentTime = 0; }).catch(() => {});
+            overlay.style.transition = "opacity 0.3s";
+            overlay.style.opacity = "0";
+            setTimeout(() => overlay.remove(), 300);
+        }, { once: true });
+    }
+
     checkDailyFlush().finally(() => {
         init();
     });

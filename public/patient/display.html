@@ -15,7 +15,7 @@
             <img src="../assets/images/Ph_seal_cabuyao_city.png"
                  alt="Lungsod ng Cabuyao seal"
                  class="w-16 h-16 sm:w-20 sm:h-20 crisp-img">
-
+x
             <div class="text-center">
                 <h1 class="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-gray-900 tracking-tight">Cabuyao City Hospital</h1>
                 <p class="text-base sm:text-lg lg:text-xl text-gray-600 font-semibold mt-1 sm:mt-2">Currently serving</p>
@@ -35,6 +35,19 @@
     <div class="flex-1 overflow-hidden min-h-0">
         <div id="displayGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 sm:gap-5 p-2"></div>
     </div>
+
+    <!-- Audio unlock — tap anywhere to enable sound -->
+    <div id="audioUnlockOverlay" style="
+        position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+        background: rgba(0,0,0,0.6);
+        color: white; text-align: center;
+        padding: 0.4rem 1.2rem;
+        border-radius: 999px;
+        font-size: 0.78rem; font-weight: 600;
+        letter-spacing: 0.03em;
+        z-index: 9999; cursor: pointer;
+        white-space: nowrap;
+    ">🔔 Tap anywhere to enable bell sound</div>
 
     <script src="../assets/js/patient-display.js"></script>
 </body>
